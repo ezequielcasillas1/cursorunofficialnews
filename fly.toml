@@ -1,4 +1,8 @@
-# GitHub / root deploy — same app as mobile/server/fly.toml
+# fly.toml app configuration file generated for cursorunofficialnews on 2026-06-27T06:11:07Z
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
 app = 'cursorunofficialnews'
 primary_region = 'iad'
 
@@ -8,13 +12,17 @@ primary_region = 'iad'
 
 [env]
   DATA_DIR = '/app/data'
-  PORT = '8787'
   NODE_ENV = 'production'
+  PORT = '8787'
+
+[[mounts]]
+  source = 'cursorunofficialnews_data'
+  destination = '/app/data'
 
 [http_service]
-  internal_port = 8787
+  internal_port = 8080
   force_https = true
-  auto_stop_machines = true
+  auto_stop_machines = 'stop'
   auto_start_machines = true
   min_machines_running = 0
   processes = ['app']
@@ -26,11 +34,8 @@ primary_region = 'iad'
     method = 'GET'
     path = '/health'
 
-[mounts]
-  source = 'cursorunofficialnews_data'
-  destination = '/app/data'
-
 [[vm]]
   memory = '256mb'
   cpu_kind = 'shared'
   cpus = 1
+  memory_mb = 256
