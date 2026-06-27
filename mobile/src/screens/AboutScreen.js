@@ -35,18 +35,22 @@ export function AboutScreen({ onBack }) {
       <Text style={styles.title}>About</Text>
       <Text style={styles.body}>{DISCLAIMER}</Text>
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Phase 1</Text>
+        <Text style={styles.sectionTitle}>How it works</Text>
         <Text style={styles.body}>
-          Official feeds only: Cursor changelog RSS and GitHub releases. Tap any
-          headline to open the original source in your browser.
+          This app aggregates headlines and short excerpts from Cursor-related
+          sources. Tap any card to open the original article, release note, forum
+          post, or video in your browser. We never republish full article bodies.
         </Text>
       </View>
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Phase 2</Text>
+        <Text style={styles.sectionTitle}>Current features</Text>
         <Text style={styles.body}>
-          One deduplicated timeline — duplicate stories appear once, sorted by
-          date. When the same URL comes from multiple sources, the official
-          source wins. Feed cards show an Official badge for verified sources.
+          • Official changelog RSS and GitHub releases{'\n'}
+          • Forum announcements and blog posts (RSS + optional scrape){'\n'}
+          • YouTube channel videos{'\n'}
+          • Deduplicated timeline — official source wins on duplicates{'\n'}
+          • Category filters: All, Updates, News, Forum, Videos{'\n'}
+          • Official-only filter and pull-to-refresh
         </Text>
       </View>
       <View style={styles.section}>
@@ -65,7 +69,7 @@ export function AboutScreen({ onBack }) {
                 {source.isOfficial ? <SourceOfficialBadge /> : null}
               </View>
               <Text style={styles.sourceMeta}>
-                {source.category} · priority {source.priority}
+                {source.category} · {source.ingestMethod || 'rss'}
                 {source.enabled ? '' : ' · disabled'}
               </Text>
               {source.attributionLabel ? (
@@ -78,10 +82,10 @@ export function AboutScreen({ onBack }) {
         )}
       </View>
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Planned</Text>
+        <Text style={styles.sectionTitle}>Coming later</Text>
         <Text style={styles.body}>
-          More sources, filters, notifications, and optional membership — not in
-          this build.
+          Push notifications for new items (opt-in), optional membership for
+          extras, and a public web/PWA build. Core news feed stays free.
         </Text>
       </View>
       <View style={styles.section}>
