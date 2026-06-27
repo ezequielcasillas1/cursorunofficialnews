@@ -139,7 +139,7 @@ One phase at a time. Do not skip ahead unless user approves.
 | Web | Cloudflare Pages `cursorunofficial.news` | [CLOUDFLARE-DEPLOY.md](CLOUDFLARE-DEPLOY.md) |
 | Email (Resend) | Fly secrets + Resend domain verify | [FLY-DEPLOY.md](FLY-DEPLOY.md) — separate from Pages |
 
-Deploy API first; set `VITE_API_BASE=https://cursorunofficialnews.fly.dev` in Cloudflare Pages build env.
+Deploy API first; web defaults to `/api` (Worker proxy → Fly). Optional override: `VITE_API_BASE=https://cursorunofficialnews.fly.dev` in Cloudflare build env.
 
 ---
 

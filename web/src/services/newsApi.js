@@ -13,9 +13,24 @@ async function fetchJson(path, options = {}) {
       ...options,
     });
 
+    const contentType = res.headers.get('content-type') || '';
+
     if (!res.ok) {
-      const body = await res.json().catch(() => ({}));
-      throw new Error(body.error || `Request failed (${res.status})`);
+      if (contentType.includes('application/json')) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || `Request failed (${res.status})`);
+      }
+      throw new Error(`Request failed (${res.status})`);
+    }
+
+    if (!contentType.includes('application/json')) {
+      const preview = (await res.text()).slice(0, 80).trim();
+      if (preview.toLowerCase().startsWith('<!doctype') || preview.startsWith('<html')) {
+        throw new Error(
+          `API returned HTML instead of JSON at ${API_BASE}${path} — is the API deployed? See docs/CLOUDFLARE-DEPLOY.md`,
+        );
+      }
+      throw new Error(`Expected JSON from API but received ${contentType || 'unknown content type'}`);
     }
 
     return res.json();

@@ -1,9 +1,14 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "cursorunofficialnews",
+  "main": "./web/worker/index.js",
   "compatibility_date": "2025-06-27",
+  "vars": {
+    "API_ORIGIN": "https://cursorunofficialnews.fly.dev"
+  },
   "assets": {
     "directory": "./web/dist",
+    "binding": "ASSETS",
     "not_found_handling": "single-page-application"
   }
 }

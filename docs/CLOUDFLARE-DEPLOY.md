@@ -1,11 +1,13 @@
-# Deploy Web to Cloudflare Workers (Static Assets)
+# Deploy Web to Cloudflare Workers (Static Assets + API Proxy)
 
-Host the **Vite + React web preview** (`web/`) on Cloudflare Workers with static assets. The API stays on Fly.io — the web app calls it at build time via `VITE_API_BASE`.
+Host the **Vite + React web preview** (`web/`) on Cloudflare Workers with static assets. The **API runs on Fly.io** (always-on cloud, cron ingest, JSON persistence) — the Worker **proxies `/api/*`** to Fly so the site works without your local machine.
 
 | Layer | Host | URL |
 |---|---|---|
-| Web (static) | Cloudflare Workers | `https://cursorunofficial.news` (or `www`) |
-| API | Fly.io | `https://cursorunofficialnews.fly.dev` |
+| Web (static + `/api` proxy) | Cloudflare Workers | `https://cursorunofficial.news` (or `www`) |
+| API (Express, ingest, cron) | Fly.io | `https://cursorunofficialnews.fly.dev` |
+
+**Why the JSON error happens:** If `/api/v1/news` is not proxied, Cloudflare serves `index.html` (SPA fallback). The browser tries to parse HTML as JSON → `Unexpected token '<', "<!doctype "...`. Fix: deploy the Worker with `web/worker/index.js` (proxies `/api`) **and** ensure Fly.io API is healthy.
 
 **Repo:** `github.com/ezequielcasillas1/cursorunofficialnews` (private; default branch `main`)
 
@@ -15,6 +17,22 @@ Confirm locally:
 git remote -v
 # origin  https://github.com/ezequielcasillas1/cursorunofficialnews.git (fetch)
 ```
+
+## Architecture
+
+```
+Browser → cursorunofficial.news (Cloudflare Worker)
+            ├─ /api/*  → proxy → cursorunofficialnews.fly.dev (Fly.io Express API)
+            └─ /*      → web/dist static assets (SPA)
+```
+
+| Component | Runs on | Why not Cloudflare Workers alone? |
+|---|---|---|
+| Web UI | Workers static assets | Vite build output; SPA fallback |
+| `/api` proxy | Worker script (`web/worker/index.js`) | Same-origin `/api` — no CORS, no build-time env required |
+| Feed API + ingest | Fly.io (`mobile/server/`) | Express, `node-cron`, `fs` JSON store, RSS fetch — Node-only |
+
+Scheduled ingest: Fly.io in-process cron (`INGEST_CRON_ENABLED=true`) or external cron hitting `POST /v1/ingest`. See [FLY-DEPLOY.md](FLY-DEPLOY.md).
 
 ---
 
@@ -39,10 +57,11 @@ git remote -v
 
 | File | Purpose |
 |---|---|
-| `wrangler.jsonc` | Worker name + static assets path (`web/dist`) + SPA fallback |
+| `wrangler.jsonc` | Worker name, `main` script, `API_ORIGIN` var, static assets path |
+| `web/worker/index.js` | Proxies `/api/*` → Fly.io; serves static assets otherwise |
 | `web/public/_headers` | Minimal security headers on static assets |
 | `web/.node-version` | Node 20 for Cloudflare build (Vite 7 requires Node 20+) |
-| `web/.env.example` | Documents `VITE_API_BASE` for local vs production |
+| `web/.env.example` | Documents `VITE_API_BASE` (optional; default `/api` uses proxy) |
 
 Vite outputs to **`web/dist/`**, not repo-root `dist/`. Wrangler reads `assets.directory` from `wrangler.jsonc`.
 
@@ -61,15 +80,22 @@ Root `package.json` scripts:
 ```jsonc
 {
   "name": "cursorunofficialnews",
+  "main": "./web/worker/index.js",
   "compatibility_date": "2025-06-27",
+  "vars": {
+    "API_ORIGIN": "https://cursorunofficialnews.fly.dev"
+  },
   "assets": {
     "directory": "./web/dist",
+    "binding": "ASSETS",
     "not_found_handling": "single-page-application"
   }
 }
 ```
 
-**Do not** set `"directory": "dist"` — that path does not exist after `npm run build`.
+**Do not** set `"directory": "dist"` — Vite builds to `web/dist/`.
+
+To point at a different API host, change `vars.API_ORIGIN` or set it in the Cloudflare dashboard under **Settings → Variables**.
 
 ---
 
@@ -98,16 +124,22 @@ If the dashboard only shows **Output directory** (no separate deploy command), s
 
 ### 3. Environment variables (build-time)
 
-Under **Settings → Environment variables**, add for **Production** (and **Preview** if preview deploys should hit prod API):
+**`VITE_API_BASE` is optional.** Default `/api` is proxied by the Worker to Fly.io.
 
-| Variable | Value | Notes |
+Only set build env vars if you need an override:
+
+| Variable | Value | Required? |
 |---|---|---|
-| `VITE_API_BASE` | `https://cursorunofficialnews.fly.dev` | **Required** — baked into the JS bundle at build time |
-| `NODE_VERSION` | `20` | Optional if `web/.node-version` is present; use if build fails on Node 18 |
+| `VITE_API_BASE` | `/api` (default) or `https://cursorunofficialnews.fly.dev` | No — omit for Worker proxy |
+| `NODE_VERSION` | `20` | Only if build fails on Node 18 |
+
+Worker runtime var (not Vite):
+
+| Variable | Value | Where |
+|---|---|---|
+| `API_ORIGIN` | `https://cursorunofficialnews.fly.dev` | `wrangler.jsonc` `vars` or dashboard **Variables** |
 
 Do **not** set `VITE_INGEST_SECRET` in Cloudflare unless you intentionally expose ingest from the public web UI (not recommended for production).
-
-After changing env vars, trigger **Retry deployment** so the new values are embedded in the bundle.
 
 ### 4. Deploy
 
@@ -126,8 +158,8 @@ SSL/TLS is automatic (Cloudflare Universal SSL).
 ### 6. Verify the live site
 
 1. Open `https://cursorunofficial.news` (or your `*.workers.dev` URL before DNS is wired).
-2. Confirm the news feed loads (not “Request timed out”).
-3. DevTools → **Network** → confirm requests go to `https://cursorunofficialnews.fly.dev/v1/news` (not `/api`).
+2. Confirm the news feed loads (not “Unexpected token '<'” or “Request timed out”).
+3. DevTools → **Network** → confirm requests go to **`/api/v1/news`** (same origin) or your `VITE_API_BASE` override.
 4. Optional smoke test from PowerShell:
 
    ```powershell
@@ -167,6 +199,20 @@ npx wrangler deploy --dry-run
 
 ## Troubleshooting
 
+### `Unexpected token '<', "<!doctype "... is not valid JSON`
+
+**Root cause:** The browser requested JSON from `/api/v1/news`, but got HTML (`index.html`) because:
+
+1. Worker proxy is missing (old deploy without `web/worker/index.js`), **or**
+2. Fly.io API is down / cold-starting (`min_machines_running = 0`), **or**
+3. Wrong path — request hit static assets instead of `/api`.
+
+**Fix:**
+
+1. Redeploy with current `wrangler.jsonc` (includes `main: ./web/worker/index.js`).
+2. Verify Fly: `Invoke-RestMethod https://cursorunofficialnews.fly.dev/health`
+3. Test proxy on live site: open `https://cursorunofficial.news/api/v1/news?limit=1` — should return JSON, not HTML.
+
 ### `assets.directory` does not exist (`/opt/buildhome/repo/dist`)
 
 **Root cause:** Wrangler (or dashboard auto-setup) pointed at repo-root `dist/`, but Vite builds to `web/dist/`.
@@ -199,7 +245,9 @@ npx wrangler deploy --dry-run
 | `assets.directory` / `dist` not found | Output dir `dist` at repo root; Vite uses `web/dist` | Set `wrangler.jsonc` → `./web/dist`; dashboard **Build output directory** → `web/dist` |
 | `Missing script: "build"` | Wrong root directory in dashboard | Leave **Root directory** blank (repo root); **Build command** → `npm run build` |
 | Build fails on Node | Default Node 18 | Set `NODE_VERSION=20` or rely on `web/.node-version` |
-| Feed timeout / empty | API down or wrong `VITE_API_BASE` | Check Fly health; redeploy after fixing env |
+| Feed timeout / empty | API down or cold start on Fly | Check Fly health; first request may wake machine (~5–10s) |
+| JSON parse / `<!doctype` error | `/api` not proxied; HTML SPA fallback | Deploy Worker with `web/worker/index.js`; test `/api/v1/news` |
+| Wrong `VITE_API_BASE` | Direct Fly URL misconfigured | Omit `VITE_API_BASE` to use `/api` proxy, or set correct Fly URL |
 | 404 on refresh / deep link | Missing SPA fallback | `not_found_handling: "single-page-application"` in `wrangler.jsonc` |
 | `_redirects` infinite loop (100324) | `/* /index.html 200` conflicts with wrangler SPA handling | Remove `web/public/_redirects`; rely on `not_found_handling` only |
 | CORS errors | Unlikely — API uses open CORS | Check browser console; confirm API URL is HTTPS |
@@ -211,6 +259,21 @@ npx wrangler deploy --dry-run
 ## Alternative: Cloudflare Pages
 
 You can also deploy via **Pages** with **Root directory** → `web`, **Build command** → `npm run build`, **Build output directory** → `dist` (relative to `web/`). The current repo setup targets **Workers Static Assets** + `wrangler.jsonc` at repo root.
+
+---
+
+## Deploy API first (Fly.io)
+
+The web site depends on a cloud API. One-time setup:
+
+```powershell
+cd C:\Dev\CursorAINews
+fly auth login
+fly deploy
+fly secrets set INGEST_SECRET="..." NODE_ENV="production" INGEST_CRON_ENABLED="true" PUBLIC_API_BASE="https://cursorunofficialnews.fly.dev"
+```
+
+Full details: [FLY-DEPLOY.md](FLY-DEPLOY.md).
 
 ---
 
