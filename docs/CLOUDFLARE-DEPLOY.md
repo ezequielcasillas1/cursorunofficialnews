@@ -7,7 +7,14 @@ Host the **Vite + React web preview** (`web/`) on Cloudflare Pages. The API stay
 | Web (static) | Cloudflare Pages | `https://cursorunofficial.news` (or `www`) |
 | API | Fly.io | `https://cursorunofficialnews.fly.dev` |
 
-**Repo:** `github.com/ezequielcasillas1/cursorunofficialnews`
+**Repo:** `github.com/ezequielcasillas1/cursorunofficialnews` (private; default branch `main`)
+
+Confirm locally:
+
+```powershell
+git remote -v
+# origin  https://github.com/ezequielcasillas1/cursorunofficialnews.git (fetch)
+```
 
 ---
 
@@ -122,8 +129,27 @@ Open the URL Vite prints (usually `http://127.0.0.1:4173`).
 
 ## Troubleshooting
 
+### `PROJECT CANNOT BE FOUND` (most common first)
+
+1. **GitHub app cannot see the repo (private repo)** — This repo is **private**. During Cloudflare → **Connect to Git**, the GitHub **Cloudflare Workers & Pages** app must include `ezequielcasillas1/cursorunofficialnews` under **Repository access**.
+   - GitHub → **Settings** → **Integrations** → **Applications** → **Cloudflare Workers and Pages** → **Configure**
+   - Set **Repository access** → **Only select repositories** → add **`cursorunofficialnews`**
+   - Or use **All repositories** temporarily, then retry **Workers & Pages** → **Create** → **Pages** → **Connect to Git**
+
+2. **Pages project not created yet** — The error appears if you open a project URL or custom domain before the first Pages project exists. Create it: **Workers & Pages** → **Create** → **Pages** (not Workers) → **Connect to Git** → pick **`ezequielcasillas1/cursorunofficialnews`**.
+
+3. **Wrong Cloudflare account** — Domain zone `cursorunofficial.news` and the Pages project must live under the **same** Cloudflare account. Log out/in or check the account switcher in the dashboard.
+
+4. **Repo already linked on another Cloudflare account** — One GitHub repo can only back one Pages project across all Cloudflare accounts. Error: *"This repository is being used for a Cloudflare Pages project on a different Cloudflare account."* Delete the old Pages project on the other account, or use **Direct Upload** / a different repo.
+
+5. **Stale GitHub authorization** — Uninstall **Cloudflare Workers and Pages** from GitHub (Applications page), then reconnect from the Cloudflare Pages **Connect to Git** flow.
+
+6. **Fly.io API not deployed** — Does **not** cause "PROJECT CANNOT BE FOUND", but the site will fail after deploy. `https://cursorunofficialnews.fly.dev/health` must respond before you rely on the live feed. See [FLY-DEPLOY.md](FLY-DEPLOY.md).
+
 | Symptom | Likely cause | Fix |
 |---|---|---|
+| `Missing script: "build"` | Pages **root directory** left at repo root (default) instead of `web` | Set **Root directory** → `web`, **Build output** → `dist`. Or keep repo root: **Build command** → `npm run build`, **Build output** → `web/dist` (root `package.json` delegates to `web/`) |
+| `PROJECT CANNOT BE FOUND` | Private repo not granted to Cloudflare GitHub app, no Pages project yet, or wrong Cloudflare account | See numbered list above |
 | Build fails on Node | Default Node 18 | Set `NODE_VERSION=20` or rely on `web/.node-version` |
 | Feed timeout / empty | API down or wrong `VITE_API_BASE` | Check Fly health; redeploy Pages after fixing env |
 | 404 on refresh / deep link | Missing SPA fallback | Ensure `web/public/_redirects` is committed and in `dist/` |
