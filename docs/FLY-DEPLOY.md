@@ -2,7 +2,7 @@
 
 Deploy the **API only** (`mobile/server/`) — not the Expo mobile app.
 
-**GitHub integration:** Fly launch from `ezequielcasillas/cursorunofficialnews` uses **root `fly.toml`** (app `cursorunofficialnews`). No extra config path needed if the repo root contains `fly.toml`.
+**GitHub integration:** Fly launch from `ezequielcasillas1/cursorunofficialnews` uses **root `fly.toml`** (app `cursorunofficialnews`). No extra config path needed if the repo root contains `fly.toml`.
 
 **Manual deploy from repo root:**
 

@@ -5,11 +5,16 @@
   "scripts": {
     "install:all": "npm install --prefix mobile/server && npm install --prefix mobile && npm install --prefix web",
     "build": "npm install --prefix web && npm run build --prefix web",
+    "deploy:web": "npm run build && wrangler deploy",
+    "preview:web": "npm run build && wrangler dev",
     "dev:api": "npm run dev --prefix mobile/server",
     "dev:mobile": "npm run start --prefix mobile",
     "dev:web": "npm run dev --prefix web"
   },
   "dependencies": {
     "expo": "^56.0.12"
+  },
+  "devDependencies": {
+    "wrangler": "^4.24.0"
   }
 }

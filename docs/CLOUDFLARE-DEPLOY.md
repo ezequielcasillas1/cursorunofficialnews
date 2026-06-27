@@ -1,10 +1,10 @@
-# Deploy Web to Cloudflare Pages
+# Deploy Web to Cloudflare Workers (Static Assets)
 
-Host the **Vite + React web preview** (`web/`) on Cloudflare Pages. The API stays on Fly.io — the web app calls it at build time via `VITE_API_BASE`.
+Host the **Vite + React web preview** (`web/`) on Cloudflare Workers with static assets. The API stays on Fly.io — the web app calls it at build time via `VITE_API_BASE`.
 
 | Layer | Host | URL |
 |---|---|---|
-| Web (static) | Cloudflare Pages | `https://cursorunofficial.news` (or `www`) |
+| Web (static) | Cloudflare Workers | `https://cursorunofficial.news` (or `www`) |
 | API | Fly.io | `https://cursorunofficialnews.fly.dev` |
 
 **Repo:** `github.com/ezequielcasillas1/cursorunofficialnews` (private; default branch `main`)
@@ -29,52 +29,77 @@ git remote -v
 
 2. **Domain nameservers point to Cloudflare** — you already connected NS for `cursorunofficial.news`. Wait until Cloudflare shows the zone as **Active** (can take up to 24h; often minutes).
 
-3. **Push this repo to GitHub** — Cloudflare Pages connects to the GitHub repo for automatic builds on push.
+3. **Push this repo to GitHub** — Cloudflare Workers connects to the GitHub repo for automatic builds on push.
 
-4. **Resend domain verification (separate)** — Email digests use Resend + Fly secrets, not Cloudflare Pages. If you plan to send from `@cursorunofficial.news`, verify the domain in the [Resend dashboard](https://resend.com/domains) and add the DNS records Resend provides (can live alongside Pages DNS in Cloudflare). This does **not** block the web deploy.
+4. **Resend domain verification (separate)** — Email digests use Resend + Fly secrets, not Cloudflare. If you plan to send from `@cursorunofficial.news`, verify the domain in the [Resend dashboard](https://resend.com/domains) and add the DNS records Resend provides (can live alongside Workers DNS in Cloudflare). This does **not** block the web deploy.
 
 ---
 
-## Repo artifacts (already in `web/`)
+## Repo artifacts
 
 | File | Purpose |
 |---|---|
-| `web/public/_redirects` | SPA fallback — deep links serve `index.html` |
+| `wrangler.jsonc` | Worker name + static assets path (`web/dist`) + SPA fallback |
+| `web/public/_redirects` | SPA fallback for local/preview tooling (Netlify-compatible) |
 | `web/public/_headers` | Minimal security headers on static assets |
 | `web/.node-version` | Node 20 for Cloudflare build (Vite 7 requires Node 20+) |
 | `web/.env.example` | Documents `VITE_API_BASE` for local vs production |
 
-Vite copies `public/` into `dist/` at build time, so `_redirects` and `_headers` land in the Pages output automatically.
+Vite outputs to **`web/dist/`**, not repo-root `dist/`. Wrangler reads `assets.directory` from `wrangler.jsonc`.
+
+Root `package.json` scripts:
+
+| Script | Command |
+|---|---|
+| `npm run build` | Installs `web/` deps and runs `vite build` → `web/dist/` |
+| `npm run deploy:web` | Build + `wrangler deploy` |
+| `npm run preview:web` | Build + `wrangler dev` (local Workers preview) |
 
 ---
 
-## Cloudflare Pages — dashboard setup
+## Wrangler config (committed at repo root)
 
-### 1. Create the Pages project
+```jsonc
+{
+  "name": "cursorunofficialnews",
+  "compatibility_date": "2025-06-27",
+  "assets": {
+    "directory": "./web/dist",
+    "not_found_handling": "single-page-application"
+  }
+}
+```
+
+**Do not** set `"directory": "dist"` — that path does not exist after `npm run build`.
+
+---
+
+## Cloudflare Workers — dashboard setup
+
+### 1. Create / verify the Worker project
 
 1. Log in to [Cloudflare Dashboard](https://dash.cloudflare.com).
-2. Select the **cursorunofficial.news** zone (or your account if zone is elsewhere).
-3. Go to **Workers & Pages** → **Create** → **Pages** → **Connect to Git**.
-4. Authorize GitHub if prompted; select repo **`ezequielcasillas1/cursorunofficialnews`**.
-5. Project name suggestion: `cursorunofficial-news` (or any name you prefer).
+2. Go to **Workers & Pages** → **Create** → **Workers** → **Connect to Git** (or open existing project **`cursorunofficialnews`**).
+3. Authorize GitHub if prompted; select repo **`ezequielcasillas1/cursorunofficialnews`**.
 
-### 2. Build settings
+### 2. Build & deploy settings
 
-On the **Set up builds and deployments** screen (or later under **Settings → Builds & deployments**):
+Under **Settings → Builds & deployments** (Workers Git integration):
 
-| Setting | Value |
-|---|---|
-| **Production branch** | `main` (or your default branch) |
-| **Framework preset** | None |
-| **Root directory** | `web` |
-| **Build command** | `npm run build` |
-| **Build output directory** | `dist` |
+| Setting | Value | Notes |
+|---|---|---|
+| **Production branch** | `main` | Or your default branch |
+| **Framework preset** | Static site / None | Auto-detect may guess wrong output dir |
+| **Root directory** | *(repo root — leave blank)* | Build runs from repo root |
+| **Build command** | `npm run build` | Delegates to `web/` via root `package.json` |
+| **Deploy command** | `npx wrangler deploy` | Uses `wrangler.jsonc` at repo root |
+| **Build output directory** | `web/dist` | **Not** `dist` — Vite writes under `web/` |
 
-Cloudflare runs `npm ci` or `npm install` inside `web/` before the build command.
+If the dashboard only shows **Output directory** (no separate deploy command), set it to **`web/dist`**. Wrangler still resolves assets from `wrangler.jsonc` → `./web/dist` at deploy time.
 
 ### 3. Environment variables (build-time)
 
-Under **Settings → Environment variables**, add for **Production** (and **Preview** if you want preview deploys to hit prod API):
+Under **Settings → Environment variables**, add for **Production** (and **Preview** if preview deploys should hit prod API):
 
 | Variable | Value | Notes |
 |---|---|---|
@@ -87,21 +112,21 @@ After changing env vars, trigger **Retry deployment** so the new values are embe
 
 ### 4. Deploy
 
-- Save settings → Cloudflare runs the first build.
-- Watch **Deployments** for build logs; a successful build gets a `*.pages.dev` URL.
+- Save settings → Cloudflare runs build then `wrangler deploy`.
+- Watch **Deployments** for logs; a successful deploy gets a `*.workers.dev` URL.
 
 ### 5. Custom domain
 
-1. **Workers & Pages** → your project → **Custom domains** → **Set up a custom domain**.
+1. **Workers & Pages** → **`cursorunofficialnews`** → **Settings → Domains & Routes** → **Add Custom Domain**.
 2. Add **`cursorunofficial.news`** (apex).
 3. Cloudflare creates the DNS records automatically because the zone is on Cloudflare.
 4. Optional: add **`www.cursorunofficial.news`** and set a redirect (apex → www or www → apex) under **Rules → Redirect Rules** if you want a single canonical host.
 
-SSL/TLS is automatic (Cloudflare Universal SSL). No extra cert step for Pages + proxied DNS.
+SSL/TLS is automatic (Cloudflare Universal SSL).
 
 ### 6. Verify the live site
 
-1. Open `https://cursorunofficial.news` (or your `*.pages.dev` URL before DNS is wired).
+1. Open `https://cursorunofficial.news` (or your `*.workers.dev` URL before DNS is wired).
 2. Confirm the news feed loads (not “Request timed out”).
 3. DevTools → **Network** → confirm requests go to `https://cursorunofficialnews.fly.dev/v1/news` (not `/api`).
 4. Optional smoke test from PowerShell:
@@ -114,7 +139,15 @@ SSL/TLS is automatic (Cloudflare Universal SSL). No extra cert step for Pages + 
 
 ## Local production-like preview
 
-From `web/`:
+From repo root (Workers preview):
+
+```powershell
+cd C:\Dev\CursorAINews
+$env:VITE_API_BASE="https://cursorunofficialnews.fly.dev"
+npm run preview:web
+```
+
+Or Vite-only preview from `web/`:
 
 ```powershell
 cd C:\Dev\CursorAINews\web
@@ -123,39 +156,61 @@ npm run build
 npm run preview
 ```
 
-Open the URL Vite prints (usually `http://127.0.0.1:4173`).
+Validate config without uploading:
+
+```powershell
+cd C:\Dev\CursorAINews
+npm run build
+npx wrangler deploy --dry-run
+```
 
 ---
 
 ## Troubleshooting
+
+### `assets.directory` does not exist (`/opt/buildhome/repo/dist`)
+
+**Root cause:** Wrangler (or dashboard auto-setup) pointed at repo-root `dist/`, but Vite builds to `web/dist/`.
+
+**Fix:**
+
+1. Commit `wrangler.jsonc` with `"directory": "./web/dist"`.
+2. In Cloudflare dashboard, set **Build output directory** → **`web/dist`** (not `dist`).
+3. Redeploy.
 
 ### `PROJECT CANNOT BE FOUND` (most common first)
 
 1. **GitHub app cannot see the repo (private repo)** — This repo is **private**. During Cloudflare → **Connect to Git**, the GitHub **Cloudflare Workers & Pages** app must include `ezequielcasillas1/cursorunofficialnews` under **Repository access**.
    - GitHub → **Settings** → **Integrations** → **Applications** → **Cloudflare Workers and Pages** → **Configure**
    - Set **Repository access** → **Only select repositories** → add **`cursorunofficialnews`**
-   - Or use **All repositories** temporarily, then retry **Workers & Pages** → **Create** → **Pages** → **Connect to Git**
+   - Or use **All repositories** temporarily, then retry **Workers & Pages** → **Create** → **Connect to Git**
 
-2. **Pages project not created yet** — The error appears if you open a project URL or custom domain before the first Pages project exists. Create it: **Workers & Pages** → **Create** → **Pages** (not Workers) → **Connect to Git** → pick **`ezequielcasillas1/cursorunofficialnews`**.
+2. **Worker project not created yet** — Create it: **Workers & Pages** → **Create** → **Workers** → **Connect to Git** → pick **`ezequielcasillas1/cursorunofficialnews`**.
 
-3. **Wrong Cloudflare account** — Domain zone `cursorunofficial.news` and the Pages project must live under the **same** Cloudflare account. Log out/in or check the account switcher in the dashboard.
+3. **Wrong Cloudflare account** — Domain zone `cursorunofficial.news` and the Worker must live under the **same** Cloudflare account.
 
-4. **Repo already linked on another Cloudflare account** — One GitHub repo can only back one Pages project across all Cloudflare accounts. Error: *"This repository is being used for a Cloudflare Pages project on a different Cloudflare account."* Delete the old Pages project on the other account, or use **Direct Upload** / a different repo.
+4. **Repo already linked on another Cloudflare account** — One GitHub repo can only back one Workers/Pages project per account in some setups. Delete the old project on the other account, or use **Direct Upload** / a different repo.
 
-5. **Stale GitHub authorization** — Uninstall **Cloudflare Workers and Pages** from GitHub (Applications page), then reconnect from the Cloudflare Pages **Connect to Git** flow.
+5. **Stale GitHub authorization** — Uninstall **Cloudflare Workers and Pages** from GitHub (Applications page), then reconnect from the Cloudflare **Connect to Git** flow.
 
 6. **Fly.io API not deployed** — Does **not** cause "PROJECT CANNOT BE FOUND", but the site will fail after deploy. `https://cursorunofficialnews.fly.dev/health` must respond before you rely on the live feed. See [FLY-DEPLOY.md](FLY-DEPLOY.md).
 
 | Symptom | Likely cause | Fix |
 |---|---|---|
-| `Missing script: "build"` | Pages **root directory** left at repo root (default) instead of `web` | Set **Root directory** → `web`, **Build output** → `dist`. Or keep repo root: **Build command** → `npm run build`, **Build output** → `web/dist` (root `package.json` delegates to `web/`) |
-| `PROJECT CANNOT BE FOUND` | Private repo not granted to Cloudflare GitHub app, no Pages project yet, or wrong Cloudflare account | See numbered list above |
+| `assets.directory` / `dist` not found | Output dir `dist` at repo root; Vite uses `web/dist` | Set `wrangler.jsonc` → `./web/dist`; dashboard **Build output directory** → `web/dist` |
+| `Missing script: "build"` | Wrong root directory in dashboard | Leave **Root directory** blank (repo root); **Build command** → `npm run build` |
 | Build fails on Node | Default Node 18 | Set `NODE_VERSION=20` or rely on `web/.node-version` |
-| Feed timeout / empty | API down or wrong `VITE_API_BASE` | Check Fly health; redeploy Pages after fixing env |
-| 404 on refresh / deep link | Missing SPA fallback | Ensure `web/public/_redirects` is committed and in `dist/` |
+| Feed timeout / empty | API down or wrong `VITE_API_BASE` | Check Fly health; redeploy after fixing env |
+| 404 on refresh / deep link | Missing SPA fallback | `not_found_handling: "single-page-application"` in `wrangler.jsonc` |
 | CORS errors | Unlikely — API uses open CORS | Check browser console; confirm API URL is HTTPS |
-| Domain not resolving | NS propagation or wrong zone | Cloudflare zone **Active**; check **DNS** records for Pages |
-| Email not sending | Resend, not Pages | Verify domain in Resend; set Fly secrets per [FLY-DEPLOY.md](FLY-DEPLOY.md) |
+| Domain not resolving | NS propagation or wrong zone | Cloudflare zone **Active**; check **DNS** records for Worker custom domain |
+| Email not sending | Resend, not Cloudflare | Verify domain in Resend; set Fly secrets per [FLY-DEPLOY.md](FLY-DEPLOY.md) |
+
+---
+
+## Alternative: Cloudflare Pages
+
+You can also deploy via **Pages** with **Root directory** → `web`, **Build command** → `npm run build`, **Build output directory** → `dist` (relative to `web/`). The current repo setup targets **Workers Static Assets** + `wrangler.jsonc` at repo root.
 
 ---
 
