@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "node --use-system-ca --watch src/index.js",
-    "start": "node --use-system-ca src/index.js",
+    "start": "node src/index.js",
     "ingest:trigger": "node scripts/trigger-ingest.js"
   },
   "dependencies": {
