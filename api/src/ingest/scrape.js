@@ -1,0 +1,160 @@
+import { listSources } from '../sources/registry.js';
+import { normalizeScrapedEntry } from '../normalize/news-item.js';
+
+const SCRAPE_TIMEOUT_MS = 30_000;
+
+export function isScrapeConfigured() {
+  return Boolean(process.env.SCRAPE_API_URL?.trim() && process.env.SCRAPE_API_KEY?.trim());
+}
+
+function parseBlogAnchorText(rawText) {
+  const inner = rawText.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  if (!inner || inner.length < 8) return null;
+
+  const dated = inner.match(/^([A-Za-z]{3,9}\s+\d{1,2},\s+\d{4})\s*[·•|-]\s*(.+)$/);
+  if (dated) {
+    return {
+      title: dated[2].trim().slice(0, 200),
+      pubDate: dated[1],
+    };
+  }
+
+  return {
+    title: inner.slice(0, 200),
+    pubDate: null,
+  };
+}
+
+function extractBlogLinks(html, baseUrl) {
+  if (!html) return [];
+  const origin = new URL(baseUrl).origin;
+  const seen = new Set();
+  const items = [];
+
+  const anchorRe = /<a[^>]+href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
+  let match;
+  while ((match = anchorRe.exec(html)) !== null) {
+    const href = match[1];
+    const parsed = parseBlogAnchorText(match[2]);
+    if (!parsed?.title) continue;
+
+    let absolute;
+    try {
+      absolute = new URL(href, baseUrl).toString();
+    } catch {
+      continue;
+    }
+
+    if (!absolute.startsWith(origin)) continue;
+    const path = new URL(absolute).pathname;
+    if (!/^\/blog\/[^/]+/.test(path)) continue;
+    if (path === '/blog' || path === '/blog/') continue;
+    if (/^\/blog\/topic\//.test(path)) continue;
+    if (seen.has(absolute)) continue;
+    seen.add(absolute);
+
+    items.push({
+      title: parsed.title,
+      link: absolute,
+      summary: '',
+      pubDate: parsed.pubDate,
+    });
+  }
+
+  return items;
+}
+
+async function fetchPageHtml(pageUrl) {
+  const response = await fetch(pageUrl, {
+    headers: {
+      Accept: 'text/html',
+      'User-Agent': 'UnofficialCursorNews/1.0',
+    },
+    signal: AbortSignal.timeout(SCRAPE_TIMEOUT_MS),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Direct fetch ${response.status} for ${pageUrl}`);
+  }
+
+  return response.text();
+}
+
+async function callScrapeApi(pageUrl) {
+  const apiUrl = process.env.SCRAPE_API_URL.trim();
+  const apiKey = process.env.SCRAPE_API_KEY.trim();
+
+  const response = await fetch(apiUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      url: pageUrl,
+      formats: ['html', 'markdown'],
+      onlyMainContent: true,
+    }),
+    signal: AbortSignal.timeout(SCRAPE_TIMEOUT_MS),
+  });
+
+  if (!response.ok) {
+    const body = await response.text().catch(() => '');
+    throw new Error(`Scrape API ${response.status}: ${body.slice(0, 120)}`);
+  }
+
+  const payload = await response.json();
+  const data = payload.data || payload;
+  return {
+    html: data.html || '',
+    markdown: data.markdown || '',
+    metadata: data.metadata || {},
+  };
+}
+
+async function fetchScrapeSource(source) {
+  if (!source.pageUrl) return [];
+
+  let html;
+  let metadata = {};
+
+  if (isScrapeConfigured()) {
+    ({ html, metadata } = await callScrapeApi(source.pageUrl));
+  } else {
+    html = await fetchPageHtml(source.pageUrl);
+  }
+
+  let entries = extractBlogLinks(html, source.pageUrl);
+
+  if (entries.length === 0 && metadata.title && metadata.sourceURL) {
+    entries = [{
+      title: metadata.title,
+      link: metadata.sourceURL,
+      summary: metadata.description || '',
+      pubDate: metadata.publishedTime || metadata.modifiedTime || null,
+    }];
+  }
+
+  return entries.map((entry) => normalizeScrapedEntry(source, entry));
+}
+
+export async function ingestScrapeSources() {
+  const sources = listSources().filter((s) => s.ingestMethod === 'scrape');
+  if (sources.length === 0) return [];
+
+  if (!isScrapeConfigured()) {
+    console.warn('[scrape] SCRAPE_API_URL/SCRAPE_API_KEY not set — using direct page fetch');
+  }
+  const batches = await Promise.all(
+    sources.map(async (source) => {
+      try {
+        return await fetchScrapeSource(source);
+      } catch (err) {
+        console.error('[scrape]', source.id, err.message);
+        return [];
+      }
+    }),
+  );
+
+  return batches.flat();
+}

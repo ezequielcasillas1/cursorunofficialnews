@@ -1,0 +1,50 @@
+---
+description: Cursor AI News (Unofficial Cursor News) workspace routing. Triggers on "Cursor AI News", "CursorAINews", "cursor ai news", "CAI news", or "unofficial cursor news feed". Confirms this workspace is the canonical project root.
+alwaysApply: true
+---
+
+# Cursor AI News — Project Root (NOT PasteCraft)
+
+This workspace **is** the Cursor AI News project. Do not redirect work to PasteCraft.
+
+## Canonical project root
+
+**Absolute path:** `C:\Dev\CursorAINews`
+
+| What | Path |
+|---|---|
+| Project root | `C:\Dev\CursorAINews` |
+| API (Node ingest + JSON) | `C:\Dev\CursorAINews\api` |
+| Mobile (Expo Dev Client) | `C:\Dev\CursorAINews\mobile` |
+| Web preview (optional) | `C:\Dev\CursorAINews\web` |
+| Docs | `C:\Dev\CursorAINews\docs` |
+
+## Trigger phrases (apply this rule)
+
+- **Cursor AI News**
+- **CursorAINews**
+- **cursor ai news**
+- **CAI news**
+- **unofficial cursor news feed**
+- **Unofficial Cursor News**
+
+## Mandatory agent behavior
+
+1. **Scope all reads, edits, terminals, and commits** to `C:\Dev\CursorAINews` and its subdirectories.
+2. **Do NOT** implement Cursor AI News features under `C:\Dev\PasteCraft` unless the user explicitly asks to copy PasteCraft patterns only (read-only reference).
+3. **Do NOT** conflate with PasteCraft: browser extension, merchant dock/queue, clips, Supabase sync, or any `extension/` path.
+4. For phased feed-service work, also follow `unofficial-cursor-news-feed-service.mdc` in this repo.
+
+## Explicit forbiddens
+
+| Wrong (PasteCraft) | Right (this repo) |
+|---|---|
+| `C:\Dev\PasteCraft\` for news feed code | `api/`, `mobile/`, `web/` |
+| PasteCraft `extension/` | `api/src/`, `mobile/src/` |
+| PasteCraft merchant features | ingest, API routes, mobile feed |
+| PasteCraft `request.md` / merchant docs | `docs/` |
+
+## Product identity
+
+- **Cursor AI News / Unofficial Cursor News** — unofficial fan app; not affiliated with Anysphere.
+- **PasteCraft** — separate browser-extension product. Never the default workspace for news feed work.

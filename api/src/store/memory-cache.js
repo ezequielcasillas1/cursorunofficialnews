@@ -1,10 +1,26 @@
+import { getSourceMeta } from '../sources/registry.js';
+
 let items = [];
 let lastIngestAt = null;
 
-export function getNews({ category, limit = 50 } = {}) {
+function parseCategories({ category, categories } = {}) {
+  if (categories?.length) return categories;
+  if (!category) return [];
+  return String(category)
+    .split(',')
+    .map((c) => c.trim())
+    .filter(Boolean);
+}
+
+export function getNews({ category, categories, official, limit = 50 } = {}) {
   let list = [...items];
-  if (category) {
-    list = list.filter((item) => item.category === category);
+  const categoryList = parseCategories({ category, categories });
+  if (categoryList.length > 0) {
+    const set = new Set(categoryList);
+    list = list.filter((item) => set.has(item.category));
+  }
+  if (official === true || official === 'true') {
+    list = list.filter((item) => getSourceMeta(item.sourceId)?.isOfficial);
   }
   list.sort((a, b) => {
     const ta = a.publishedAt ? Date.parse(a.publishedAt) : 0;

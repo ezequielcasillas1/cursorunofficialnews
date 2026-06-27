@@ -1,26 +1,26 @@
 ---
-description: Phased plan (1â€“7) for Unofficial Cursor News feed service â€” vertical slices + modularity. Use when building Unofficial Cursor News at C:\Dev\CursorAINews.
+description: Phased plan (1–7) for Unofficial Cursor News feed service — vertical slices + modularity. Use when building Unofficial Cursor News at C:\Dev\CursorAINews.
 globs: api/**, mobile/**, web/**, docs/**
 alwaysApply: false
 ---
 
-# Unofficial Cursor News â€” Feed Service Plan (Phases 1â€“7)
+# Unofficial Cursor News — Feed Service Plan (Phases 1–7)
 
 Build the **Unofficial Cursor News** app feed service through **vertical slices** (shippable user value per phase) and **modularity** (single-responsibility modules inside each slice).
 
 **Product name:** Unofficial Cursor News  
-**Positioning:** Unofficial fan app â€” **not affiliated with Anysphere.**  
+**Positioning:** Unofficial fan app — **not affiliated with Anysphere.**  
 **Brand copy:** Refer to the product as **Cursor** (not "Cursor AI").  
 **Stack:** `api` (Node ingest + JSON API) + `mobile` (Expo Dev Client). Optional `web/` for browser preview.
 
-**Out of scope:** Phase 8 (native Swift/iOS without Expo) â€” do not plan or implement unless user explicitly requests.
+**Out of scope:** Phase 8 (native Swift/iOS without Expo) — do not plan or implement unless user explicitly requests.
 
 ---
 
 ## Architecture (always)
 
 ```
-Sources (registry) â†’ Ingest â†’ Normalize â†’ Store â†’ API routes â†’ Mobile/Web client â†’ Open original URL
+Sources (registry) → Ingest → Normalize → Store → API routes → Mobile/Web client → Open original URL
 ```
 
 | Module | Path | Responsibility |
@@ -28,18 +28,18 @@ Sources (registry) â†’ Ingest â†’ Normalize â†’ Store â†’ AP
 | Source registry | `api/src/sources/registry.js` | Allowlisted feeds; enable/disable; ingest method |
 | Ingest | `api/src/ingest/feeds.js`, `scrape.js` | Pull RSS/Atom/scrape (metadata only) |
 | Normalize | `api/src/normalize/news-item.js` | `NewsItem` shape, excerpt cap, dedupe keys |
-| Store | `api/src/store/` | Cache (memory â†’ DB later) |
-| Routes | `api/src/index.js` | HTTP only â€” no ingest logic inline |
-| Mobile API client | `mobile/src/api/newsClient.js` | Fetch JSON â€” no RSS, no UI |
-| Screens | `mobile/App.js` or `mobile/src/screens/` | UI only â€” calls API client |
+| Store | `api/src/store/` | Cache (memory → DB later) |
+| Routes | `api/src/index.js` | HTTP only — no ingest logic inline |
+| Mobile API client | `mobile/src/api/newsClient.js` | Fetch JSON — no RSS, no UI |
+| Screens | `mobile/App.js` or `mobile/src/screens/` | UI only — calls API client |
 
-**Ethics (every phase):** title + short excerpt (â‰¤300 chars) + canonical URL + attribution. Tap opens original in browser. Never republish full article body in-app.
+**Ethics (every phase):** title + short excerpt (≤300 chars) + canonical URL + attribution. Tap opens original in browser. Never republish full article body in-app.
 
 **Four ingest paths (expand in Phase 3):** (1) RSS/Atom, (2) scrape API fallback, (3) curated registry, (4) third-party aggregator feeds.
 
 ---
 
-## Phase 1 â€” Core feed (official sources)
+## Phase 1 — Core feed (official sources)
 
 **Vertical slice:** User sees Cursor changelog + GitHub releases on device; tap opens original.
 
@@ -59,9 +59,9 @@ Sources (registry) â†’ Ingest â†’ Normalize â†’ Store â†’ AP
 
 ---
 
-## Phase 2 â€” Dedupe + registry quality
+## Phase 2 — Dedupe + registry quality
 
-**Vertical slice:** One clean timeline â€” duplicate stories appear once.
+**Vertical slice:** One clean timeline — duplicate stories appear once.
 
 **Work:** `dedupeNewsItems` by canonical URL; official source wins over aggregator when added later. Sort by `publishedAt` desc. Expose source metadata on `GET /v1/sources`.
 
@@ -71,23 +71,23 @@ Sources (registry) â†’ Ingest â†’ Normalize â†’ Store â†’ AP
 
 ---
 
-## Phase 3 â€” Expand coverage (four ingest paths)
+## Phase 3 — Expand coverage (four ingest paths)
 
 **Vertical slice:** More Cursor news sources, same rules.
 
 **Add incrementally (one source at a time, test each):**
-1. RSS/Atom â€” forum/community feeds if available
-2. Scrape â€” `scrape.js` behind env flag; metadata only; robots/ToS respect
-3. Registry â€” new rows in `registry.js` (later DB)
-4. Aggregators â€” e.g. Releasebot Cursor RSS (`enabled: false` until verified)
+1. RSS/Atom — forum/community feeds if available
+2. Scrape — `scrape.js` behind env flag; metadata only; robots/ToS respect
+3. Registry — new rows in `registry.js` (later DB)
+4. Aggregators — e.g. Releasebot Cursor RSS (`enabled: false` until verified)
 
-**Done when:** â‰¥2 ingest methods live; each source documented in registry with `ingestMethod`, `attributionLabel`, `maxExcerptChars`.
+**Done when:** ≥2 ingest methods live; each source documented in registry with `ingestMethod`, `attributionLabel`, `maxExcerptChars`.
 
 **Do not:** full-page scrape storage; paywalled content republishing.
 
 ---
 
-## Phase 4 â€” UX essentials (functional, not beautiful)
+## Phase 4 — UX essentials (functional, not beautiful)
 
 **Vertical slice:** Daily-usable reader on Windows + phone.
 
@@ -99,7 +99,7 @@ Sources (registry) â†’ Ingest â†’ Normalize â†’ Store â†’ AP
 
 ---
 
-## Phase 5 â€” Notifications
+## Phase 5 — Notifications
 
 **Vertical slice:** User gets alerted when **new** items appear (opt-in).
 
@@ -111,15 +111,15 @@ Sources (registry) â†’ Ingest â†’ Normalize â†’ Store â†’ AP
 
 ---
 
-## Phase 6 â€” Membership ($1â€“$5/mo)
+## Phase 6 — Membership ($1–$5/mo)
 
-**Vertical slice:** Optional support â€” **core news stays free.**
+**Vertical slice:** Optional support — **core news stays free.**
 
 | Tier | Price | Free | Paid |
 |---|---|---|---|
-| Core feed + open originals | $0 | âœ… | âœ… |
-| Advanced filters / saved items | â€” | basic | âœ… |
-| Notification modes (instant vs digest) | â€” | digest | âœ… |
+| Core feed + open originals | $0 | ✅ | ✅ |
+| Advanced filters / saved items | — | basic | ✅ |
+| Notification modes (instant vs digest) | — | digest | ✅ |
 
 **Work:** Stripe/web billing module (not in mobile bundle secrets); gate **convenience only**, never headlines or links.
 
@@ -129,7 +129,7 @@ Sources (registry) â†’ Ingest â†’ Normalize â†’ Store â†’ AP
 
 ---
 
-## Phase 7 â€” Ship web + PWA
+## Phase 7 — Ship web + PWA
 
 **Vertical slice:** Public URL; add-to-home-screen; production API.
 
@@ -147,7 +147,7 @@ Sources (registry) â†’ Ingest â†’ Normalize â†’ Store â†’ AP
 2. **Implement vertical slice** end-to-end (API + client for that slice).
 3. **Verify** on Windows: API `npm run dev` + mobile `npx expo start --dev-client` (or web `npm run dev`).
 4. Ask user: **"Ezequiel, is the implementation successful?"** before SUCCESS logs or branch commit.
-5. **One phase at a time** â€” do not skip ahead unless user approves.
+5. **One phase at a time** — do not skip ahead unless user approves.
 
 ---
 
@@ -157,8 +157,9 @@ Sources (registry) â†’ Ingest â†’ Normalize â†’ Store â†’ AP
 |---|---|
 | API entry | `api/src/index.js` |
 | Source registry | `api/src/sources/registry.js` |
-| Strategy doc | `docs/SOURCE-STRATEGY.md` |
-| Week checklist | `docs/WEEK-PLAN.md` |
+| Strategy doc | `api/SOURCE-STRATEGY.md` (also `docs/SOURCE-STRATEGY.md`) |
+| Week checklist | `api/WEEK-PLAN.md` (also `docs/WEEK-PLAN.md`) |
+| Agent context | `api/AGENT-CONTEXT.md` (also `docs/AGENT-CONTEXT.md`) |
 | Mobile app | `mobile/` |
 | Web preview (optional) | `web/` |
 
@@ -167,9 +168,9 @@ Sources (registry) â†’ Ingest â†’ Normalize â†’ Store â†’ AP
 ## Windows dev commands (PowerShell)
 
 ```powershell
-cd api; npm install; npm run dev
+cd C:\Dev\CursorAINews\api; npm install; npm run dev
 # separate terminal:
-cd mobile; npm install; npx expo start --dev-client
+cd C:\Dev\CursorAINews\mobile; npm install; npx expo start --dev-client
 ```
 
 Use `;` not `&&` in PowerShell. API default: `http://127.0.0.1:8787`.

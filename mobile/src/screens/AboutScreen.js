@@ -1,8 +1,31 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import { fetchSources } from '../api/newsClient';
 import { DISCLAIMER } from '../config/constants';
 import { DisclaimerBanner } from '../components/DisclaimerBanner';
+import { SourceOfficialBadge } from '../components/SourceOfficialBadge';
 
 export function AboutScreen({ onBack }) {
+  const [sources, setSources] = useState([]);
+  const [loadingSources, setLoadingSources] = useState(true);
+  const [sourcesError, setSourcesError] = useState('');
+
+  useEffect(() => {
+    fetchSources()
+      .then((data) => setSources(data.sources || []))
+      .catch((err) =>
+        setSourcesError(err.message || 'Could not load sources from API'),
+      )
+      .finally(() => setLoadingSources(false));
+  }, []);
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <DisclaimerBanner />
@@ -19,10 +42,46 @@ export function AboutScreen({ onBack }) {
         </Text>
       </View>
       <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Phase 2</Text>
+        <Text style={styles.body}>
+          One deduplicated timeline — duplicate stories appear once, sorted by
+          date. When the same URL comes from multiple sources, the official
+          source wins. Feed cards show an Official badge for verified sources.
+        </Text>
+      </View>
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Sources</Text>
+        {loadingSources ? (
+          <ActivityIndicator style={styles.loader} />
+        ) : sourcesError ? (
+          <Text style={styles.error}>{sourcesError}</Text>
+        ) : sources.length === 0 ? (
+          <Text style={styles.body}>No sources registered.</Text>
+        ) : (
+          sources.map((source) => (
+            <View key={source.id} style={styles.sourceRow}>
+              <View style={styles.sourceHeader}>
+                <Text style={styles.sourceName}>{source.name}</Text>
+                {source.isOfficial ? <SourceOfficialBadge /> : null}
+              </View>
+              <Text style={styles.sourceMeta}>
+                {source.category} · priority {source.priority}
+                {source.enabled ? '' : ' · disabled'}
+              </Text>
+              {source.attributionLabel ? (
+                <Text style={styles.sourceMeta}>
+                  Attribution: {source.attributionLabel}
+                </Text>
+              ) : null}
+            </View>
+          ))
+        )}
+      </View>
+      <View style={styles.section}>
         <Text style={styles.sectionTitle}>Planned</Text>
         <Text style={styles.body}>
-          Aggregators, notifications, and optional membership — not in this
-          build.
+          More sources, filters, notifications, and optional membership — not in
+          this build.
         </Text>
       </View>
       <View style={styles.section}>
@@ -63,5 +122,35 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginBottom: 6,
+  },
+  loader: {
+    marginTop: 8,
+  },
+  error: {
+    color: '#b00020',
+    fontSize: 14,
+  },
+  sourceRow: {
+    borderColor: '#ddd',
+    borderRadius: 6,
+    borderWidth: 1,
+    marginBottom: 8,
+    padding: 10,
+  },
+  sourceHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 6,
+    marginBottom: 4,
+  },
+  sourceName: {
+    color: '#111',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  sourceMeta: {
+    color: '#666',
+    fontSize: 13,
+    lineHeight: 18,
   },
 });
