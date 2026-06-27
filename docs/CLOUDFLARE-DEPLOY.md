@@ -40,7 +40,6 @@ git remote -v
 | File | Purpose |
 |---|---|
 | `wrangler.jsonc` | Worker name + static assets path (`web/dist`) + SPA fallback |
-| `web/public/_redirects` | SPA fallback for local/preview tooling (Netlify-compatible) |
 | `web/public/_headers` | Minimal security headers on static assets |
 | `web/.node-version` | Node 20 for Cloudflare build (Vite 7 requires Node 20+) |
 | `web/.env.example` | Documents `VITE_API_BASE` for local vs production |
@@ -202,6 +201,7 @@ npx wrangler deploy --dry-run
 | Build fails on Node | Default Node 18 | Set `NODE_VERSION=20` or rely on `web/.node-version` |
 | Feed timeout / empty | API down or wrong `VITE_API_BASE` | Check Fly health; redeploy after fixing env |
 | 404 on refresh / deep link | Missing SPA fallback | `not_found_handling: "single-page-application"` in `wrangler.jsonc` |
+| `_redirects` infinite loop (100324) | `/* /index.html 200` conflicts with wrangler SPA handling | Remove `web/public/_redirects`; rely on `not_found_handling` only |
 | CORS errors | Unlikely — API uses open CORS | Check browser console; confirm API URL is HTTPS |
 | Domain not resolving | NS propagation or wrong zone | Cloudflare zone **Active**; check **DNS** records for Worker custom domain |
 | Email not sending | Resend, not Cloudflare | Verify domain in Resend; set Fly secrets per [FLY-DEPLOY.md](FLY-DEPLOY.md) |
