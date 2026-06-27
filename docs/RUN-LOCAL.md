@@ -15,7 +15,7 @@ Plain step-by-step guide to see **both** the API feed and the mobile newsletter 
    - USB debugging enabled
    - Phone connected by USB
    - **adb** available (Android SDK Platform Tools). Check with `adb devices`.
-5. **Optional:** A browser on your PC to sanity-check the API (Step F).
+5. **Optional:** A browser on your PC to sanity-check the API (Step F) or the web feed (Step G).
 
 ---
 
@@ -42,6 +42,9 @@ cd C:\Dev\CursorAINews\mobile\server
 npm install
 
 cd C:\Dev\CursorAINews\mobile
+npm install
+
+cd C:\Dev\CursorAINews\web
 npm install
 ```
 
@@ -257,10 +260,48 @@ Invoke-RestMethod "http://127.0.0.1:8787/v1/news?limit=3"
 
 ---
 
+## Step G — Web preview (optional)
+
+While Terminal 1 (API) is running, open a **third** terminal:
+
+```powershell
+cd C:\Dev\CursorAINews
+npm run dev:web
+```
+
+Or:
+
+```powershell
+cd C:\Dev\CursorAINews\web
+npm run dev
+```
+
+Open **http://127.0.0.1:5173** in your browser.
+
+### What you should see
+
+- Navy masthead with **Unofficial Cursor News**
+- Disclaimer banner
+- Category filter chips (All, Changelog, Releases, …)
+- News cards with title, excerpt, date, and **Open original** link
+- **Refresh feed** runs `POST /v1/ingest` then reloads the list
+
+### How it connects
+
+| Setting | Default | Notes |
+|---------|---------|--------|
+| Vite dev server | `:5173` | `web/vite.config.js` |
+| API proxy | `/api` → `http://127.0.0.1:8787` | Same backend as mobile |
+| Direct API URL | `VITE_API_BASE=http://127.0.0.1:8787` | Optional in `web/.env` |
+
+If `mobile/server/.env` sets **`INGEST_SECRET`**, copy `web/.env.example` → `web/.env` and set the same value as **`VITE_INGEST_SECRET`** so Refresh works.
+
+---
+
 ## Troubleshooting
 
-| Problem | Fix |
-|---------|-----|
+| **Web shows “Request failed” / empty feed** | API running? Check http://127.0.0.1:8787/health. Start web with `npm run dev:web` after API. |
+| **Web Refresh → Unauthorized** | Set `VITE_INGEST_SECRET` in `web/.env` to match `INGEST_SECRET` in `mobile/server/.env`. |
 | **Connection refused / can’t reach API** | Terminal 1 running? Try `/health` in browser. On physical phone, run `adb reverse tcp:8787 tcp:8787` again. |
 | **Wrong API URL on error screen** | Phone shows `http://127.0.0.1:8787` — that only works with `adb reverse`. Without USB, set `EXPO_PUBLIC_API_BASE` in `mobile/.env` to your PC LAN IP. |
 | **Empty feed after refresh** | Run ingest: `Invoke-RestMethod -Method POST http://127.0.0.1:8787/v1/ingest` (add `-Headers @{ 'X-API-Secret' = $env:INGEST_SECRET }` if `INGEST_SECRET` is set). Or: `cd mobile/server; node scripts/trigger-ingest.js` |
@@ -283,7 +324,7 @@ C:\Dev\CursorAINews\
 ├── mobile\              ← Expo app (newsletter UI)
 │   ├── server\          ← API server (port 8787) ← USE THIS
 │   └── src\             ← screens, components, API client
-├── web\                 ← optional browser preview
+├── web\                 ← browser preview (Vite :5173, proxies to API)
 ├── docs\                ← plans and this guide
 └── api\                 ← empty legacy folder — ignore
 ```
@@ -291,16 +332,19 @@ C:\Dev\CursorAINews\
 **Root shortcuts:**
 
 ```powershell
-npm run install:all   # install deps
+npm run install:all   # install deps (api + mobile + web)
 npm run dev:api       # start API
 npm run dev:mobile    # start Expo
+npm run dev:web       # start web preview (:5173)
 ```
 
 ---
 
 ## Pre-deploy checklist (production)
 
-Complete **before** deploying `mobile/server/` to a host (VPS, Railway, Render, etc.).
+Complete **before** deploying `mobile/server/` to a host (VPS, Railway, Render, Fly.io, etc.).
+
+**Fly.io:** see **[docs/FLY-DEPLOY.md](FLY-DEPLOY.md)** for volume, secrets, and `fly deploy` from this repo.
 
 ### 1. Environment file
 

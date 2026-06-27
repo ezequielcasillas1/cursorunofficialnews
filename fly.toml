@@ -4,7 +4,7 @@ primary_region = 'iad'
 
 [build]
   dockerfile = 'mobile/server/Dockerfile'
-  ignorefile = 'mobile/server/.dockerignore'
+  ignorefile = '.dockerignore'
 
 [env]
   DATA_DIR = '/app/data'

@@ -38,7 +38,7 @@ export function AboutScreen({ onBack }) {
       </Pressable>
 
       <Text style={styles.eyebrow}>About this edition</Text>
-      <Text style={styles.title}>Cursor AI News</Text>
+      <Text style={styles.title}>Unofficial Cursor News</Text>
       <EditorialDivider style={styles.divider} />
       <Text style={styles.body}>{DISCLAIMER}</Text>
 

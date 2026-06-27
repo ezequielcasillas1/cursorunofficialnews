@@ -1,55 +1,82 @@
 .app-shell {
   max-width: 720px;
   margin: 0 auto;
-  padding: 1rem 1rem 2rem;
+  padding: 0 1rem 2.5rem;
 }
 
-.app-header {
+.masthead {
+  background: linear-gradient(135deg, var(--color-navy) 0%, var(--color-navy-soft) 100%);
+  color: var(--color-chip-active-text);
+  margin: 0 -1rem 1rem;
+  padding: 1.25rem 1rem 1rem;
+  box-shadow: var(--shadow-card);
+}
+
+.masthead-inner {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
-  margin-bottom: 0.75rem;
 }
 
-.app-header h1 {
+.masthead h1 {
   margin: 0;
-  font-size: 1.5rem;
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
 }
 
-.tagline {
-  margin: 0.25rem 0 0;
-  color: #52525b;
-  font-size: 0.9rem;
+.masthead-sub {
+  margin: 0.35rem 0 0;
+  font-family: var(--font-ui);
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-gold-light);
 }
 
 .disclaimer {
-  background: #fef3c7;
-  border: 1px solid #fcd34d;
-  border-radius: 6px;
+  background: var(--color-disclaimer-bg);
+  color: var(--color-disclaimer-text);
+  border-radius: var(--radius-md);
   padding: 0.65rem 0.85rem;
-  font-size: 0.8rem;
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  line-height: 1.45;
   margin-bottom: 0.75rem;
 }
 
 .status-bar {
-  font-size: 0.8rem;
-  color: #71717a;
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  color: var(--color-ink-light);
   margin: 0 0 0.75rem;
 }
 
 .btn {
-  border: 1px solid #d4d4d8;
-  background: #fff;
-  padding: 0.45rem 0.85rem;
-  border-radius: 6px;
+  border: 1px solid var(--color-gold);
+  background: var(--color-gold);
+  color: var(--color-navy);
+  padding: 0.45rem 0.9rem;
+  border-radius: var(--radius-md);
   cursor: pointer;
-  font-size: 0.9rem;
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.btn:hover:not(:disabled) {
+  filter: brightness(1.05);
 }
 
 .btn:disabled {
-  opacity: 0.6;
+  opacity: 0.65;
   cursor: not-allowed;
 }
 
@@ -61,18 +88,25 @@
 }
 
 .chip {
-  border: 1px solid #d4d4d8;
-  background: #fff;
-  padding: 0.3rem 0.65rem;
-  border-radius: 999px;
-  font-size: 0.8rem;
+  border: 1px solid var(--color-border);
+  background: var(--color-chip-bg);
+  color: var(--color-ink-soft);
+  padding: 0.32rem 0.7rem;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  font-weight: 500;
   cursor: pointer;
 }
 
+.chip:hover {
+  border-color: var(--color-gold-muted);
+}
+
 .chip-active {
-  background: #18181b;
-  color: #fff;
-  border-color: #18181b;
+  background: var(--color-chip-active-bg);
+  color: var(--color-chip-active-text);
+  border-color: var(--color-chip-active-bg);
 }
 
 .news-list {
@@ -85,47 +119,76 @@
 }
 
 .news-card {
-  background: #fff;
-  border: 1px solid #e4e4e7;
-  border-radius: 8px;
-  padding: 0.85rem 1rem;
+  background: var(--color-card-elevated);
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-gold);
+  border-radius: var(--radius-md);
+  padding: 0.9rem 1rem;
+  box-shadow: var(--shadow-card);
 }
 
 .news-card-meta {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
   gap: 0.5rem;
-  font-size: 0.75rem;
-  color: #71717a;
-  margin-bottom: 0.35rem;
+  margin-bottom: 0.4rem;
 }
 
 .badge {
+  font-family: var(--font-ui);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-gold-muted);
+}
+
+.badge-official {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.12rem 0.45rem;
+  border-radius: var(--radius-pill);
+  background: var(--color-success-soft);
+  border: 1px solid var(--color-success);
+  color: var(--color-success);
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
+}
+
+.news-card time {
+  font-family: var(--font-ui);
+  font-size: 0.68rem;
+  color: var(--color-ink-light);
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  font-weight: 600;
 }
 
 .news-card h2 {
-  margin: 0 0 0.4rem;
-  font-size: 1.05rem;
+  margin: 0 0 0.45rem;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 600;
   line-height: 1.35;
+  letter-spacing: -0.01em;
 }
 
 .news-card h2 a {
   text-decoration: none;
-  color: inherit;
+  color: var(--color-ink);
 }
 
 .news-card h2 a:hover {
-  color: #2563eb;
+  color: var(--color-link);
 }
 
 .excerpt {
-  margin: 0 0 0.5rem;
-  color: #3f3f46;
+  margin: 0 0 0.55rem;
+  color: var(--color-ink-soft);
   font-size: 0.9rem;
+  line-height: 1.55;
 }
 
 .news-card-footer {
@@ -133,45 +196,71 @@
   justify-content: space-between;
   align-items: center;
   gap: 0.5rem;
-  font-size: 0.8rem;
-  color: #71717a;
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  color: var(--color-ink-muted);
 }
 
 .open-link {
   white-space: nowrap;
+  font-weight: 500;
 }
 
 .status-msg {
   padding: 1rem;
-  background: #fff;
-  border: 1px dashed #d4d4d8;
-  border-radius: 8px;
+  background: var(--color-card-elevated);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  font-family: var(--font-ui);
 }
 
 .status-msg.error {
-  border-color: #fca5a5;
-  background: #fef2f2;
+  border-color: var(--color-error);
+  background: var(--color-error-soft);
+  color: var(--color-error);
 }
 
 .hint {
   font-size: 0.85rem;
-  color: #52525b;
+  color: var(--color-ink-muted);
+  margin-top: 0.5rem;
 }
 
 .about-panel {
   margin-top: 2rem;
   padding-top: 1rem;
-  border-top: 1px solid #e4e4e7;
+  border-top: 1px solid var(--color-border);
   font-size: 0.9rem;
 }
 
 .about-panel h2 {
   margin: 0 0 0.5rem;
-  font-size: 1rem;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
 }
 
 .about-panel ul {
-  margin: 0;
+  margin: 0 0 1rem;
   padding-left: 1.2rem;
-  color: #52525b;
+  color: var(--color-ink-muted);
+  line-height: 1.6;
+}
+
+.sources-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.sources-list li {
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  color: var(--color-ink-soft);
+}
+
+.sources-list .source-name {
+  font-weight: 600;
 }

@@ -34,7 +34,7 @@ export function assembleEmailSubject(items) {
   if (count === 1) {
     return truncate(sorted[0].title, 78);
   }
-  return `Cursor AI News · ${count} new headlines`;
+  return `Unofficial Cursor News · ${count} new headlines`;
 }
 
 function formatDate(iso) {
@@ -148,7 +148,7 @@ export function assembleEmailDigest(items, { unsubscribeUrl } = {}) {
                 Headlines link to original sources; we never republish full articles.
               </p>
               <p style="margin:0;color:#8a8a98;font-family:Inter,Arial,sans-serif;font-size:12px;line-height:1.6;">
-                You subscribed to this digest via Cursor AI News.
+                You subscribed to this digest via Unofficial Cursor News.
                 ${unsubscribeUrl ? `<a href="${escapeHtml(unsubscribeUrl)}" style="color:#5c5c6a;">Unsubscribe</a> anytime.` : 'Unsubscribe anytime in the app settings.'}
               </p>
             </td>
@@ -173,7 +173,7 @@ export function assembleEmailDigest(items, { unsubscribeUrl } = {}) {
   const textFooter = [
     '',
     '---',
-    'You subscribed to this digest via Cursor AI News.',
+    'You subscribed to this digest via Unofficial Cursor News.',
     unsubscribeUrl
       ? `Unsubscribe: ${unsubscribeUrl}`
       : 'Unsubscribe anytime in the app settings.',

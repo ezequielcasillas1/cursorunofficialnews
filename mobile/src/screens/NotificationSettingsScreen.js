@@ -222,7 +222,7 @@ export function NotificationSettingsScreen({ onBack, previewItem }) {
         <Text style={styles.backText}>Back to feed</Text>
       </Pressable>
 
-      <Text style={styles.eyebrow}>Cursor AI News</Text>
+      <Text style={styles.eyebrow}>Unofficial · Independent</Text>
       <Text style={styles.headline}>Alerts</Text>
       <EditorialDivider />
       <Text style={styles.subhead}>

@@ -19,7 +19,7 @@ export function Masthead({
         style={styles.banner}
       >
         <Text style={styles.eyebrow}>Unofficial · Independent</Text>
-        <Text style={styles.title}>Cursor AI News</Text>
+        <Text style={styles.title}>Unofficial Cursor News</Text>
         <View style={styles.ruleRow}>
           <View style={styles.ruleGold} />
           <View style={styles.ruleThin} />

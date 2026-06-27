@@ -27,7 +27,7 @@ Everything a new chat needs. **This is Cursor AI News — NOT PasteCraft.**
 |---|---|---|
 | App (Expo + API) | `mobile/` | Expo Dev Client — **primary client** |
 | API server | `mobile/server/` | Express `:8787` — ingest, normalize, JSON |
-| Web | `web/` | React + Vite — legacy preview |
+| Web | `web/` | React + Vite `:5173` — dev proxy to API; prod → [CLOUDFLARE-DEPLOY.md](CLOUDFLARE-DEPLOY.md) |
 
 Modularity: registry → ingest → normalize → store → routes → client. Vertical slices per phase.
 
@@ -41,11 +41,12 @@ cd C:\Dev\CursorAINews\mobile\server; npm install; npm run dev
 cd C:\Dev\CursorAINews\mobile; npm install; npx expo start --dev-client
 ```
 
-From repo root (after `npm install` in `mobile/server` and `mobile/`):
+From repo root (after `npm install` in `mobile/server`, `mobile/`, and `web/`):
 
 ```powershell
 npm run dev:api      # API on :8787
 npm run dev:mobile   # Expo dev client
+npm run dev:web      # Web preview on :5173 (proxies /api → :8787)
 ```
 
 First Android native build (once): `npx expo run:android` from `mobile/`.
@@ -130,9 +131,21 @@ One phase at a time. Do not skip ahead unless user approves.
 
 ---
 
+## Production deploy
+
+| Layer | Host | Doc |
+|---|---|---|
+| API | Fly.io `cursorunofficialnews.fly.dev` | [FLY-DEPLOY.md](FLY-DEPLOY.md) |
+| Web | Cloudflare Pages `cursorunofficial.news` | [CLOUDFLARE-DEPLOY.md](CLOUDFLARE-DEPLOY.md) |
+| Email (Resend) | Fly secrets + Resend domain verify | [FLY-DEPLOY.md](FLY-DEPLOY.md) — separate from Pages |
+
+Deploy API first; set `VITE_API_BASE=https://cursorunofficialnews.fly.dev` in Cloudflare Pages build env.
+
+---
+
 ## Do not (any phase)
 
 - Edit PasteCraft for this product
 - Republish full articles or paywalled content
 - Ship without disclaimer + attribution on every item
-- Assume Netlify/production deploy unless user confirms
+- Assume production deploy is live unless user confirms dashboard steps are done

@@ -32,11 +32,20 @@ cd C:\Dev\CursorAINews\mobile\server; npm install; npm run dev
 cd C:\Dev\CursorAINews\mobile; npm install; npx expo install expo-dev-client expo-constants; npx expo start --dev-client
 ```
 
+**Terminal 2 (alternative) – Web preview**
+
+```powershell
+cd C:\Dev\CursorAINews\web; npm install; npm run dev
+```
+
+Open http://127.0.0.1:5173 — Vite proxies `/api` to the API on `:8787`. Start the API first (Terminal 1).
+
 Or from repo root (after installs above):
 
 ```powershell
 npm run dev:api
 npm run dev:mobile
+npm run dev:web      # browser preview at http://127.0.0.1:5173
 ```
 
 **First Android dev build** (once per machine / after native dep changes):
@@ -59,6 +68,8 @@ Physical device: set `EXPO_PUBLIC_API_BASE=http://<your-pc-lan-ip>:8787` before 
 - [mobile/README.md](mobile/README.md) – architecture + API URL matrix
 - [SOURCE-STRATEGY.md](docs/SOURCE-STRATEGY.md) – four ingest paths + ethics
 - [WEEK-PLAN.md](docs/WEEK-PLAN.md) – one-week build order
+- [FLY-DEPLOY.md](docs/FLY-DEPLOY.md) – API on Fly.io
+- [CLOUDFLARE-DEPLOY.md](docs/CLOUDFLARE-DEPLOY.md) – web on Cloudflare Pages (`cursorunofficial.news`)
 
 ## Monetization (planned)
 

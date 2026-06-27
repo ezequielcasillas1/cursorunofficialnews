@@ -1,3 +1,6 @@
+import { useEffect, useState } from 'react';
+import { fetchSources } from '../services/newsApi.js';
+
 export function StatusBar({ lastIngestAt, sourceCount }) {
   if (!lastIngestAt) return null;
   return (
@@ -8,15 +11,39 @@ export function StatusBar({ lastIngestAt, sourceCount }) {
 }
 
 export function AboutPanel() {
+  const [sources, setSources] = useState([]);
+  const [sourcesError, setSourcesError] = useState('');
+
+  useEffect(() => {
+    fetchSources()
+      .then((data) => setSources(data.sources || []))
+      .catch((err) => setSourcesError(err.message || 'Could not load sources'));
+  }, []);
+
   return (
     <section className="about-panel">
       <h2>About</h2>
       <ul>
         <li>Free core feed — headlines and excerpts only</li>
         <li>Every item opens the original source in a new tab</li>
-        <li>Membership ($1–$5/mo) planned for extra features, not core news</li>
-        <li>Push notifications — planned</li>
+        <li>Unofficial fan project — not affiliated with Anysphere</li>
       </ul>
+
+      <h2>Sources</h2>
+      {sourcesError ? <p className="hint">{sourcesError}</p> : null}
+      {sources.length ? (
+        <ul className="sources-list">
+          {sources.map((source) => (
+            <li key={source.id}>
+              <span className="source-name">{source.name}</span>
+              {source.isOfficial ? ' · Official' : ''}
+              {source.attributionLabel ? ` · ${source.attributionLabel}` : ''}
+            </li>
+          ))}
+        </ul>
+      ) : sourcesError ? null : (
+        <p className="hint">Loading sources…</p>
+      )}
     </section>
   );
 }
