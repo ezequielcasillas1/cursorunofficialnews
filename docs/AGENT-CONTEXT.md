@@ -16,7 +16,7 @@ Everything a new chat needs. **This is Cursor AI News — NOT PasteCraft.**
 | Wrong | Right |
 |---|---|
 | `C:\Dev\PasteCraft\` | `C:\Dev\CursorAINews\` |
-| `extension/`, merchant, clips, Supabase sync | `api/`, `mobile/`, `web/` |
+| `extension/`, merchant, clips, Supabase sync | `mobile/`, `mobile/server/`, `web/` |
 | PasteCraft `request.md` / `refresh.md` | `docs/CURSOR-AI-NEWS-PHASE-PLAN.md` |
 
 ---
@@ -25,8 +25,8 @@ Everything a new chat needs. **This is Cursor AI News — NOT PasteCraft.**
 
 | Layer | Path | Port / notes |
 |---|---|---|
-| API | `api/` | Express `:8787` — ingest, normalize, JSON |
-| Mobile | `mobile/` | Expo Dev Client — **primary client** |
+| App (Expo + API) | `mobile/` | Expo Dev Client — **primary client** |
+| API server | `mobile/server/` | Express `:8787` — ingest, normalize, JSON |
 | Web | `web/` | React + Vite — legacy preview |
 
 Modularity: registry → ingest → normalize → store → routes → client. Vertical slices per phase.
@@ -36,9 +36,16 @@ Modularity: registry → ingest → normalize → store → routes → client. V
 ## Run (Windows PowerShell)
 
 ```powershell
-cd C:\Dev\CursorAINews\api; npm install; npm run dev
+cd C:\Dev\CursorAINews\mobile\server; npm install; npm run dev
 
 cd C:\Dev\CursorAINews\mobile; npm install; npx expo start --dev-client
+```
+
+From repo root (after `npm install` in `mobile/server` and `mobile/`):
+
+```powershell
+npm run dev:api      # API on :8787
+npm run dev:mobile   # Expo dev client
 ```
 
 First Android native build (once): `npx expo run:android` from `mobile/`.
@@ -63,7 +70,7 @@ Client: `mobile/src/api/newsClient.js` · config: `mobile/app.config.js`
 
 ## Zscaler / corporate TLS
 
-Outbound RSS fetch needs system CA: `node --use-system-ca` (already in `api/package.json` `dev`/`start` scripts).
+Outbound RSS fetch needs system CA: `node --use-system-ca` (already in `mobile/server/package.json` `dev`/`start` scripts).
 
 ---
 
@@ -81,9 +88,9 @@ One phase at a time. Do not skip ahead unless user approves.
 
 | Item | Status |
 |---|---|
-| Changelog RSS URL | Done → `https://cursor.com/changelog/rss.xml` (`api/src/sources/registry.js`) |
+| Changelog RSS URL | Done → `https://cursor.com/changelog/rss.xml` (`mobile/server/src/sources/registry.js`) |
 | API ingest (~50 changelog items) | Done — bootstrap on startup + `POST /v1/ingest` |
-| Zscaler TLS | Done (`node --use-system-ca` in `api/package.json` `dev`/`start`) |
+| Zscaler TLS | Done (`node --use-system-ca` in `mobile/server/package.json` `dev`/`start`) |
 | GitHub releases Atom | Upstream empty — `getcursor/cursor/releases.atom` (not a local bug) |
 | Mobile feed on device | Done — user confirmed feed loading (adb reverse or `EXPO_PUBLIC_API_BASE`) |
 | Phase 1 SUCCESS log | Done — `success/SuccessLog.md` (2026-06-26) |
@@ -94,7 +101,7 @@ One phase at a time. Do not skip ahead unless user approves.
 
 | Item | Status |
 |---|---|
-| `dedupeNewsItems` by canonical URL | Done — `api/src/normalize/news-item.js` |
+| `dedupeNewsItems` by canonical URL | Done — `mobile/server/src/normalize/news-item.js` |
 | Official source wins on duplicate | Done — `isOfficial` + `priority` in registry |
 | Sort by `publishedAt` desc | Done — ingest + `getNews` |
 | `GET /v1/sources` metadata | Done — `listSourcesForApi()` |
@@ -107,7 +114,7 @@ One phase at a time. Do not skip ahead unless user approves.
 | Item | Status |
 |---|---|
 | Forum announcements RSS | Done — `cursor-forum-announcements` in registry |
-| Scrape ingest path | Done — `api/src/ingest/scrape.js` (env-gated) |
+| Scrape ingest path | Done — `mobile/server/src/ingest/scrape.js` (env-gated) |
 | Blog scrape source | Done — `cursor-blog-scrape` (needs `SCRAPE_API_*` env) |
 | Releasebot aggregator | Disabled — no working RSS; `enabled: false` |
 | ≥2 ingest methods | Done — RSS/Atom + scrape |

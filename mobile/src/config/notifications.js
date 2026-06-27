@@ -1,0 +1,41 @@
+/** Notification topic toggles — maps to registry categories on the API. */
+export const NOTIFICATION_CATEGORIES = [
+  {
+    id: 'changelog',
+    label: 'Changelog',
+    description: 'Product updates, fixes, and release notes from Cursor.',
+  },
+  {
+    id: 'release',
+    label: 'Releases',
+    description: 'GitHub release announcements when available.',
+  },
+  {
+    id: 'blog',
+    label: 'Blog',
+    description: 'Cursor blog posts and editorial news.',
+  },
+  {
+    id: 'forum',
+    label: 'Forum',
+    description: 'Official forum announcements and community news.',
+  },
+  {
+    id: 'video',
+    label: 'Videos',
+    description: 'New uploads on the official Cursor YouTube channel.',
+  },
+  {
+    id: 'tutorial',
+    label: 'Tutorials',
+    description: 'Official Cursor Learn guides and how-tos.',
+  },
+];
+
+export const DEFAULT_NOTIFICATION_PREFS = {
+  enabled: false,
+  categories: ['changelog', 'release', 'blog'],
+};
+
+export const NOTIFICATION_PREFS_KEY = '@cursor_news_notification_prefs';
+export const LAST_SEEN_KEY = '@cursor_news_last_seen_at';

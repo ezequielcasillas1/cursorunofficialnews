@@ -1,0 +1,131 @@
+import crypto from 'crypto';
+import { VALID_CATEGORY_IDS } from '../../../shared/notifications/constants.js';
+import { loadJsonFile, saveJsonFile } from './json-persist.js';
+
+const FILENAME = 'email-subscribers.json';
+const VALID_CATEGORIES = new Set(VALID_CATEGORY_IDS);
+
+/** @type {Map<string, object>} */
+const subscribers = new Map();
+
+const EMAIL_RE =
+  /^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$/i;
+
+function generateUnsubscribeToken() {
+  return crypto.randomBytes(32).toString('hex');
+}
+
+function loadFromDisk() {
+  const rows = loadJsonFile(FILENAME, []);
+  subscribers.clear();
+  let needsSave = false;
+  for (const row of rows) {
+    if (row?.email) {
+      if (!row.unsubscribeToken) {
+        row.unsubscribeToken = generateUnsubscribeToken();
+        needsSave = true;
+      }
+      subscribers.set(row.email, row);
+    }
+  }
+  if (needsSave) saveToDisk();
+}
+
+function saveToDisk() {
+  saveJsonFile(FILENAME, [...subscribers.values()]);
+}
+
+loadFromDisk();
+
+export function normalizeCategories(categories) {
+  if (!Array.isArray(categories)) return [];
+  return [...new Set(categories.filter((c) => VALID_CATEGORIES.has(c)))];
+}
+
+export function normalizeEmail(email) {
+  return String(email || '')
+    .trim()
+    .toLowerCase();
+}
+
+export function isValidEmail(email) {
+  const normalized = normalizeEmail(email);
+  if (!normalized || normalized.length > 254) return false;
+  return EMAIL_RE.test(normalized);
+}
+
+export function subscribeEmail({ email, categories = [], enabled = true }) {
+  const normalized = normalizeEmail(email);
+  if (!isValidEmail(normalized)) {
+    throw new Error('A valid email address is required');
+  }
+
+  const isEnabled = Boolean(enabled);
+  const normalizedCategories = isEnabled ? normalizeCategories(categories) : [];
+  if (isEnabled && normalizedCategories.length === 0) {
+    throw new Error('Select at least one topic for email digest');
+  }
+
+  const existing = subscribers.get(normalized);
+  const record = {
+    email: normalized,
+    categories: normalizedCategories,
+    enabled: isEnabled,
+    unsubscribeToken: existing?.unsubscribeToken || generateUnsubscribeToken(),
+    subscribedAt: existing?.subscribedAt || new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+  subscribers.set(normalized, record);
+  saveToDisk();
+  return record;
+}
+
+export function unsubscribeEmail(email) {
+  const normalized = normalizeEmail(email);
+  if (!normalized) throw new Error('email is required');
+  const removed = subscribers.delete(normalized);
+  if (removed) saveToDisk();
+  return removed;
+}
+
+export function unsubscribeByToken(token) {
+  if (!token) return false;
+  for (const [email, record] of subscribers.entries()) {
+    if (record.unsubscribeToken === token) {
+      subscribers.delete(email);
+      saveToDisk();
+      return true;
+    }
+  }
+  return false;
+}
+
+export function getSubscriberByToken(token) {
+  if (!token) return null;
+  for (const record of subscribers.values()) {
+    if (record.unsubscribeToken === token) return record;
+  }
+  return null;
+}
+
+export function getSubscriber(email) {
+  const normalized = normalizeEmail(email);
+  return subscribers.get(normalized) || null;
+}
+
+export function listSubscribers() {
+  return [...subscribers.values()];
+}
+
+export function getSubscribedEmails(category) {
+  return listSubscribers().filter(
+    (s) => s.enabled && (!category || s.categories.includes(category)),
+  );
+}
+
+export function getUnsubscribeUrl(subscriber) {
+  const base = process.env.PUBLIC_API_BASE?.trim() || `http://127.0.0.1:${process.env.PORT || 8787}`;
+  const token = subscriber?.unsubscribeToken;
+  if (!token) return null;
+  return `${base.replace(/\/$/, '')}/v1/email/unsubscribe?token=${encodeURIComponent(token)}`;
+}

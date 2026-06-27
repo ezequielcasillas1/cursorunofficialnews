@@ -1,0 +1,175 @@
+/** Deep-tone editorial palette — Washington Post–inspired newsletter aesthetic. */
+export const colors = {
+  ink: '#0a0a0f',
+  inkSoft: '#1c1c24',
+  inkMuted: '#5c5c6a',
+  inkLight: '#8a8a98',
+  paper: '#f0ebe3',
+  paperDeep: '#e8e2d8',
+  card: '#faf7f2',
+  cardElevated: '#fffdf9',
+  border: '#ddd6c8',
+  borderStrong: '#c9c0ae',
+  navy: '#0d1b2a',
+  navySoft: '#1b2838',
+  gold: '#c9a962',
+  goldMuted: '#a8894a',
+  goldLight: '#e8dcc0',
+  accent: '#0d1b2a',
+  accentSoft: '#e8e4dc',
+  link: '#2c5282',
+  linkMuted: '#4a6fa5',
+  error: '#9b2335',
+  errorSoft: '#f5e6e8',
+  success: '#2d6a4f',
+  successSoft: '#e6f0eb',
+  disclaimerBg: '#2a2418',
+  disclaimerText: '#e8dcc8',
+  chipBg: '#ebe5da',
+  chipActiveBg: '#0d1b2a',
+  chipActiveText: '#faf7f2',
+  overlay: 'rgba(10, 10, 15, 0.55)',
+};
+
+export const spacing = {
+  xs: 4,
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 24,
+  xxl: 32,
+  xxxl: 48,
+};
+
+export const fontFamilies = {
+  display: 'PlayfairDisplay_700Bold',
+  displaySemi: 'PlayfairDisplay_600SemiBold',
+  displayRegular: 'PlayfairDisplay_400Regular',
+  body: 'SourceSerif4_400Regular',
+  bodySemi: 'SourceSerif4_600SemiBold',
+  bodyBold: 'SourceSerif4_700Bold',
+  ui: 'Inter_400Regular',
+  uiMedium: 'Inter_500Medium',
+  uiSemi: 'Inter_600SemiBold',
+};
+
+export const typography = {
+  masthead: {
+    color: colors.ink,
+    fontFamily: fontFamilies.display,
+    fontSize: 32,
+    letterSpacing: -0.5,
+    lineHeight: 38,
+  },
+  mastheadSub: {
+    color: colors.inkMuted,
+    fontFamily: fontFamilies.ui,
+    fontSize: 11,
+    fontWeight: '500',
+    letterSpacing: 2.2,
+    textTransform: 'uppercase',
+  },
+  eyebrow: {
+    color: colors.goldMuted,
+    fontFamily: fontFamilies.uiSemi,
+    fontSize: 10,
+    letterSpacing: 1.6,
+    textTransform: 'uppercase',
+  },
+  headline: {
+    color: colors.ink,
+    fontFamily: fontFamilies.display,
+    fontSize: 28,
+    letterSpacing: -0.3,
+    lineHeight: 34,
+  },
+  subhead: {
+    color: colors.inkSoft,
+    fontFamily: fontFamilies.body,
+    fontSize: 16,
+    lineHeight: 25,
+  },
+  sectionLabel: {
+    color: colors.inkMuted,
+    fontFamily: fontFamilies.uiSemi,
+    fontSize: 10,
+    letterSpacing: 1.4,
+    textTransform: 'uppercase',
+  },
+  body: {
+    color: colors.inkSoft,
+    fontFamily: fontFamilies.body,
+    fontSize: 15,
+    lineHeight: 24,
+  },
+  bodySmall: {
+    color: colors.inkMuted,
+    fontFamily: fontFamilies.body,
+    fontSize: 13,
+    lineHeight: 21,
+  },
+  meta: {
+    color: colors.inkLight,
+    fontFamily: fontFamilies.ui,
+    fontSize: 11,
+    letterSpacing: 0.3,
+    lineHeight: 16,
+  },
+  dateline: {
+    color: colors.inkLight,
+    fontFamily: fontFamilies.uiMedium,
+    fontSize: 11,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+  },
+  cardTitle: {
+    color: colors.ink,
+    fontFamily: fontFamilies.displaySemi,
+    fontSize: 19,
+    letterSpacing: -0.2,
+    lineHeight: 26,
+  },
+  cardTitleLarge: {
+    color: colors.ink,
+    fontFamily: fontFamilies.display,
+    fontSize: 22,
+    letterSpacing: -0.3,
+    lineHeight: 28,
+  },
+  excerpt: {
+    color: colors.inkSoft,
+    fontFamily: fontFamilies.body,
+    fontSize: 14,
+    lineHeight: 22,
+  },
+  uiLabel: {
+    color: colors.inkSoft,
+    fontFamily: fontFamilies.uiMedium,
+    fontSize: 13,
+    letterSpacing: 0.2,
+  },
+  uiButton: {
+    color: colors.chipActiveText,
+    fontFamily: fontFamilies.uiSemi,
+    fontSize: 12,
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
+  },
+};
+
+export const radii = {
+  sm: 4,
+  md: 8,
+  lg: 12,
+  pill: 999,
+};
+
+export const shadows = {
+  card: {
+    shadowColor: colors.ink,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+};

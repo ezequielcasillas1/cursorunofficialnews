@@ -4,7 +4,7 @@
 
 **Not affiliated with Anysphere.** Fan project for Cursor changelog, releases, and community news.
 
-Primary client: **Expo Dev Client** (`mobile/`). Legacy web client kept in `web/`.
+Primary client: **Expo Dev Client** (`mobile/`). API server lives at `mobile/server/`. Legacy web client kept in `web/`.
 
 **Phased build plan (Phases 1–7):** `.cursor/rules/unofficial-cursor-news-feed-service.mdc`
 
@@ -15,7 +15,7 @@ Open this folder in Cursor: **File → Open Folder →** `C:\Dev\CursorAINews`
 | Layer | Tech | Folder |
 |---|---|---|
 | Mobile (primary) | Expo + React Native + expo-dev-client | `mobile/` |
-| API | Node.js + Express | `api/` |
+| API | Node.js + Express | `mobile/server/` |
 | Web (legacy) | React 19 + Vite | `web/` |
 
 ## Quick start (Windows 11)
@@ -23,13 +23,20 @@ Open this folder in Cursor: **File → Open Folder →** `C:\Dev\CursorAINews`
 **Terminal 1 – API**
 
 ```powershell
-cd C:\Dev\CursorAINews\api; npm install; npm run dev
+cd C:\Dev\CursorAINews\mobile\server; npm install; npm run dev
 ```
 
 **Terminal 2 – Expo dev client**
 
 ```powershell
 cd C:\Dev\CursorAINews\mobile; npm install; npx expo install expo-dev-client expo-constants; npx expo start --dev-client
+```
+
+Or from repo root (after installs above):
+
+```powershell
+npm run dev:api
+npm run dev:mobile
 ```
 
 **First Android dev build** (once per machine / after native dep changes):

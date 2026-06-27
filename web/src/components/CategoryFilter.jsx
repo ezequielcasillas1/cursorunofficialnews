@@ -4,6 +4,8 @@ const CATEGORIES = [
   { id: 'release', label: 'Releases' },
   { id: 'blog', label: 'Blog' },
   { id: 'forum', label: 'Forum' },
+  { id: 'video', label: 'Videos' },
+  { id: 'tutorial', label: 'Tutorials' },
 ];
 
 export function CategoryFilter({ value, onChange }) {

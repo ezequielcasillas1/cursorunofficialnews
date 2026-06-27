@@ -28,7 +28,7 @@ Use all four in priority order. Backend merges + dedupes by canonical URL.
 | GitHub releases | `https://github.com/getcursor/cursor/releases.atom` | Atom |
 | Blog | `https://cursor.com/blog` | Scrape fallback — no public RSS (404 on `/blog/rss.xml`) |
 
-**Extend:** add new official URLs to `api/src/sources/registry.js` when Cursor publishes them.
+**Extend:** add new official URLs to `mobile/server/src/sources/registry.js` when Cursor publishes them.
 
 ### 2. Scraping API (fallback only)
 

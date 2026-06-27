@@ -7,10 +7,13 @@ import {
   Text,
   View,
 } from 'react-native';
+import { ArrowLeft } from 'lucide-react-native';
 import { fetchSources } from '../api/newsClient';
 import { DISCLAIMER } from '../config/constants';
 import { DisclaimerBanner } from '../components/DisclaimerBanner';
+import { EditorialDivider } from '../components/EditorialDivider';
 import { SourceOfficialBadge } from '../components/SourceOfficialBadge';
+import { colors, radii, spacing, typography } from '../theme/tokens';
 
 export function AboutScreen({ onBack }) {
   const [sources, setSources] = useState([]);
@@ -27,13 +30,18 @@ export function AboutScreen({ onBack }) {
   }, []);
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView style={styles.root} contentContainerStyle={styles.container}>
       <DisclaimerBanner />
       <Pressable onPress={onBack} style={styles.back}>
-        <Text style={styles.backText}>← Back to feed</Text>
+        <ArrowLeft size={18} color={colors.link} strokeWidth={2} />
+        <Text style={styles.backText}>Back to feed</Text>
       </Pressable>
-      <Text style={styles.title}>About</Text>
+
+      <Text style={styles.eyebrow}>About this edition</Text>
+      <Text style={styles.title}>Cursor AI News</Text>
+      <EditorialDivider style={styles.divider} />
       <Text style={styles.body}>{DISCLAIMER}</Text>
+
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>How it works</Text>
         <Text style={styles.body}>
@@ -42,21 +50,24 @@ export function AboutScreen({ onBack }) {
           post, or video in your browser. We never republish full article bodies.
         </Text>
       </View>
+
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Current features</Text>
         <Text style={styles.body}>
           • Official changelog RSS and GitHub releases{'\n'}
           • Forum announcements and blog posts (RSS + optional scrape){'\n'}
-          • YouTube channel videos{'\n'}
+          • YouTube channel videos and Cursor Learn tutorials{'\n'}
           • Deduplicated timeline — official source wins on duplicates{'\n'}
-          • Category filters: All, Updates, News, Forum, Videos{'\n'}
-          • Official-only filter and pull-to-refresh
+          • Category filters: All, Updates, News, Forum, Videos, Tutorials{'\n'}
+          • Official-only filter and pull-to-refresh{'\n'}
+          • Opt-in digest alerts (Settings → Alerts)
         </Text>
       </View>
+
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Sources</Text>
         {loadingSources ? (
-          <ActivityIndicator style={styles.loader} />
+          <ActivityIndicator color={colors.navy} style={styles.loader} />
         ) : sourcesError ? (
           <Text style={styles.error}>{sourcesError}</Text>
         ) : sources.length === 0 ? (
@@ -81,13 +92,15 @@ export function AboutScreen({ onBack }) {
           ))
         )}
       </View>
+
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Coming later</Text>
         <Text style={styles.body}>
-          Push notifications for new items (opt-in), optional membership for
-          extras, and a public web/PWA build. Core news feed stays free.
+          Instant alert delivery and optional membership extras. Public web/PWA
+          build. Core news feed stays free.
         </Text>
       </View>
+
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Privacy</Text>
         <Text style={styles.body}>Privacy policy URL — coming soon.</Text>
@@ -97,64 +110,79 @@ export function AboutScreen({ onBack }) {
 }
 
 const styles = StyleSheet.create({
+  root: {
+    backgroundColor: colors.paper,
+    flex: 1,
+  },
   container: {
-    padding: 16,
-    paddingBottom: 32,
+    paddingBottom: spacing.xxxl,
   },
   back: {
-    marginBottom: 12,
-    marginTop: 12,
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginBottom: spacing.lg,
+    marginTop: spacing.lg,
+    paddingHorizontal: spacing.lg,
   },
   backText: {
-    color: '#0066cc',
+    ...typography.uiLabel,
+    color: colors.link,
     fontSize: 15,
+  },
+  eyebrow: {
+    ...typography.eyebrow,
+    paddingHorizontal: spacing.lg,
   },
   title: {
-    fontSize: 24,
-    fontWeight: '700',
-    marginBottom: 12,
+    ...typography.headline,
+    marginBottom: spacing.sm,
+    paddingHorizontal: spacing.lg,
+  },
+  divider: {
+    marginHorizontal: spacing.lg,
   },
   body: {
-    color: '#333',
-    fontSize: 15,
-    lineHeight: 22,
+    ...typography.body,
+    paddingHorizontal: spacing.lg,
   },
   section: {
-    marginTop: 20,
+    marginTop: spacing.xl,
+    paddingHorizontal: spacing.lg,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 6,
+    ...typography.cardTitle,
+    fontSize: 17,
+    marginBottom: spacing.sm,
   },
   loader: {
-    marginTop: 8,
+    marginTop: spacing.sm,
   },
   error: {
-    color: '#b00020',
-    fontSize: 14,
+    ...typography.bodySmall,
+    color: colors.error,
   },
   sourceRow: {
-    borderColor: '#ddd',
-    borderRadius: 6,
-    borderWidth: 1,
-    marginBottom: 8,
-    padding: 10,
+    backgroundColor: colors.cardElevated,
+    borderColor: colors.border,
+    borderRadius: radii.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    marginBottom: spacing.sm,
+    padding: spacing.md,
   },
   sourceHeader: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 6,
-    marginBottom: 4,
+    flexWrap: 'wrap',
+    gap: spacing.xs,
+    marginBottom: spacing.xs,
   },
   sourceName: {
-    color: '#111',
+    ...typography.cardTitle,
     fontSize: 15,
-    fontWeight: '600',
   },
   sourceMeta: {
-    color: '#666',
-    fontSize: 13,
+    ...typography.meta,
     lineHeight: 18,
   },
 });

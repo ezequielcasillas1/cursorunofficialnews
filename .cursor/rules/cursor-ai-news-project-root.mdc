@@ -14,8 +14,8 @@ This workspace **is** the Cursor AI News project. Do not redirect work to PasteC
 | What | Path |
 |---|---|
 | Project root | `C:\Dev\CursorAINews` |
-| API (Node ingest + JSON) | `C:\Dev\CursorAINews\api` |
-| Mobile (Expo Dev Client) | `C:\Dev\CursorAINews\mobile` |
+| App (Expo + API) | `C:\Dev\CursorAINews\mobile` |
+| API server | `C:\Dev\CursorAINews\mobile\server` |
 | Web preview (optional) | `C:\Dev\CursorAINews\web` |
 | Docs | `C:\Dev\CursorAINews\docs` |
 
@@ -39,8 +39,8 @@ This workspace **is** the Cursor AI News project. Do not redirect work to PasteC
 
 | Wrong (PasteCraft) | Right (this repo) |
 |---|---|
-| `C:\Dev\PasteCraft\` for news feed code | `api/`, `mobile/`, `web/` |
-| PasteCraft `extension/` | `api/src/`, `mobile/src/` |
+| `C:\Dev\PasteCraft\` for news feed code | `mobile/`, `mobile/server/`, `web/` |
+| PasteCraft `extension/` | `mobile/server/src/`, `mobile/src/` |
 | PasteCraft merchant features | ingest, API routes, mobile feed |
 | PasteCraft `request.md` / merchant docs | `docs/` |
 

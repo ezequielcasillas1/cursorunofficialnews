@@ -24,7 +24,16 @@ export default {
     web: {
       favicon: './assets/favicon.png',
     },
-    plugins: ['expo-dev-client'],
+    plugins: [
+      'expo-dev-client',
+      [
+        'expo-notifications',
+        {
+          icon: './assets/icon.png',
+          color: '#111111',
+        },
+      ],
+    ],
     extra: {
       ...(process.env.EXPO_PUBLIC_API_BASE
         ? { apiBase: process.env.EXPO_PUBLIC_API_BASE }

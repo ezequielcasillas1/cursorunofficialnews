@@ -1,14 +1,26 @@
 node_modules/
 .env
 .env.local
+mobile/server/.env
 dist/
 build/
 .expo/
 .expo-shared/
-android/
-ios/
+# Expo prebuild output (regenerated via `npx expo prebuild --platform android --clean`)
+mobile/android/.gradle/
+mobile/android/build/
+mobile/android/app/build/
+mobile/android/.idea/
+mobile/android/local.properties
+mobile/android/**/*.iml
+mobile/android/.cxx/
+mobile/ios/
+mobile/.gradle-trust/
 *.log
 .DS_Store
+
+# Server JSON persistence (device tokens, subscribers, known IDs)
+mobile/server/data/*.json
 
 .recovery/
 .recovery2/

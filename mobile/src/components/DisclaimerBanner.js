@@ -1,9 +1,12 @@
 import { StyleSheet, Text, View } from 'react-native';
+import { AlertTriangle } from 'lucide-react-native';
 import { DISCLAIMER } from '../config/constants';
+import { colors, radii, spacing, typography } from '../theme/tokens';
 
 export function DisclaimerBanner() {
   return (
     <View style={styles.banner}>
+      <AlertTriangle size={14} color={colors.gold} strokeWidth={2} style={styles.icon} />
       <Text style={styles.text}>{DISCLAIMER}</Text>
     </View>
   );
@@ -11,15 +14,21 @@ export function DisclaimerBanner() {
 
 const styles = StyleSheet.create({
   banner: {
-    backgroundColor: '#fff3cd',
-    borderBottomColor: '#ffecb5',
-    borderBottomWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    alignItems: 'flex-start',
+    backgroundColor: colors.disclaimerBg,
+    flexDirection: 'row',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+  },
+  icon: {
+    marginTop: 1,
   },
   text: {
-    color: '#664d03',
+    ...typography.bodySmall,
+    color: colors.disclaimerText,
+    flex: 1,
     fontSize: 12,
-    lineHeight: 16,
+    lineHeight: 18,
   },
 });

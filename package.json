@@ -1,0 +1,13 @@
+{
+  "name": "unofficial-cursor-news",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "install:all": "npm install --prefix mobile/server && npm install --prefix mobile",
+    "dev:api": "npm run dev --prefix mobile/server",
+    "dev:mobile": "npm run start --prefix mobile"
+  },
+  "dependencies": {
+    "expo": "^56.0.12"
+  }
+}

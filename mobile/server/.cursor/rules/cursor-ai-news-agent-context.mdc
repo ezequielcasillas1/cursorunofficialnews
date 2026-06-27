@@ -1,0 +1,18 @@
+---
+description: Cold-start onboarding for Cursor AI News agents. NOT PasteCraft. Read AGENT-CONTEXT.md and phase plan first.
+alwaysApply: true
+---
+
+# Cursor AI News — Agent Onboarding
+
+**Project root:** `C:\Dev\CursorAINews` · **Server:** `mobile/server` · **NOT** `C:\Dev\PasteCraft`
+
+Before any work:
+
+1. Read **`AGENT-CONTEXT.md`** (this folder) — stack, run commands, Android API base, phase status.
+2. Read **`docs/CURSOR-AI-NEWS-PHASE-PLAN.md`** — one phase at a time; check status boxes.
+3. Follow **`.cursor/rules/unofficial-cursor-news-feed-service.mdc`** for phase detail.
+
+Quick run: `npm run dev` (`:8787`) from this folder · `..` → `npx expo start --dev-client` · physical Android → `adb reverse tcp:8787 tcp:8787` or `EXPO_PUBLIC_API_BASE`.
+
+Ask user **"Ezequiel, is the implementation successful?"** before SUCCESS logs or commit.

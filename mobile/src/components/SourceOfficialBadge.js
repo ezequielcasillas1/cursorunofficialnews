@@ -1,8 +1,11 @@
 import { StyleSheet, Text, View } from 'react-native';
+import { ShieldCheck } from 'lucide-react-native';
+import { colors, radii, spacing, typography } from '../theme/tokens';
 
 export function SourceOfficialBadge() {
   return (
     <View style={styles.badge}>
+      <ShieldCheck size={10} color={colors.success} strokeWidth={2.5} />
       <Text style={styles.text}>Official</Text>
     </View>
   );
@@ -10,17 +13,20 @@ export function SourceOfficialBadge() {
 
 const styles = StyleSheet.create({
   badge: {
-    backgroundColor: '#e8f4ea',
-    borderColor: '#2e7d32',
-    borderRadius: 4,
-    borderWidth: 1,
-    paddingHorizontal: 6,
-    paddingVertical: 1,
+    alignItems: 'center',
+    backgroundColor: colors.successSoft,
+    borderColor: colors.success,
+    borderRadius: radii.sm,
+    borderWidth: StyleSheet.hairlineWidth,
+    flexDirection: 'row',
+    gap: 3,
+    marginLeft: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
   },
   text: {
-    color: '#2e7d32',
-    fontSize: 10,
-    fontWeight: '600',
-    textTransform: 'uppercase',
+    ...typography.eyebrow,
+    color: colors.success,
+    fontSize: 9,
   },
 });
