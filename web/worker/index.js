@@ -34,6 +34,19 @@ export default {
       return proxyApiRequest(request, apiOrigin);
     }
 
+    // Serve ads.txt as plain text (never SPA fallback) for AdSense crawlers.
+    if (url.pathname === '/ads.txt') {
+      const assetResponse = await env.ASSETS.fetch(request);
+      if (assetResponse.ok) {
+        const headers = new Headers(assetResponse.headers);
+        headers.set('Content-Type', 'text/plain; charset=utf-8');
+        return new Response(assetResponse.body, {
+          status: assetResponse.status,
+          headers,
+        });
+      }
+    }
+
     return env.ASSETS.fetch(request);
   },
 };

@@ -10,5 +10,15 @@
     "directory": "./web/dist",
     "binding": "ASSETS",
     "not_found_handling": "single-page-application"
-  }
+  },
+  "routes": [
+    {
+      "pattern": "cursorunofficial.news",
+      "custom_domain": true
+    },
+    {
+      "pattern": "www.cursorunofficial.news",
+      "custom_domain": true
+    }
+  ]
 }
