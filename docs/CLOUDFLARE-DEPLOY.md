@@ -131,6 +131,7 @@ Only set build env vars if you need an override:
 | Variable | Value | Required? |
 |---|---|---|
 | `VITE_API_BASE` | `/api` (default) or `https://cursorunofficialnews.fly.dev` | No — omit for Worker proxy |
+| `VITE_ADSENSE_CLIENT_ID` | `ca-pub-5184491334740169` | Optional — enables in-app ad slots; site verification uses static script in `web/index.html` |
 | `NODE_VERSION` | `20` | Only if build fails on Node 18 |
 
 Worker runtime var (not Vite):
