@@ -1,4 +1,6 @@
+import { AdSlot } from './AdSlot.jsx';
 import { NewsCard } from './NewsCard.jsx';
+import { SupporterSlot } from './SupporterSlot.jsx';
 
 export function NewsFeed({ items, loading, error, sourceMap }) {
   if (loading) {
@@ -25,16 +27,29 @@ export function NewsFeed({ items, loading, error, sourceMap }) {
     );
   }
 
+  const [lead, ...rest] = items;
+
   return (
-    <ul className="news-list">
-      {items.map((item) => (
-        <li key={item.id}>
+    <>
+      <ul className="news-list">
+        <li key={lead.id}>
           <NewsCard
-            item={item}
-            isOfficial={Boolean(sourceMap?.[item.sourceId]?.isOfficial)}
+            item={lead}
+            isOfficial={Boolean(sourceMap?.[lead.sourceId]?.isOfficial)}
+            featured
           />
         </li>
-      ))}
-    </ul>
+        {rest.map((item, index) => (
+          <li key={item.id}>
+            <NewsCard
+              item={item}
+              isOfficial={Boolean(sourceMap?.[item.sourceId]?.isOfficial)}
+            />
+            {index === 2 ? <AdSlot /> : null}
+            {index === 5 ? <SupporterSlot /> : null}
+          </li>
+        ))}
+      </ul>
+    </>
   );
 }

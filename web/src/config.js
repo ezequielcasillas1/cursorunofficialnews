@@ -13,3 +13,10 @@ export const APP_NAME = 'Unofficial Cursor News';
 
 export const DISCLAIMER =
   'Not affiliated with, endorsed by, or sponsored by Anysphere, Inc. "Cursor" is a trademark of its respective owner.';
+
+/** Buy Me a Coffee / supporter link — set VITE_BMAC_URL to enable */
+export const BMAC_URL = import.meta.env.VITE_BMAC_URL || '';
+
+/** Google AdSense — set both to enable in-feed ads */
+export const ADSENSE_CLIENT = import.meta.env.VITE_ADSENSE_CLIENT || '';
+export const ADSENSE_SLOT = import.meta.env.VITE_ADSENSE_SLOT || '';

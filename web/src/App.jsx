@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { AboutPanel, StatusBar } from './components/AboutPanel.jsx';
 import { CategoryFilter } from './components/CategoryFilter.jsx';
-import { DisclaimerBanner, Header } from './components/Header.jsx';
+import { Footer } from './components/Footer.jsx';
+import { Header } from './components/Header.jsx';
+import { MonetizationSection } from './components/monetization/MonetizationSection.jsx';
 import { NewsFeed } from './components/NewsFeed.jsx';
 import {
   buildSourceMap,
@@ -65,13 +67,16 @@ export default function App() {
   return (
     <div className="app-shell">
       <Header onRefresh={handleRefresh} refreshing={refreshing} />
-      <DisclaimerBanner />
-      <StatusBar lastIngestAt={status.lastIngestAt} sourceCount={status.sourceCount} />
-      <CategoryFilter value={category} onChange={setCategory} />
-      <main>
-        <NewsFeed items={items} loading={loading} error={error} sourceMap={sourceMap} />
-      </main>
-      <AboutPanel />
+      <div className="app-body">
+        <StatusBar lastIngestAt={status.lastIngestAt} sourceCount={status.sourceCount} />
+        <CategoryFilter value={category} onChange={setCategory} />
+        <MonetizationSection />
+        <main className="app-main">
+          <NewsFeed items={items} loading={loading} error={error} sourceMap={sourceMap} />
+        </main>
+        <AboutPanel />
+      </div>
+      <Footer />
     </div>
   );
 }

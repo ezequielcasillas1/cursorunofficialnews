@@ -1,0 +1,70 @@
+import { useEffect, useRef } from 'react';
+import { ADSENSE_CLIENT_ID, ADSENSE_SLOT_ID, isAdSenseConfigured } from '../../monetization/config.js';
+
+let adsenseScriptPromise;
+
+function loadAdSenseScript(clientId) {
+  if (adsenseScriptPromise) return adsenseScriptPromise;
+
+  adsenseScriptPromise = new Promise((resolve, reject) => {
+    if (document.querySelector('script[data-adsense-client]')) {
+      resolve();
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.async = true;
+    script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${encodeURIComponent(clientId)}`;
+    script.crossOrigin = 'anonymous';
+    script.dataset.adsenseClient = clientId;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error('AdSense script failed to load'));
+    document.head.appendChild(script);
+  });
+
+  return adsenseScriptPromise;
+}
+
+export function AdSenseSlot({ className = '' }) {
+  const slotRef = useRef(null);
+  const pushedRef = useRef(false);
+
+  useEffect(() => {
+    if (!isAdSenseConfigured() || pushedRef.current) return;
+
+    let cancelled = false;
+
+    loadAdSenseScript(ADSENSE_CLIENT_ID)
+      .then(() => {
+        if (cancelled || !slotRef.current || pushedRef.current) return;
+        pushedRef.current = true;
+        try {
+          (window.adsbygoogle = window.adsbygoogle || []).push({});
+        } catch {
+          pushedRef.current = false;
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (!isAdSenseConfigured()) return null;
+
+  return (
+    <aside className={`adsense-slot ${className}`.trim()} aria-label="Advertisement">
+      <p className="adsense-label">Advertisement</p>
+      <ins
+        ref={slotRef}
+        className="adsbygoogle"
+        style={{ display: 'block' }}
+        data-ad-client={ADSENSE_CLIENT_ID}
+        {...(ADSENSE_SLOT_ID ? { 'data-ad-slot': ADSENSE_SLOT_ID } : {})}
+        data-ad-format="auto"
+        data-full-width-responsive="true"
+      />
+    </aside>
+  );
+}

@@ -10,17 +10,20 @@ const CATEGORIES = [
 
 export function CategoryFilter({ value, onChange }) {
   return (
-    <nav className="category-filter" aria-label="Filter by category">
-      {CATEGORIES.map((cat) => (
-        <button
-          key={cat.id || 'all'}
-          type="button"
-          className={value === cat.id ? 'chip chip-active' : 'chip'}
-          onClick={() => onChange(cat.id)}
-        >
-          {cat.label}
-        </button>
-      ))}
-    </nav>
+    <div className="filter-section">
+      <span className="filter-label">Browse by topic</span>
+      <nav className="category-filter" aria-label="Filter by category">
+        {CATEGORIES.map((cat) => (
+          <button
+            key={cat.id || 'all'}
+            type="button"
+            className={value === cat.id ? 'chip chip-active' : 'chip'}
+            onClick={() => onChange(cat.id)}
+          >
+            {cat.label}
+          </button>
+        ))}
+      </nav>
+    </div>
   );
 }

@@ -5,7 +5,7 @@ export function StatusBar({ lastIngestAt, sourceCount }) {
   if (!lastIngestAt) return null;
   return (
     <p className="status-bar">
-      Last ingest: {new Date(lastIngestAt).toLocaleString()} · {sourceCount} active sources
+      Last updated {new Date(lastIngestAt).toLocaleString()} · {sourceCount} sources
     </p>
   );
 }
@@ -22,10 +22,10 @@ export function AboutPanel() {
 
   return (
     <section className="about-panel">
-      <h2>About</h2>
+      <h2>About this feed</h2>
       <ul>
-        <li>Free core feed — headlines and excerpts only</li>
-        <li>Every item opens the original source in a new tab</li>
+        <li>Free headlines and excerpts — every item links to the original source</li>
+        <li>Aggregated from official changelogs, releases, and community sources</li>
         <li>Unofficial fan project — not affiliated with Anysphere</li>
       </ul>
 
