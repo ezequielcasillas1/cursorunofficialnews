@@ -17,6 +17,8 @@ export const DISCLAIMER =
 /** Buy Me a Coffee / supporter link — set VITE_BMAC_URL to enable */
 export const BMAC_URL = import.meta.env.VITE_BMAC_URL || '';
 
-/** Google AdSense — set both to enable in-feed ads */
-export const ADSENSE_CLIENT = import.meta.env.VITE_ADSENSE_CLIENT || '';
-export const ADSENSE_SLOT = import.meta.env.VITE_ADSENSE_SLOT || '';
+/** Google AdSense — prefer VITE_ADSENSE_CLIENT_ID / VITE_ADSENSE_SLOT_ID (see monetization/config.js) */
+export {
+  ADSENSE_CLIENT_ID as ADSENSE_CLIENT,
+  ADSENSE_SLOT_ID as ADSENSE_SLOT,
+} from './monetization/config.js';

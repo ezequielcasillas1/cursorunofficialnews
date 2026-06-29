@@ -1,12 +1,10 @@
-import { isMonetizationConfigured, BMC_USERNAME } from '../../monetization/config.js';
+import { isMonetizationConfigured, getBmcMembershipUrl, getBmcPageUrl } from '../../monetization/config.js';
 import { useMembership } from '../../monetization/useMembership.js';
 import { AdSenseSlot } from './AdSenseSlot.jsx';
 import { BuyMeTacoPanel, SupporterBadge } from './BuyMeTacoPanel.jsx';
 
 function PausedMembershipNotice({ email }) {
-  const manageUrl = BMC_USERNAME
-    ? `https://www.buymeacoffee.com/${encodeURIComponent(BMC_USERNAME)}/membership`
-    : 'https://www.buymeacoffee.com';
+  const manageUrl = getBmcMembershipUrl() || getBmcPageUrl() || 'https://www.buymeacoffee.com';
 
   return (
     <section className="taco-panel taco-panel--muted">

@@ -1,8 +1,11 @@
 /** Google AdSense publisher client ID, e.g. ca-pub-xxxxxxxxxxxxxxxx */
 export const ADSENSE_CLIENT_ID = import.meta.env.VITE_ADSENSE_CLIENT_ID?.trim() || '';
 
-/** Optional display ad slot ID */
-export const ADSENSE_SLOT_ID = import.meta.env.VITE_ADSENSE_SLOT_ID?.trim() || '';
+/** Optional display ad slot ID — create a Display ad unit in AdSense, then paste the slot ID here. */
+export const ADSENSE_SLOT_ID =
+  import.meta.env.VITE_ADSENSE_SLOT_ID?.trim() ||
+  import.meta.env.VITE_ADSENSE_SLOT?.trim() ||
+  '';
 
 /** Buy Me a Coffee username (page slug). Prod defaults to casiezeq; override via VITE_BMC_USERNAME. */
 const BMC_USERNAME_ENV = import.meta.env.VITE_BMC_USERNAME?.trim() || '';
@@ -21,15 +24,29 @@ const TIER_URL_KEYS = {
   5: 'VITE_BMC_TIER_URL_5',
 };
 
+/** Public BMC creator page (always exists once the account is live). */
+export function getBmcPageUrl() {
+  if (!BMC_USERNAME) return '';
+  return `https://www.buymeacoffee.com/${encodeURIComponent(BMC_USERNAME)}`;
+}
+
+/**
+ * Membership hub URL — only works after Memberships are enabled in the BMC dashboard.
+ * Falls back to the main page so tier buttons never 404 before go-live setup.
+ */
+export function getBmcMembershipUrl() {
+  if (!BMC_USERNAME) return '';
+  return `${getBmcPageUrl()}/membership`;
+}
+
 /** Membership checkout URL for a monthly tier ($1–$5). Override per tier via env. */
 export function getTacoTierUrl(amount) {
   const envKey = TIER_URL_KEYS[amount];
   const override = envKey ? import.meta.env[envKey]?.trim() : '';
   if (override) return override;
 
-  if (!BMC_USERNAME) return '';
-
-  return `https://www.buymeacoffee.com/${encodeURIComponent(BMC_USERNAME)}/membership`;
+  // Main page shows the membership widget once tiers exist; /membership 404s until then.
+  return getBmcPageUrl();
 }
 
 export function isMonetizationConfigured() {

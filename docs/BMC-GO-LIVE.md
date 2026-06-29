@@ -24,7 +24,20 @@ Web (cursorunofficial.news)
 
 ## Step 1 — BMC dashboard
 
-1. [buymeacoffee.com](https://www.buymeacoffee.com) → **Extras** → **Webhooks**
+### 1a. Enable Memberships (required — tier links 404 without this)
+
+1. [buymeacoffee.com](https://www.buymeacoffee.com) → your page → **Membership** (or **Extras → Membership**)
+2. Click **Enable membership** / **Set up membership**
+3. Create monthly tiers matching the app ($1, $2, $3, $4, $5) — names can differ; prices should match
+4. After save, verify `https://buymeacoffee.com/<your-slug>/membership` loads (not 404)
+
+Until memberships are enabled, tier buttons link to your main BMC page (`buymeacoffee.com/<slug>`) so users are not sent to a dead `/membership` URL.
+
+Optional: copy each tier’s checkout URL from BMC and set `VITE_BMC_TIER_URL_1` … `VITE_BMC_TIER_URL_5` in Cloudflare for direct tier checkout.
+
+### 1b. Webhooks
+
+1. **Extras** → **Webhooks**
 2. Add webhook URL: `https://cursorunofficialnews.fly.dev/v1/bmc/webhook`
 3. Subscribe to membership events (`membership.started`, `membership.updated`, `membership.cancelled`). Pause/resume is handled via `membership.updated` (check `paused` in payload) and optional pause/resume event names if BMC adds them.
 4. Copy the **webhook secret**

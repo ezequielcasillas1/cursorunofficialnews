@@ -36,7 +36,9 @@ export function AdSenseSlot({ className = '' }) {
   const slotRef = useRef(null);
   const pushedRef = useRef(false);
   const clientId = ADSENSE_CLIENT_ID || 'ca-pub-5184491334740169';
-  const adsEnabled = isAdSenseConfigured() || isAdSenseScriptPresent();
+  // Manual <ins> units need a slot ID from AdSense → Units. Without it, rely on auto ads in index.html.
+  const hasDisplayUnit = Boolean(ADSENSE_SLOT_ID);
+  const adsEnabled = hasDisplayUnit && (isAdSenseConfigured() || isAdSenseScriptPresent());
 
   useEffect(() => {
     if (!adsEnabled || pushedRef.current) return;
@@ -70,7 +72,7 @@ export function AdSenseSlot({ className = '' }) {
         className="adsbygoogle"
         style={{ display: 'block' }}
         data-ad-client={clientId}
-        {...(ADSENSE_SLOT_ID ? { 'data-ad-slot': ADSENSE_SLOT_ID } : {})}
+        data-ad-slot={ADSENSE_SLOT_ID}
         data-ad-format="auto"
         data-full-width-responsive="true"
       />
