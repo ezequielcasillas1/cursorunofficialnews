@@ -27,3 +27,8 @@
 **Status:** SUCCESS
 **Files:** mobile/server/src/sources/registry.js, mobile/src/config/notifications.js
 **Result:** Reddit sources use community category again; mobile notification category descriptions match Community vs Social split.
+
+### [2026-06-29] - Newsletter beta disclaimer + production email verified
+**Status:** SUCCESS
+**Files:** [web/src/components/newsletter/NewsletterSettings.jsx, web/src/App.css, mobile/server/AGENT-CONTEXT.md]
+**Result:** Web digest panel shows beta copy; user verified Resend/Fly pipeline sends; AGENT-CONTEXT documents Fly newsletter secrets.
