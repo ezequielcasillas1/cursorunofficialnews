@@ -138,6 +138,8 @@ One phase at a time. Do not skip ahead unless user approves.
 | API | Fly.io `cursorunofficialnews.fly.dev` | [FLY-DEPLOY.md](FLY-DEPLOY.md) |
 | Web | Cloudflare Pages `cursorunofficial.news` | [CLOUDFLARE-DEPLOY.md](CLOUDFLARE-DEPLOY.md) |
 | Email (Resend) | Fly secrets + Resend domain verify | [FLY-DEPLOY.md](FLY-DEPLOY.md) — separate from Pages |
+| BMC membership | Fly webhook + Cloudflare `VITE_BMC_USERNAME` | [BMC-GO-LIVE.md](BMC-GO-LIVE.md) |
+| Pipedream MCP (dev tooling) | `api/.env.local` + `.cursor/mcp.json` | [PIPEDREAM-MCP.md](PIPEDREAM-MCP.md) |
 
 Deploy API first; web defaults to `/api` (Worker proxy → Fly). Optional override: `VITE_API_BASE=https://cursorunofficialnews.fly.dev` in Cloudflare build env.
 

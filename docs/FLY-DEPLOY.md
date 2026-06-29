@@ -74,6 +74,16 @@ Optional (scrape fallback):
 fly secrets set SCRAPE_API_KEY="..." SCRAPE_API_URL="https://api.firecrawl.dev/v1/scrape"
 ```
 
+Optional (Buy Me a Coffee membership / ad-free webhooks):
+
+```powershell
+fly secrets set `
+  BMC_WEBHOOK_SECRET="your-bmc-webhook-secret" `
+  PUBLIC_WEB_BASE="https://cursorunofficial.news"
+```
+
+Full BMC go-live steps: [BMC-GO-LIVE.md](BMC-GO-LIVE.md).
+
 Generate `INGEST_SECRET` locally:
 
 ```powershell
@@ -92,6 +102,9 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 | `RESEND_FROM_EMAIL` | If email enabled | Verified domain in Resend |
 | `REGISTER_SECRET` | Optional | Protects `POST /v1/devices/register` |
 | `INGEST_CRON_SCHEDULE` | Optional | Default `*/30 * * * *` |
+| `BMC_WEBHOOK_SECRET` | If BMC enabled | From [buymeacoffee.com webhooks](https://www.buymeacoffee.com/webhooks) |
+| `PUBLIC_WEB_BASE` | If BMC enabled | Public site URL for activation links, e.g. `https://cursorunofficial.news` |
+| `BMC_DEV_ADFREE_EMAILS` | Dev only | Comma-separated emails; omit in production |
 
 `PORT`, `DATA_DIR`, and base `NODE_ENV` are set in `fly.toml` `[env]` — do not need secrets.
 

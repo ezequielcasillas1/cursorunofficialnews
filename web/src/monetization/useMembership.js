@@ -14,6 +14,7 @@ export function useMembership() {
   const [claiming, setClaiming] = useState(false);
   const [claimError, setClaimError] = useState('');
   const [supporterEmail, setSupporterEmail] = useState('');
+  const [membershipStatus, setMembershipStatus] = useState(null);
 
   const verifyToken = useCallback(async (token) => {
     if (BMC_DEV_ADFREE) {
@@ -24,6 +25,7 @@ export function useMembership() {
 
     if (!token) {
       setAdFree(false);
+      setMembershipStatus(null);
       setChecking(false);
       return false;
     }
@@ -34,12 +36,14 @@ export function useMembership() {
       const active = Boolean(data.adFree);
       setAdFree(active);
       setSupporterEmail(data.email || '');
+      setMembershipStatus(data.membershipStatus || null);
       if (!active) {
         clearStoredAdFreeToken();
       }
       return active;
     } catch {
       setAdFree(false);
+      setMembershipStatus(null);
       return false;
     } finally {
       setChecking(false);
@@ -65,9 +69,11 @@ export function useMembership() {
         }
         setAdFree(Boolean(data.adFree));
         setSupporterEmail(data.email || email);
+        setMembershipStatus(data.membershipStatus || (data.adFree ? 'active' : null));
         return Boolean(data.adFree);
       } catch (err) {
         setClaimError(err.message || 'Could not verify membership');
+        setMembershipStatus(err.membershipStatus || null);
         return false;
       } finally {
         setClaiming(false);
@@ -80,6 +86,7 @@ export function useMembership() {
     clearStoredAdFreeToken();
     setAdFree(false);
     setSupporterEmail('');
+    setMembershipStatus(null);
     setClaimError('');
   }, []);
 
@@ -89,6 +96,7 @@ export function useMembership() {
     claiming,
     claimError,
     supporterEmail,
+    membershipStatus,
     claimAdFree,
     clearAdFree,
     refreshStatus: () => verifyToken(getStoredAdFreeToken()),

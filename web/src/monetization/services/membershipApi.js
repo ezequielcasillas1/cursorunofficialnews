@@ -20,7 +20,11 @@ async function fetchJson(path, options = {}) {
 
     const body = await res.json();
     if (!res.ok) {
-      throw new Error(body.error || `Request failed (${res.status})`);
+      const err = new Error(body.error || `Request failed (${res.status})`);
+      if (body.membershipStatus) {
+        err.membershipStatus = body.membershipStatus;
+      }
+      throw err;
     }
     return body;
   } catch (err) {

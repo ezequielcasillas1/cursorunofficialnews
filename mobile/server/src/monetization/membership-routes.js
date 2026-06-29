@@ -3,6 +3,7 @@ import {
   buildAdFreeActivationUrl,
   claimAdFreeAccess,
   getAdFreeStatus,
+  getMember,
   isDevAdFreeEmail,
   listMembers,
 } from '../store/bmc-members.js';
@@ -50,9 +51,20 @@ export function registerMembershipRoutes(app) {
 
       const claim = claimAdFreeAccess(email);
       if (!claim) {
+        const member = getMember(email);
+        if (member?.status === 'paused') {
+          res.status(403).json({
+            error:
+              'Your membership is paused on Buy Me a Coffee. Resume it there, then try again.',
+            membershipStatus: 'paused',
+          });
+          return;
+        }
+
         res.status(404).json({
           error:
             'No active membership found for this email. Subscribe first, then try again in a minute.',
+          membershipStatus: member?.status === 'cancelled' ? 'cancelled' : null,
         });
         return;
       }
@@ -81,6 +93,7 @@ export function registerMembershipRoutes(app) {
       ok: true,
       adFree: status.adFree,
       email: status.email,
+      membershipStatus: status.membershipStatus,
     });
   });
 

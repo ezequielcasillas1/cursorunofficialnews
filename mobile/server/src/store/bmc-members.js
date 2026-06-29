@@ -29,6 +29,9 @@ function loadFromDisk() {
     if (!row.adFreeToken) {
       row.adFreeToken = generateAdFreeToken();
     }
+    if (!row.status) {
+      row.status = row.active ? 'active' : 'cancelled';
+    }
     members.set(row.email, row);
     indexToken(row);
   }
@@ -45,7 +48,9 @@ function buildRecord(email, existing) {
     email,
     adFreeToken: existing?.adFreeToken || generateAdFreeToken(),
     active: true,
+    status: 'active',
     membershipStartedAt: existing?.membershipStartedAt || new Date().toISOString(),
+    pausedAt: null,
     cancelledAt: null,
     updatedAt: new Date().toISOString(),
   };
@@ -65,15 +70,54 @@ export function activateMember(email) {
   return record;
 }
 
+export function pauseMember(email) {
+  const normalized = normalizeEmail(email);
+  if (!isValidEmail(normalized)) {
+    throw new Error('Invalid supporter email from webhook');
+  }
+
+  const existing = members.get(normalized);
+  const record =
+    existing ||
+    {
+      email: normalized,
+      adFreeToken: generateAdFreeToken(),
+      membershipStartedAt: null,
+    };
+
+  record.active = false;
+  record.status = 'paused';
+  record.pausedAt = new Date().toISOString();
+  record.cancelledAt = null;
+  record.updatedAt = new Date().toISOString();
+  members.set(normalized, record);
+  indexToken(record);
+  saveToDisk();
+  return true;
+}
+
 export function deactivateMember(email) {
   const normalized = normalizeEmail(email);
-  const existing = members.get(normalized);
-  if (!existing) return false;
+  if (!isValidEmail(normalized)) {
+    throw new Error('Invalid supporter email from webhook');
+  }
 
-  existing.active = false;
-  existing.cancelledAt = new Date().toISOString();
-  existing.updatedAt = new Date().toISOString();
-  members.set(normalized, existing);
+  const existing = members.get(normalized);
+  const record =
+    existing ||
+    {
+      email: normalized,
+      adFreeToken: generateAdFreeToken(),
+      membershipStartedAt: null,
+    };
+
+  record.active = false;
+  record.status = 'cancelled';
+  record.cancelledAt = new Date().toISOString();
+  record.pausedAt = null;
+  record.updatedAt = new Date().toISOString();
+  members.set(normalized, record);
+  indexToken(record);
   saveToDisk();
   return true;
 }
@@ -109,11 +153,16 @@ export function claimAdFreeAccess(email) {
 
 export function getAdFreeStatus(token) {
   const member = getMemberByToken(token);
-  if (!member?.active) {
-    return { adFree: false, email: null };
+  if (!member) {
+    return { adFree: false, email: null, membershipStatus: null };
   }
 
-  return { adFree: true, email: member.email };
+  const membershipStatus = member.active ? 'active' : member.status || 'cancelled';
+  if (!member.active) {
+    return { adFree: false, email: member.email, membershipStatus };
+  }
+
+  return { adFree: true, email: member.email, membershipStatus: 'active' };
 }
 
 export function listMembers() {

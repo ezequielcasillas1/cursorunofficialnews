@@ -4,8 +4,9 @@ export const ADSENSE_CLIENT_ID = import.meta.env.VITE_ADSENSE_CLIENT_ID?.trim() 
 /** Optional display ad slot ID */
 export const ADSENSE_SLOT_ID = import.meta.env.VITE_ADSENSE_SLOT_ID?.trim() || '';
 
-/** Buy Me a Coffee username (page slug), e.g. cursorunofficialnews */
-export const BMC_USERNAME = import.meta.env.VITE_BMC_USERNAME?.trim() || '';
+/** Buy Me a Coffee username (page slug). Prod defaults to casiezeq; override via VITE_BMC_USERNAME. */
+const BMC_USERNAME_ENV = import.meta.env.VITE_BMC_USERNAME?.trim() || '';
+export const BMC_USERNAME = BMC_USERNAME_ENV || (import.meta.env.PROD ? 'casiezeq' : '');
 
 /** Dev-only: treat all visitors as ad-free supporters */
 export const BMC_DEV_ADFREE = import.meta.env.VITE_BMC_DEV_ADFREE === 'true';

@@ -1,7 +1,25 @@
-import { isMonetizationConfigured } from '../../monetization/config.js';
+import { isMonetizationConfigured, BMC_USERNAME } from '../../monetization/config.js';
 import { useMembership } from '../../monetization/useMembership.js';
 import { AdSenseSlot } from './AdSenseSlot.jsx';
 import { BuyMeTacoPanel, SupporterBadge } from './BuyMeTacoPanel.jsx';
+
+function PausedMembershipNotice({ email }) {
+  const manageUrl = BMC_USERNAME
+    ? `https://www.buymeacoffee.com/${encodeURIComponent(BMC_USERNAME)}/membership`
+    : 'https://www.buymeacoffee.com';
+
+  return (
+    <section className="taco-panel taco-panel--muted">
+      <p className="taco-supporter-msg">
+        <span aria-hidden="true">⏸️</span> Membership paused
+        {email ? ` for ${email}` : ''}. Ads are shown until you resume on Buy Me a Coffee.
+      </p>
+      <a className="taco-claim-toggle" href={manageUrl} target="_blank" rel="noopener noreferrer">
+        Manage membership
+      </a>
+    </section>
+  );
+}
 
 export function MonetizationSection() {
   const {
@@ -10,6 +28,7 @@ export function MonetizationSection() {
     claiming,
     claimError,
     supporterEmail,
+    membershipStatus,
     claimAdFree,
     clearAdFree,
   } = useMembership();
@@ -34,6 +53,9 @@ export function MonetizationSection() {
 
   return (
     <section className="monetization-section">
+      {membershipStatus === 'paused' ? (
+        <PausedMembershipNotice email={supporterEmail} />
+      ) : null}
       <BuyMeTacoPanel
         onClaim={claimAdFree}
         claiming={claiming}

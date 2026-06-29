@@ -132,6 +132,7 @@ Only set build env vars if you need an override:
 |---|---|---|
 | `VITE_API_BASE` | `/api` (default) or `https://cursorunofficialnews.fly.dev` | No — omit for Worker proxy |
 | `VITE_ADSENSE_CLIENT_ID` | `ca-pub-5184491334740169` | Optional — enables in-app ad slots; site verification uses static script in `web/index.html` |
+| `VITE_BMC_USERNAME` | Your BMC page slug | Optional — enables membership CTA + ad-free claim UI; see [BMC-GO-LIVE.md](BMC-GO-LIVE.md) |
 | `NODE_VERSION` | `20` | Only if build fails on Node 18 |
 
 Worker runtime var (not Vite):

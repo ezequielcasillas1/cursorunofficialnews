@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import {
   activateMember,
   deactivateMember,
+  pauseMember,
 } from '../store/bmc-members.js';
 
 const ACTIVE_EVENTS = new Set([
@@ -14,6 +15,22 @@ const ACTIVE_EVENTS = new Set([
 const CANCEL_EVENTS = new Set([
   'membership.cancelled',
   'membership_cancelled',
+]);
+
+const PAUSE_EVENTS = new Set([
+  'membership.paused',
+  'membership_paused',
+  'membership.on_hold',
+  'membership_on_hold',
+  'membership.pause',
+  'membership_pause',
+]);
+
+const RESUME_EVENTS = new Set([
+  'membership.resumed',
+  'membership_resumed',
+  'membership.unpaused',
+  'membership_unpaused',
 ]);
 
 function verifySignature(rawBody, signature, secret) {
@@ -45,15 +62,46 @@ function extractEmail(payload) {
   return '';
 }
 
-function isActiveMembership(payload) {
-  const status = String(
-    payload?.status ||
-      payload?.membership_status ||
-      payload?.response?.status ||
-      'active',
-  ).toLowerCase();
+function getMembershipData(payload) {
+  return payload?.data || payload?.response || payload || {};
+}
 
-  return !['cancelled', 'canceled', 'inactive', 'expired'].includes(status);
+function extractEvent(req, payload) {
+  const fromHeader = String(req.get('x-bmc-event') || req.get('X-Bmc-Event') || '').toLowerCase();
+  if (fromHeader) return fromHeader;
+  return String(payload?.type || payload?.event || '').toLowerCase();
+}
+
+function isPausedMembership(data) {
+  const pausedFields = [data.paused, data.is_paused, data.isPaused, data.IsPaused];
+  for (const value of pausedFields) {
+    if (value === true || value === 'true' || value === 1 || value === '1') return true;
+    if (value === false || value === 'false' || value === 0 || value === '0') return false;
+  }
+
+  const status = String(data.status || data.membership_status || '').toLowerCase();
+  return ['paused', 'on_hold', 'on hold', 'on-hold'].includes(status);
+}
+
+function isCancelledMembership(data) {
+  const cancelFields = [data.canceled, data.cancelled, data.is_canceled, data.isCancelled];
+  for (const value of cancelFields) {
+    if (value === true || value === 'true' || value === 1 || value === '1') return true;
+    if (value === false || value === 'false' || value === 0 || value === '0') return false;
+  }
+
+  const status = String(data.status || data.membership_status || '').toLowerCase();
+  return ['cancelled', 'canceled', 'inactive', 'expired'].includes(status);
+}
+
+function isActiveMembership(data) {
+  if (isCancelledMembership(data)) return false;
+
+  const status = String(data.status || data.membership_status || 'active').toLowerCase();
+
+  return !['cancelled', 'canceled', 'inactive', 'expired', 'paused', 'on_hold', 'on hold', 'on-hold'].includes(
+    status,
+  );
 }
 
 export function handleBmcWebhook(req, res) {
@@ -83,8 +131,10 @@ export function handleBmcWebhook(req, res) {
     return;
   }
 
-  const event = String(req.get('x-bmc-event') || req.get('X-Bmc-Event') || '').toLowerCase();
-  const email = extractEmail(payload?.response || payload);
+  const data = getMembershipData(payload);
+  const event = extractEvent(req, payload);
+  const email = extractEmail(data);
+  const paused = PAUSE_EVENTS.has(event) || isPausedMembership(data);
 
   if (!email) {
     res.json({ ok: true, ignored: true, reason: 'no email in payload' });
@@ -92,15 +142,21 @@ export function handleBmcWebhook(req, res) {
   }
 
   try {
-    if (CANCEL_EVENTS.has(event)) {
-      deactivateMember(email);
-      res.json({ ok: true, event, email, active: false });
+    if (paused) {
+      pauseMember(email);
+      res.json({ ok: true, event, email, active: false, membershipStatus: 'paused' });
       return;
     }
 
-    if (ACTIVE_EVENTS.has(event) || isActiveMembership(payload?.response || payload)) {
+    if (CANCEL_EVENTS.has(event) || isCancelledMembership(data)) {
+      deactivateMember(email);
+      res.json({ ok: true, event, email, active: false, membershipStatus: 'cancelled' });
+      return;
+    }
+
+    if (RESUME_EVENTS.has(event) || ACTIVE_EVENTS.has(event) || isActiveMembership(data)) {
       activateMember(email);
-      res.json({ ok: true, event, email, active: true });
+      res.json({ ok: true, event, email, active: true, membershipStatus: 'active' });
       return;
     }
 
