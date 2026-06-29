@@ -215,7 +215,7 @@ export const SOURCES = [
   {
     id: 'reddit-cursor-ai',
     name: 'Reddit — r/CursorAI',
-    category: 'social',
+    category: 'community',
     feedUrl: 'https://www.reddit.com/r/CursorAI/.rss',
     ingestMethod: 'rss',
     enabled: true,
@@ -227,7 +227,7 @@ export const SOURCES = [
   {
     id: 'reddit-cursor',
     name: 'Reddit — r/cursor',
-    category: 'social',
+    category: 'community',
     feedUrl: 'https://www.reddit.com/r/cursor/.rss',
     ingestMethod: 'rss',
     enabled: true,

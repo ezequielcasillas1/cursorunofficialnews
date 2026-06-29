@@ -23,12 +23,12 @@ export const NOTIFICATION_CATEGORIES = [
   {
     id: 'community',
     label: 'Community',
-    description: 'Hacker News and other community discussions.',
+    description: 'Reddit, Hacker News, and other community discussions.',
   },
   {
     id: 'social',
     label: 'Social',
-    description: 'Posts from Cursor on X (Twitter) and Reddit discussions.',
+    description: 'Posts from Cursor on X (Twitter).',
   },
   {
     id: 'video',

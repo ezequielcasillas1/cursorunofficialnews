@@ -22,3 +22,8 @@
 **Status:** SUCCESS
 **Files:** mobile/server/src/sources/registry.js, mobile/server/src/ingest/feeds.js, mobile/server/src/ingest/twitter-api.js, mobile/server/.env.example, web/src/config/feedCategories.js, web/src/components/CategoryFilter.jsx, web/src/App.jsx, web/src/services/newsApi.js, web/src/components/NewsFeed.jsx, web/src/App.css, mobile/src/config/constants.js, mobile/src/config/notifications.js
 **Result:** User confirmed Community and Social tabs work on cursorunofficial.news. Reddit/HN/X sources ingested on Fly (46f05b4); web Sections + Official only aligned with Android; Fly deploy + ingest live.
+
+### [2026-06-29] - Reddit revert to Community category
+**Status:** SUCCESS
+**Files:** mobile/server/src/sources/registry.js, mobile/src/config/notifications.js
+**Result:** Reddit sources use community category again; mobile notification category descriptions match Community vs Social split.
