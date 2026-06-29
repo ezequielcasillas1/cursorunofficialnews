@@ -1,5 +1,6 @@
 import { APP_NAME } from '../config.js';
 import { SupporterSlot } from './SupporterSlot.jsx';
+import { ThemeToggle } from './ThemeToggle.jsx';
 
 const SOCIAL_LINKS = [
   { label: 'X', href: 'https://x.com/casiezeq' },
@@ -32,6 +33,7 @@ export function Header({ onRefresh, refreshing }) {
         <hr className="masthead-rule" />
         <p className="masthead-sub">Your morning briefing on Cursor — changelog, releases, and community</p>
         <div className="masthead-actions">
+          <ThemeToggle />
           <button type="button" className="btn" onClick={onRefresh} disabled={refreshing}>
             {refreshing ? 'Refreshing…' : import.meta.env.PROD ? 'Reload feed' : 'Refresh feed'}
           </button>

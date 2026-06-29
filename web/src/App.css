@@ -116,6 +116,10 @@
   margin-top: var(--space-lg);
 }
 
+.theme-toggle {
+  min-width: 4.5rem;
+}
+
 /* ── Disclaimer strip ──────────────────────────────────── */
 
 .disclaimer {
