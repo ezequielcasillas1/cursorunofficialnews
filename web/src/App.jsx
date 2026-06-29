@@ -18,6 +18,8 @@ import {
   triggerIngest,
 } from './services/newsApi.js';
 import { filterNewsItems } from './feed/filterNewsItems.js';
+import { useCookieConsent } from './consent/useCookieConsent.js';
+import { CookieConsent } from './components/CookieConsent.jsx';
 import './App.css';
 
 const FILTER_PREFS_KEY = 'cursor_news_filter_prefs';
@@ -41,6 +43,7 @@ function saveFilterPrefs(category, officialOnly) {
 }
 
 export default function App() {
+  const { hasConsent, acceptConsent } = useCookieConsent();
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [officialOnly, setOfficialOnly] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -155,7 +158,8 @@ export default function App() {
   const showPagination = !isSearching && feedMeta.totalPages > 1;
 
   return (
-    <div className="app-shell">
+    <div className="app-shell" data-consent={hasConsent ? 'accepted' : 'pending'}>
+      <div className="app-interactive" {...(!hasConsent ? { inert: '' } : {})}>
       <Header onRefresh={handleRefresh} refreshing={refreshing} />
       <div className="app-body">
         <StatusBar lastIngestAt={status.lastIngestAt} sourceCount={status.sourceCount} />
@@ -202,6 +206,8 @@ export default function App() {
         <AboutPanel />
       </div>
       <Footer />
+      </div>
+      {!hasConsent ? <CookieConsent onAccept={acceptConsent} /> : null}
     </div>
   );
 }

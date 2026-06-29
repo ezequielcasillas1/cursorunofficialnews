@@ -6,6 +6,60 @@
   flex-direction: column;
 }
 
+.app-shell[data-consent='pending'] .app-interactive {
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ── Cookie consent ────────────────────────────────────── */
+
+.cookie-consent {
+  position: fixed;
+  inset: auto 0 0 0;
+  z-index: 1000;
+  padding: var(--space-lg);
+  background: var(--color-card-elevated);
+  border-top: 1px solid var(--color-border-strong);
+  box-shadow: var(--shadow-elevated);
+}
+
+.cookie-consent-inner {
+  max-width: var(--content-wide);
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-md) var(--space-xl);
+}
+
+.cookie-consent-title {
+  margin: 0;
+  flex: 1 1 12rem;
+  font-family: var(--font-ui);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--color-ink);
+}
+
+.cookie-consent-text {
+  margin: 0;
+  flex: 2 1 16rem;
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--color-ink-muted);
+}
+
+.cookie-consent-actions {
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+.cookie-consent-accept {
+  white-space: nowrap;
+}
+
 .app-body {
   flex: 1;
   width: 100%;
