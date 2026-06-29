@@ -12,3 +12,8 @@
 **Status:** SUCCESS
 **Files:** [api/src/ingest/scrape.js, api/src/ingest/feeds.js, api/src/sources/registry.js, docs/SOURCE-STRATEGY.md, docs/CURSOR-AI-NEWS-PHASE-PLAN.md, docs/AGENT-CONTEXT.md]
 **Result:** Forum announcements RSS live; scrape ingest path env-gated (SCRAPE_API_URL/KEY); blog scrape source registered; ≥2 ingest methods (RSS/Atom + scrape); Releasebot disabled until RSS verified.
+
+### [2026-06-29] - BMC tier 404 fallback + AdSense slot config
+**Status:** SUCCESS
+**Files:** docs/BMC-GO-LIVE.md, docs/CLOUDFLARE-DEPLOY.md, web/.env.example, web/src/components/AdSlot.jsx, web/src/components/monetization/AdSenseSlot.jsx, web/src/components/monetization/MonetizationSection.jsx, web/src/config.js, web/src/monetization/config.js
+**Result:** User confirmed BMC membership checkout and site monetization work. Commit acc7e8b pushed to main. Tier buttons no longer 404; $5 Supporter tier live on BMC; ad-free email claim flow working.
