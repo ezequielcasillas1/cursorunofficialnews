@@ -46,6 +46,8 @@ export const FEED_CATEGORIES = [
   { id: 'updates', label: 'Updates', apiCategories: ['changelog', 'release'] },
   { id: 'news', label: 'News', apiCategories: ['blog'] },
   { id: 'forum', label: 'Forum', apiCategories: ['forum'] },
+  { id: 'community', label: 'Community', apiCategories: ['community'] },
+  { id: 'social', label: 'Social', apiCategories: ['social'] },
   { id: 'videos', label: 'Videos', apiCategories: ['video'] },
   { id: 'tutorials', label: 'Tutorials', apiCategories: ['tutorial'] },
 ];
@@ -62,6 +64,8 @@ export function getEmptyFeedMessage(categoryId, officialOnly) {
     updates: 'No changelog or release items found.',
     news: 'No blog posts found.',
     forum: 'No forum announcements found.',
+    community: 'No community posts found.',
+    social: 'No social posts found.',
     videos: 'No YouTube videos found.',
     tutorials: 'No Cursor Learn tutorials found.',
   };

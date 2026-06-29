@@ -21,6 +21,16 @@ export const NOTIFICATION_CATEGORIES = [
     description: 'Official forum announcements and community news.',
   },
   {
+    id: 'community',
+    label: 'Community',
+    description: 'Reddit, Hacker News, and other community discussions.',
+  },
+  {
+    id: 'social',
+    label: 'Social',
+    description: 'Posts from Cursor on X (Twitter).',
+  },
+  {
     id: 'video',
     label: 'Videos',
     description: 'New uploads on the official Cursor YouTube channel.',

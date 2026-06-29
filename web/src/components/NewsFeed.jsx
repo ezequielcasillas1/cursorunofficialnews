@@ -1,3 +1,4 @@
+import { getEmptyFeedMessage } from '../config/feedCategories.js';
 import { AdSlot } from './AdSlot.jsx';
 import { NewsCard } from './NewsCard.jsx';
 import { SupporterSlot } from './SupporterSlot.jsx';
@@ -24,7 +25,14 @@ function errorHint(message) {
   );
 }
 
-export function NewsFeed({ items, loading, error, sourceMap }) {
+export function NewsFeed({
+  items,
+  loading,
+  error,
+  sourceMap,
+  selectedCategory = 'all',
+  officialOnly = false,
+}) {
   if (loading) {
     return <p className="status-msg">Loading news…</p>;
   }
@@ -39,13 +47,14 @@ export function NewsFeed({ items, loading, error, sourceMap }) {
   }
 
   if (!items.length) {
+    const emptyMessage = getEmptyFeedMessage(selectedCategory, officialOnly);
     return (
       <p className="status-msg">
         {import.meta.env.PROD
-          ? 'No items yet. The feed updates automatically — try again in a few minutes.'
+          ? `${emptyMessage} The feed updates automatically — try again in a few minutes.`
           : (
               <>
-                No items yet. Click <strong>Refresh feed</strong> to run ingest (set{' '}
+                {emptyMessage} Click <strong>Refresh feed</strong> to run ingest (set{' '}
                 <code>VITE_INGEST_SECRET</code> if the API requires it).
               </>
             )}

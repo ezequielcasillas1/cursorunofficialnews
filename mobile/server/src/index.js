@@ -3,6 +3,7 @@ import cron from 'node-cron';
 import express from 'express';
 import { ingestAllSources } from './ingest/feeds.js';
 import { isScrapeConfigured } from './ingest/scrape.js';
+import { isTwitterApiConfigured } from './ingest/twitter-api.js';
 import { diffNewItems } from './jobs/diff-new-items.js';
 import { notifyEmailSubscribers } from './jobs/send-email-digest.js';
 import { notifySubscribers } from './jobs/send-push.js';
@@ -72,7 +73,9 @@ app.get('/health', (_req, res) => {
 app.get('/v1/status', (_req, res) => {
   res.json({
     ...getStatus(),
+    sourceCount: listSourcesForApi().filter((s) => s.enabled).length,
     scrapeConfigured: isScrapeConfigured(),
+    twitterApiConfigured: isTwitterApiConfigured(),
   });
 });
 

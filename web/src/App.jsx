@@ -5,6 +5,7 @@ import { Footer } from './components/Footer.jsx';
 import { Header } from './components/Header.jsx';
 import { MonetizationSection } from './components/monetization/MonetizationSection.jsx';
 import { NewsFeed } from './components/NewsFeed.jsx';
+import { getCategoryApiParam } from './config/feedCategories.js';
 import { INGEST_SECRET } from './config.js';
 import {
   buildSourceMap,
@@ -15,8 +16,29 @@ import {
 } from './services/newsApi.js';
 import './App.css';
 
+const FILTER_PREFS_KEY = 'cursor_news_filter_prefs';
+
+function loadFilterPrefs() {
+  try {
+    const raw = localStorage.getItem(FILTER_PREFS_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {
+    /* ignore corrupt prefs */
+  }
+  return null;
+}
+
+function saveFilterPrefs(category, officialOnly) {
+  try {
+    localStorage.setItem(FILTER_PREFS_KEY, JSON.stringify({ category, officialOnly }));
+  } catch {
+    /* non-fatal */
+  }
+}
+
 export default function App() {
-  const [category, setCategory] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [officialOnly, setOfficialOnly] = useState(false);
   const [items, setItems] = useState([]);
   const [sourceMap, setSourceMap] = useState({});
   const [loading, setLoading] = useState(true);
@@ -25,17 +47,28 @@ export default function App() {
   const [status, setStatus] = useState({ lastIngestAt: null, sourceCount: 0 });
 
   useEffect(() => {
+    const prefs = loadFilterPrefs();
+    if (prefs?.category) setSelectedCategory(prefs.category);
+    if (typeof prefs?.officialOnly === 'boolean') setOfficialOnly(prefs.officialOnly);
+
     fetchSources()
       .then((data) => setSourceMap(buildSourceMap(data.sources || [])))
       .catch(() => {});
   }, []);
 
-  const loadNews = useCallback(async (cat) => {
+  useEffect(() => {
+    saveFilterPrefs(selectedCategory, officialOnly);
+  }, [selectedCategory, officialOnly]);
+
+  const loadNews = useCallback(async (categoryId, official) => {
     setError('');
     setLoading(true);
     try {
       const [news, meta] = await Promise.all([
-        fetchNews({ category: cat || undefined }),
+        fetchNews({
+          category: getCategoryApiParam(categoryId),
+          official: official ? true : undefined,
+        }),
         fetchStatus().catch(() => null),
       ]);
       setItems(news.items || []);
@@ -49,8 +82,8 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    loadNews(category);
-  }, [category, loadNews]);
+    loadNews(selectedCategory, officialOnly);
+  }, [selectedCategory, officialOnly, loadNews]);
 
   async function handleRefresh() {
     setRefreshing(true);
@@ -60,7 +93,7 @@ export default function App() {
       if (INGEST_SECRET) {
         await triggerIngest();
       }
-      await loadNews(category);
+      await loadNews(selectedCategory, officialOnly);
     } catch (err) {
       setError(err.message || 'Refresh failed');
     } finally {
@@ -73,10 +106,22 @@ export default function App() {
       <Header onRefresh={handleRefresh} refreshing={refreshing} />
       <div className="app-body">
         <StatusBar lastIngestAt={status.lastIngestAt} sourceCount={status.sourceCount} />
-        <CategoryFilter value={category} onChange={setCategory} />
+        <CategoryFilter
+          selectedCategory={selectedCategory}
+          officialOnly={officialOnly}
+          onCategoryChange={setSelectedCategory}
+          onOfficialOnlyChange={setOfficialOnly}
+        />
         <MonetizationSection />
         <main className="app-main">
-          <NewsFeed items={items} loading={loading} error={error} sourceMap={sourceMap} />
+          <NewsFeed
+            items={items}
+            loading={loading}
+            error={error}
+            sourceMap={sourceMap}
+            selectedCategory={selectedCategory}
+            officialOnly={officialOnly}
+          />
         </main>
         <AboutPanel />
       </div>
