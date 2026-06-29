@@ -5,6 +5,7 @@ import { Footer } from './components/Footer.jsx';
 import { Header } from './components/Header.jsx';
 import { MonetizationSection } from './components/monetization/MonetizationSection.jsx';
 import { NewsFeed } from './components/NewsFeed.jsx';
+import { INGEST_SECRET } from './config.js';
 import {
   buildSourceMap,
   fetchNews,
@@ -55,7 +56,10 @@ export default function App() {
     setRefreshing(true);
     setError('');
     try {
-      await triggerIngest();
+      // Public prod: reload cached feed only. Ingest needs X-API-Secret (dev / admin).
+      if (INGEST_SECRET) {
+        await triggerIngest();
+      }
       await loadNews(category);
     } catch (err) {
       setError(err.message || 'Refresh failed');

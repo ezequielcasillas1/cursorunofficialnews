@@ -2,6 +2,28 @@ import { AdSlot } from './AdSlot.jsx';
 import { NewsCard } from './NewsCard.jsx';
 import { SupporterSlot } from './SupporterSlot.jsx';
 
+function errorHint(message) {
+  if (import.meta.env.PROD) {
+    if (message.includes('Unauthorized')) {
+      return 'The feed reload failed. News updates automatically on the server every ~30 minutes.';
+    }
+    if (message.includes('timed out')) {
+      return 'The API may be waking up — wait a few seconds and try again.';
+    }
+    if (message.includes('HTML instead of JSON')) {
+      return 'The /api proxy may be missing. Redeploy with wrangler — see docs/CLOUDFLARE-DEPLOY.md.';
+    }
+    return 'Try again shortly. If this persists, see docs/CLOUDFLARE-DEPLOY.md.';
+  }
+
+  return (
+    <>
+      Start the API: <code>npm run dev:api</code> from repo root, or{' '}
+      <code>cd mobile/server &amp;&amp; npm run dev</code>
+    </>
+  );
+}
+
 export function NewsFeed({ items, loading, error, sourceMap }) {
   if (loading) {
     return <p className="status-msg">Loading news…</p>;
@@ -11,10 +33,7 @@ export function NewsFeed({ items, loading, error, sourceMap }) {
     return (
       <div className="status-msg error" role="alert">
         <p>{error}</p>
-        <p className="hint">
-          Start the API: <code>npm run dev:api</code> from repo root, or{' '}
-          <code>cd mobile/server &amp;&amp; npm run dev</code>
-        </p>
+        <p className="hint">{errorHint(error)}</p>
       </div>
     );
   }
@@ -22,7 +41,14 @@ export function NewsFeed({ items, loading, error, sourceMap }) {
   if (!items.length) {
     return (
       <p className="status-msg">
-        No items yet. Click <strong>Refresh feed</strong> to run ingest.
+        {import.meta.env.PROD
+          ? 'No items yet. The feed updates automatically — try again in a few minutes.'
+          : (
+              <>
+                No items yet. Click <strong>Refresh feed</strong> to run ingest (set{' '}
+                <code>VITE_INGEST_SECRET</code> if the API requires it).
+              </>
+            )}
       </p>
     );
   }

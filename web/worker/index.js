@@ -31,7 +31,28 @@ export default {
 
     if (url.pathname === '/api' || url.pathname.startsWith('/api/')) {
       const apiOrigin = env.API_ORIGIN?.trim() || DEFAULT_API_ORIGIN;
-      return proxyApiRequest(request, apiOrigin);
+      try {
+        const response = await proxyApiRequest(request, apiOrigin);
+        // Surface upstream failures instead of falling through to SPA HTML.
+        if (response.status >= 502) {
+          return new Response(
+            JSON.stringify({
+              error: 'API temporarily unavailable',
+              status: response.status,
+            }),
+            {
+              status: response.status,
+              headers: { 'Content-Type': 'application/json; charset=utf-8' },
+            },
+          );
+        }
+        return response;
+      } catch {
+        return new Response(JSON.stringify({ error: 'API unreachable' }), {
+          status: 502,
+          headers: { 'Content-Type': 'application/json; charset=utf-8' },
+        });
+      }
     }
 
     // Serve ads.txt as plain text (never SPA fallback) for AdSense crawlers.

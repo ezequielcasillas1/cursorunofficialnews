@@ -1,6 +1,7 @@
 import { API_BASE, INGEST_SECRET } from '../config.js';
 
-const REQUEST_TIMEOUT_MS = 15000;
+/** Fly cold starts can exceed 10s when min_machines_running = 0. */
+const REQUEST_TIMEOUT_MS = import.meta.env.PROD ? 30000 : 15000;
 
 async function fetchJson(path, options = {}) {
   const controller = new AbortController();
