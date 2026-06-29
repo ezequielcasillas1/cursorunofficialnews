@@ -10,10 +10,16 @@ let lastIngestAt = null;
 function sanitizeNewsItem(item) {
   if (!item || typeof item !== 'object') return null;
   const source = item.sourceId ? getSourceById(item.sourceId) : null;
+  // Sitemap-sourced items inherit <lastmod>, which is the sitemap's own
+  // regeneration time — not the article date. Drop it so evergreen tutorials
+  // cannot pose as today's news in the chronological All feed.
+  const publishedAt =
+    source?.ingestMethod === 'sitemap' ? null : item.publishedAt;
   return {
     ...item,
     category: source?.category || item.category,
     canonicalUrl: sanitizeExternalUrl(item.canonicalUrl),
+    publishedAt,
   };
 }
 

@@ -35,10 +35,13 @@ function parseSitemapUrls(xml, { urlPattern, skipPattern, titlePathStrip }) {
     if (!loc || (urlPattern && !urlPattern.test(loc))) continue;
     if (skipPattern?.test(loc)) continue;
 
-    const lastmod = block.match(/<lastmod>([^<]+)<\/lastmod>/i)?.[1]?.trim() || null;
+    // Sitemap <lastmod> reflects sitemap regeneration time, not article
+    // publish time — using it as publishedAt makes evergreen tutorials look
+    // like the newest items and floats them above real news. Leave null so
+    // they sink to the bottom of any chronological sort.
     const title = titleFromPathUrl(loc, titlePathStrip);
     if (!title) continue;
-    items.push({ link: loc, pubDate: lastmod, title });
+    items.push({ link: loc, pubDate: null, title });
   }
 
   return items;

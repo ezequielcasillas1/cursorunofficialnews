@@ -38,11 +38,11 @@ test('getNews with no category returns items sorted by publishedAt desc', async 
     cache.replaceItems([
       {
         id: 'tutorial-old',
-        sourceId: 'cursor-learn-tutorials',
+        sourceId: 'devto-cursor-tutorials',
         category: 'tutorial',
         title: 'Old tutorial',
         publishedAt: '2024-01-01T00:00:00.000Z',
-        canonicalUrl: 'https://cursor.com/learn/old',
+        canonicalUrl: 'https://dev.to/cursor/old',
       },
       {
         id: 'changelog-new',
@@ -54,11 +54,11 @@ test('getNews with no category returns items sorted by publishedAt desc', async 
       },
       {
         id: 'tutorial-new',
-        sourceId: 'cursor-learn-tutorials',
+        sourceId: 'devto-cursor-tutorials',
         category: 'tutorial',
         title: 'Recent tutorial',
         publishedAt: '2026-05-15T00:00:00.000Z',
-        canonicalUrl: 'https://cursor.com/learn/recent',
+        canonicalUrl: 'https://dev.to/cursor/recent',
       },
     ]);
 
@@ -71,17 +71,59 @@ test('getNews with no category returns items sorted by publishedAt desc', async 
   });
 });
 
+test('sitemap-sourced items lose publishedAt and sink in chronological order', async () => {
+  await withTempDataDir(async () => {
+    const cache = await loadCacheModule();
+
+    cache.replaceItems([
+      {
+        id: 'sitemap-tutorial-today',
+        sourceId: 'cursor-learn-tutorials',
+        category: 'tutorial',
+        title: 'Sitemap tutorial dated today',
+        publishedAt: new Date().toISOString(),
+        canonicalUrl: 'https://cursor.com/learn/agent-mode',
+      },
+      {
+        id: 'changelog-yesterday',
+        sourceId: 'cursor-changelog-rss',
+        category: 'changelog',
+        title: 'Real changelog',
+        publishedAt: '2026-06-28T12:00:00.000Z',
+        canonicalUrl: 'https://cursor.com/changelog/yesterday',
+      },
+      {
+        id: 'rss-tutorial-old',
+        sourceId: 'devto-cursor-tutorials',
+        category: 'tutorial',
+        title: 'Real RSS tutorial',
+        publishedAt: '2026-04-01T00:00:00.000Z',
+        canonicalUrl: 'https://dev.to/cursor/old-tutorial',
+      },
+    ]);
+
+    const result = cache.getNews({ limit: 10 });
+    const ids = result.map((item) => item.id);
+    const sitemapItem = result.find((item) => item.id === 'sitemap-tutorial-today');
+
+    assert.equal(sitemapItem.publishedAt, null);
+    assert.equal(ids[0], 'changelog-yesterday');
+    assert.equal(ids[1], 'rss-tutorial-old');
+    assert.equal(ids[2], 'sitemap-tutorial-today');
+  });
+});
+
 test('getNews with category filter still diversifies across sources', async () => {
   await withTempDataDir(async () => {
     const cache = await loadCacheModule();
 
     const tutorialItems = Array.from({ length: 12 }, (_, index) => ({
       id: `tutorial-${index}`,
-      sourceId: 'cursor-learn-tutorials',
+      sourceId: 'devto-cursor-tutorials',
       category: 'tutorial',
       title: `Tutorial ${index}`,
       publishedAt: `2026-06-${String(28 - index).padStart(2, '0')}T00:00:00.000Z`,
-      canonicalUrl: `https://cursor.com/learn/item-${index}`,
+      canonicalUrl: `https://dev.to/cursor/item-${index}`,
     }));
 
     const forumItems = Array.from({ length: 4 }, (_, index) => ({
