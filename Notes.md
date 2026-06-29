@@ -1,0 +1,3 @@
+For your traffic question: **[Estimate Fly.io capacity](vscode-file://vscode-app/c:/Users/ezeki/AppData/Local/Programs/cursor/resources/app/out/vs/code/electron-sandbox/workbench/75042018-4455-4984-98de-076c0773d320)** found the current setup is fine for a modest fan site (~2k–15k daily visitors, ~100–300 concurrent), but a single 256MB Fly machine is the ceiling — Cloudflare handles the UI; every feed load still hits Fly.
+
+No code changes from that analysis. If you want to harden for growth, the highest-impact steps are bump Fly RAM to 512MB–1GB and add a short Cloudflare cache on `GET /v1/news`. Say the word if you want either implemented.
