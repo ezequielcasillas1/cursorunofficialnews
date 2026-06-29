@@ -38,7 +38,7 @@ export const NOTIFICATION_CATEGORIES = [
   {
     id: 'tutorial',
     label: 'Tutorials',
-    description: 'Official Cursor Learn guides and how-tos.',
+    description: 'Cursor Learn, docs, forum guides, and community how-tos.',
   },
 ];
 
