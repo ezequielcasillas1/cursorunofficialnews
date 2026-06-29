@@ -55,3 +55,24 @@ Client: `../src/api/newsClient.js` · config: `../app.config.js`
 ## Zscaler / corporate TLS
 
 Outbound RSS fetch needs system CA: `node --use-system-ca` (already in `package.json` `dev`/`start` scripts).
+
+---
+
+## Production (Fly.io) — newsletter email
+
+Full deploy: `docs/FLY-DEPLOY.md`. Email vars are **Fly secrets** (not in `fly.toml` or git).
+
+| Secret | Required for email | Notes |
+|--------|-------------------|--------|
+| `EMAIL_NOTIFICATIONS` | Yes | `true` — set `false` to disable |
+| `RESEND_API_KEY` | Yes | From [Resend API keys](https://resend.com/api-keys); omit → digests skip gracefully |
+| `RESEND_FROM_EMAIL` | Yes | Verified domain sender (not `onboarding@resend.dev` sandbox) |
+| `PUBLIC_API_BASE` | Yes | e.g. `https://cursorunofficialnews.fly.dev` — unsubscribe links |
+| `INGEST_CRON_ENABLED` | Recommended | `true` — digests fire after scheduled ingest when new items match topics |
+
+```powershell
+cd C:\Dev\CursorAINews
+fly secrets set RESEND_API_KEY="re_..." RESEND_FROM_EMAIL="Unofficial Cursor News <news@yourdomain.com>"
+```
+
+If not set yet, include `EMAIL_NOTIFICATIONS="true"` in the main secrets block (see `docs/FLY-DEPLOY.md`). Verify sender domain in Resend before production sends. List secrets: `fly secrets list`.

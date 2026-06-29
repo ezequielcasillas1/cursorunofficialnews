@@ -36,13 +36,21 @@ export function NewsletterSettings() {
     <CollapsiblePanel
       id="newsletter-settings"
       className="newsletter-panel"
-      eyebrow="Email digest"
+      eyebrow="Email digest · Beta"
       title="Newsletter options"
       subtitle="Mirror the mobile app’s digest controls on web: choose topics, manage your subscription, and keep state on this browser with a secure manage token."
       summary={loading ? 'Loading newsletter settings…' : collapsedSummary(prefs)}
       defaultExpanded={NEWSLETTER_PANEL_DEFAULT_EXPANDED}
       loading={loading}
     >
+      <p className="newsletter-beta-notice" role="note">
+        <strong>Beta.</strong> This email digest is still in development. If you sign up
+        now, you may or may not receive newsletters until we finish the feature. Already
+        subscribed? We may email you to explain that delivery might not be possible during
+        beta — but if digests are already going out, you could keep receiving them. We
+        cannot promise either outcome yet.
+      </p>
+
       <div className="newsletter-grid">
         <label className="newsletter-field" htmlFor="newsletter-email">
           <span className="newsletter-field-label">Email address</span>
