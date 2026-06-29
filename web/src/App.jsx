@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AboutPanel, StatusBar } from './components/AboutPanel.jsx';
 import { CategoryFilter } from './components/CategoryFilter.jsx';
+import { FeedSearch } from './components/FeedSearch.jsx';
 import { Footer } from './components/Footer.jsx';
 import { Header } from './components/Header.jsx';
 import { MonetizationSection } from './components/monetization/MonetizationSection.jsx';
@@ -15,6 +16,7 @@ import {
   fetchStatus,
   triggerIngest,
 } from './services/newsApi.js';
+import { filterNewsItems } from './feed/filterNewsItems.js';
 import './App.css';
 
 const FILTER_PREFS_KEY = 'cursor_news_filter_prefs';
@@ -40,6 +42,7 @@ function saveFilterPrefs(category, officialOnly) {
 export default function App() {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [officialOnly, setOfficialOnly] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [items, setItems] = useState([]);
   const [sourceMap, setSourceMap] = useState({});
   const [loading, setLoading] = useState(true);
@@ -86,6 +89,11 @@ export default function App() {
     loadNews(selectedCategory, officialOnly);
   }, [selectedCategory, officialOnly, loadNews]);
 
+  const filteredItems = useMemo(
+    () => filterNewsItems(items, searchQuery),
+    [items, searchQuery],
+  );
+
   async function handleRefresh() {
     setRefreshing(true);
     setError('');
@@ -113,16 +121,23 @@ export default function App() {
           onCategoryChange={setSelectedCategory}
           onOfficialOnlyChange={setOfficialOnly}
         />
+        <FeedSearch
+          value={searchQuery}
+          onChange={setSearchQuery}
+          resultCount={filteredItems.length}
+          totalCount={items.length}
+        />
         <MonetizationSection />
         <NewsletterSettings />
         <main className="app-main">
           <NewsFeed
-            items={items}
+            items={filteredItems}
             loading={loading}
             error={error}
             sourceMap={sourceMap}
             selectedCategory={selectedCategory}
             officialOnly={officialOnly}
+            searchQuery={searchQuery}
           />
         </main>
         <AboutPanel />

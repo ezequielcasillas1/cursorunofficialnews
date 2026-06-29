@@ -32,6 +32,7 @@ export function NewsFeed({
   sourceMap,
   selectedCategory = 'all',
   officialOnly = false,
+  searchQuery = '',
 }) {
   if (loading) {
     return <p className="status-msg">Loading news…</p>;
@@ -47,7 +48,10 @@ export function NewsFeed({
   }
 
   if (!items.length) {
-    const emptyMessage = getEmptyFeedMessage(selectedCategory, officialOnly);
+    const trimmedSearch = searchQuery.trim();
+    const emptyMessage = trimmedSearch
+      ? `No items match "${trimmedSearch}". Try different keywords or clear the search.`
+      : getEmptyFeedMessage(selectedCategory, officialOnly);
     return (
       <p className="status-msg">
         {import.meta.env.PROD
