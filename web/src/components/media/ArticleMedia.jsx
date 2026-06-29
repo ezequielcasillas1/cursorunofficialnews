@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { sanitizeExternalUrl } from '../../../../mobile/shared/url/safe-external-url.js';
 import { resolveArticleMedia } from '../../utils/articleMedia.js';
 import { MediaPlaceholder } from './MediaPlaceholder.jsx';
 
@@ -18,6 +19,7 @@ function PlayOverlay({ label = 'Watch video' }) {
 export function ArticleMedia({ item, featured = false, className = '' }) {
   const [imageFailed, setImageFailed] = useState(false);
   const media = resolveArticleMedia(item);
+  const safeUrl = sanitizeExternalUrl(item?.canonicalUrl);
   const hasImage = Boolean(media.url) && !imageFailed;
   const aspectClass = featured ? 'media-aspect-hero' : 'media-aspect-card';
   const wrapClass = [
@@ -30,7 +32,7 @@ export function ArticleMedia({ item, featured = false, className = '' }) {
     .filter(Boolean)
     .join(' ');
 
-  const mediaLink = Boolean(item?.canonicalUrl);
+  const mediaLink = Boolean(safeUrl);
 
   const inner = hasImage ? (
     <>
@@ -55,11 +57,11 @@ export function ArticleMedia({ item, featured = false, className = '' }) {
     />
   );
 
-  if (item?.canonicalUrl) {
+  if (mediaLink) {
     return (
       <figure className={wrapClass}>
         <a
-          href={item.canonicalUrl}
+          href={safeUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="article-media-link"

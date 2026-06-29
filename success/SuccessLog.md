@@ -17,3 +17,8 @@
 **Status:** SUCCESS
 **Files:** docs/BMC-GO-LIVE.md, docs/CLOUDFLARE-DEPLOY.md, web/.env.example, web/src/components/AdSlot.jsx, web/src/components/monetization/AdSenseSlot.jsx, web/src/components/monetization/MonetizationSection.jsx, web/src/config.js, web/src/monetization/config.js
 **Result:** User confirmed BMC membership checkout and site monetization work. Commit acc7e8b pushed to main. Tier buttons no longer 404; $5 Supporter tier live on BMC; ad-free email claim flow working.
+
+### [2026-06-29] - Community/social sources + web section filters
+**Status:** SUCCESS
+**Files:** mobile/server/src/sources/registry.js, mobile/server/src/ingest/feeds.js, mobile/server/src/ingest/twitter-api.js, mobile/server/.env.example, web/src/config/feedCategories.js, web/src/components/CategoryFilter.jsx, web/src/App.jsx, web/src/services/newsApi.js, web/src/components/NewsFeed.jsx, web/src/App.css, mobile/src/config/constants.js, mobile/src/config/notifications.js
+**Result:** User confirmed Community and Social tabs work on cursorunofficial.news. Reddit/HN/X sources ingested on Fly (46f05b4); web Sections + Official only aligned with Android; Fly deploy + ingest live.

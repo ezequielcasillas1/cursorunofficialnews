@@ -1,3 +1,5 @@
+import { sanitizeExternalUrl } from '../../../mobile/shared/url/safe-external-url.js';
+
 const CATEGORY_LABELS = {
   changelog: 'Changelog',
   release: 'Release',
@@ -51,7 +53,12 @@ export function getYouTubeThumbnail(url, quality = 'mqdefault') {
 }
 
 function pickImageUrl(item) {
-  return item?.imageUrl || item?.thumbnailUrl || item?.thumbnail || null;
+  return (
+    sanitizeExternalUrl(item?.imageUrl) ||
+    sanitizeExternalUrl(item?.thumbnailUrl) ||
+    sanitizeExternalUrl(item?.thumbnail) ||
+    null
+  );
 }
 
 export function resolveArticleMedia(item) {

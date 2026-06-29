@@ -3,6 +3,7 @@ import {
   PUSH_BODY_MAX,
   PUSH_TITLE_MAX,
 } from './constants.js';
+import { sanitizeExternalUrl } from '../url/safe-external-url.js';
 
 export function categoryLabel(category) {
   return CATEGORY_LABELS[category] || category;
@@ -21,12 +22,13 @@ export function assembleSinglePush(item) {
   const label = categoryLabel(item.category);
   const source = item.sourceName || 'Cursor News';
   const excerpt = truncate(item.excerpt, PUSH_BODY_MAX);
+  const safeUrl = sanitizeExternalUrl(item.canonicalUrl) || null;
 
   return {
     title: truncate(item.title, PUSH_TITLE_MAX),
     body: excerpt || `${label} · ${source}`,
     data: {
-      url: item.canonicalUrl,
+      url: safeUrl,
       itemId: item.id,
       category: item.category,
       type: 'single',
@@ -45,6 +47,7 @@ export function assembleDigestPush(items) {
   });
   const top = sorted[0];
   const count = sorted.length;
+  const safeUrl = sanitizeExternalUrl(top.canonicalUrl) || null;
 
   const title =
     count === 1
@@ -63,7 +66,7 @@ export function assembleDigestPush(items) {
       type: 'digest',
       count,
       itemIds: sorted.map((item) => item.id),
-      url: top.canonicalUrl,
+      url: safeUrl,
       itemId: top.id,
       category: top.category,
     },

@@ -28,8 +28,6 @@ import {
 
   buildSourceMap,
 
-  triggerIngest,
-
 } from '../api/newsClient';
 
 import { API_BASE, getCategoryApiParam, getEmptyFeedMessage } from '../config/constants';
@@ -126,7 +124,7 @@ async function appendStatusHint(message) {
 
     );
 
-    if (!status.scrapeConfigured) {
+    if (status.scrapeConfigured === false) {
 
       parts.push('Blog scrape not configured on API (SCRAPE_API_URL).');
 
@@ -210,7 +208,7 @@ export function FeedScreen({ onOpenAbout, onOpenAlerts }) {
 
   const loadFeed = useCallback(
 
-    async ({ initial = false, skipEmptyIngest = false } = {}) => {
+    async ({ initial = false } = {}) => {
 
       const requestId = ++loadRequestId.current;
 
@@ -253,26 +251,6 @@ export function FeedScreen({ onOpenAbout, onOpenAlerts }) {
         ]);
 
         let data = newsResult;
-
-        if (
-
-          !skipEmptyIngest &&
-
-          selectedCategory === 'all' &&
-
-          !officialOnly &&
-
-          (!data.items || data.items.length === 0)
-
-        ) {
-
-          await triggerIngest();
-
-          if (requestId !== loadRequestId.current) return;
-
-          data = await fetchNews(newsOptions);
-
-        }
 
         if (requestId !== loadRequestId.current) return;
 
@@ -322,7 +300,7 @@ export function FeedScreen({ onOpenAbout, onOpenAlerts }) {
 
             if (status.itemCount === 0) {
 
-              hints.push('API cache is empty — pull down or tap Refresh to ingest.');
+              hints.push('API cache is empty — start the server or run ingest from a trusted admin workflow.');
 
             } else {
 
@@ -334,7 +312,7 @@ export function FeedScreen({ onOpenAbout, onOpenAlerts }) {
 
             }
 
-            if (!status.scrapeConfigured) {
+            if (status.scrapeConfigured === false) {
 
               hints.push('Blog scrape not configured (SCRAPE_API_URL on API).');
 
@@ -403,10 +381,7 @@ export function FeedScreen({ onOpenAbout, onOpenAlerts }) {
     setFeedHint('');
 
     try {
-
-      await triggerIngest();
-
-      await loadFeed({ skipEmptyIngest: true });
+      await loadFeed();
 
     } catch (err) {
 

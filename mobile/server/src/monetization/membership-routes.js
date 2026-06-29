@@ -8,6 +8,14 @@ import {
   listMembers,
 } from '../store/bmc-members.js';
 import { isValidEmail, normalizeEmail } from '../store/email-subscribers.js';
+import {
+  consumeMembershipClaimRequest,
+  createMembershipClaimRequest,
+} from '../store/membership-claim-requests.js';
+import {
+  isMembershipClaimEmailConfigured,
+  sendMembershipClaimEmail,
+} from './send-membership-claim-email.js';
 
 const claimRateLimit = new Map();
 const CLAIM_RATE_MS = 30_000;
@@ -22,8 +30,16 @@ function checkClaimRateLimit(key) {
   return true;
 }
 
+const CLAIM_PENDING_MESSAGE =
+  'If that email has an active membership, we sent a verification link.';
+
+function noStore(res) {
+  res.set('Cache-Control', 'no-store');
+}
+
 export function registerMembershipRoutes(app) {
-  app.post('/v1/membership/claim', (req, res) => {
+  app.post('/v1/membership/claim', async (req, res) => {
+    noStore(res);
     try {
       const email = normalizeEmail(req.body?.email);
       if (!isValidEmail(email)) {
@@ -37,7 +53,7 @@ export function registerMembershipRoutes(app) {
         return;
       }
 
-      if (isDevAdFreeEmail(email)) {
+      if (process.env.NODE_ENV !== 'production' && isDevAdFreeEmail(email)) {
         const devRecord = activateMember(email);
         res.json({
           ok: true,
@@ -49,39 +65,67 @@ export function registerMembershipRoutes(app) {
         return;
       }
 
-      const claim = claimAdFreeAccess(email);
-      if (!claim) {
-        const member = getMember(email);
-        if (member?.status === 'paused') {
-          res.status(403).json({
-            error:
-              'Your membership is paused on Buy Me a Coffee. Resume it there, then try again.',
-            membershipStatus: 'paused',
-          });
-          return;
-        }
-
-        res.status(404).json({
-          error:
-            'No active membership found for this email. Subscribe first, then try again in a minute.',
-          membershipStatus: member?.status === 'cancelled' ? 'cancelled' : null,
+      if (!isMembershipClaimEmailConfigured()) {
+        res.status(503).json({
+          error: 'Membership email verification is unavailable right now. Please try again later.',
         });
         return;
       }
 
+      const member = getMember(email);
+      if (member?.active) {
+        const request = createMembershipClaimRequest(email);
+        await sendMembershipClaimEmail({
+          email,
+          claimToken: request.token,
+        });
+      }
+
       res.json({
         ok: true,
-        adFree: true,
-        email: claim.email,
-        token: claim.adFreeToken,
-        activationUrl: buildAdFreeActivationUrl(claim.adFreeToken),
+        pending: true,
+        message: CLAIM_PENDING_MESSAGE,
       });
     } catch (err) {
-      res.status(400).json({ error: err.message || 'Claim failed' });
+      const message = err.message || 'Claim failed';
+      const status = message.includes('unavailable') ? 503 : 400;
+      res.status(status).json({ error: message });
     }
   });
 
+  app.post('/v1/membership/claim/verify', (req, res) => {
+    noStore(res);
+    const claimToken = String(req.body?.token || '').trim();
+    if (!claimToken) {
+      res.status(400).json({ error: 'token is required' });
+      return;
+    }
+
+    const request = consumeMembershipClaimRequest(claimToken);
+    if (!request) {
+      res.status(410).json({ error: 'This verification link is invalid or has expired.' });
+      return;
+    }
+
+    const claim = claimAdFreeAccess(request.email);
+    if (!claim) {
+      res.status(410).json({
+        error: 'Your membership could not be verified. Please request a new verification link.',
+      });
+      return;
+    }
+
+    res.json({
+      ok: true,
+      adFree: true,
+      email: claim.email,
+      token: claim.adFreeToken,
+      activationUrl: buildAdFreeActivationUrl(claim.adFreeToken),
+    });
+  });
+
   app.get('/v1/membership/status', (req, res) => {
+    noStore(res);
     const token = String(req.query?.token || '').trim();
     if (!token) {
       res.status(400).json({ error: 'token query parameter is required' });

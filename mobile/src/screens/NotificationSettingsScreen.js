@@ -123,11 +123,16 @@ export function NotificationSettingsScreen({ onBack, previewItem }) {
     if (prefs.enabled && categories.length === 0) {
       throw new Error('Select at least one topic for email digest.');
     }
-    await subscribeEmail({
+    const response = await subscribeEmail({
       email: prefs.email,
       categories,
       enabled: prefs.enabled,
     });
+    return {
+      ...prefs,
+      email: response?.subscriber?.email || prefs.email,
+      manageToken: response?.subscriber?.manageToken || prefs.manageToken || '',
+    };
   }
 
   async function persistEmail(nextEmailPrefs, { syncServer = false, unsubscribe = false } = {}) {
@@ -138,9 +143,14 @@ export function NotificationSettingsScreen({ onBack, previewItem }) {
     try {
       await saveEmailPrefs(nextEmailPrefs);
 
-      if (unsubscribe && nextEmailPrefs.email) {
-        await unsubscribeEmail(nextEmailPrefs.email);
-        const cleared = { ...nextEmailPrefs, enabled: false };
+      if (unsubscribe) {
+        if (!nextEmailPrefs.manageToken) {
+          throw new Error(
+            'This device needs a fresh secure management token. Tap Subscribe once, or use the unsubscribe link from an email digest.',
+          );
+        }
+        await unsubscribeEmail(nextEmailPrefs.manageToken);
+        const cleared = { ...nextEmailPrefs, enabled: false, manageToken: '' };
         await saveEmailPrefs(cleared);
         setEmailPrefs(cleared);
         setEmailStatus('Unsubscribed — no more digest emails.');
@@ -148,7 +158,9 @@ export function NotificationSettingsScreen({ onBack, previewItem }) {
       }
 
       if (syncServer) {
-        await syncEmailToServer(nextEmailPrefs);
+        const syncedPrefs = await syncEmailToServer(nextEmailPrefs);
+        await saveEmailPrefs(syncedPrefs);
+        setEmailPrefs(syncedPrefs);
         setEmailStatus(
           nextEmailPrefs.enabled
             ? 'Subscribed — one digest email when new headlines arrive.'
@@ -193,7 +205,7 @@ export function NotificationSettingsScreen({ onBack, previewItem }) {
 
   function handleUnsubscribePress() {
     if (!emailPrefs) return;
-    persistEmail({ ...emailPrefs, enabled: false }, { unsubscribe: true });
+    persistEmail(emailPrefs, { unsubscribe: true });
   }
 
   if (!prefs || !emailPrefs) {
@@ -356,8 +368,8 @@ export function NotificationSettingsScreen({ onBack, previewItem }) {
       <View style={styles.emailDisclaimer}>
         <Text style={styles.footerText}>
           Unofficial fan app — not affiliated with Anysphere or Cursor. Your email is
-          used only for this digest. Unsubscribe anytime here. v1 has no email-link
-          unsubscribe token; use this screen or contact the maintainer.
+          used only for this digest. Unsubscribe anytime here or from the secure
+          link included in each digest email.
         </Text>
       </View>
 

@@ -1,15 +1,33 @@
 import { getSourceMeta } from '../sources/registry.js';
 import { loadJsonFile, saveJsonFile } from './json-persist.js';
+import { sanitizeExternalUrl } from '../../../shared/url/safe-external-url.js';
 
 const FILENAME = 'news-cache.json';
 
 let items = [];
 let lastIngestAt = null;
 
+function sanitizeNewsItem(item) {
+  if (!item || typeof item !== 'object') return null;
+  return {
+    ...item,
+    canonicalUrl: sanitizeExternalUrl(item.canonicalUrl),
+  };
+}
+
+function sanitizeNewsItems(nextItems) {
+  if (!Array.isArray(nextItems)) return [];
+  return nextItems.map(sanitizeNewsItem).filter(Boolean);
+}
+
 function loadFromDisk() {
   const data = loadJsonFile(FILENAME, { items: [], lastIngestAt: null });
-  items = Array.isArray(data.items) ? data.items : [];
+  const rawItems = Array.isArray(data.items) ? data.items : [];
+  items = sanitizeNewsItems(rawItems);
   lastIngestAt = data.lastIngestAt || null;
+  if (items.length !== rawItems.length || JSON.stringify(items) !== JSON.stringify(rawItems)) {
+    saveToDisk();
+  }
 }
 
 function saveToDisk() {
@@ -46,7 +64,7 @@ export function getNews({ category, categories, official, limit = 50 } = {}) {
 }
 
 export function replaceItems(nextItems) {
-  items = nextItems;
+  items = sanitizeNewsItems(nextItems);
   saveToDisk();
 }
 

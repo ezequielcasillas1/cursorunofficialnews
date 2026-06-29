@@ -1,3 +1,5 @@
+import crypto from 'crypto';
+
 function extractSecret(req) {
   const headerSecret = req.headers['x-api-secret'];
   if (headerSecret) return String(headerSecret);
@@ -10,7 +12,13 @@ function extractSecret(req) {
 
 function checkSecret(req, expectedSecret) {
   const provided = extractSecret(req);
-  return provided && provided === expectedSecret;
+  if (!provided || !expectedSecret) return false;
+
+  const providedBuf = Buffer.from(provided);
+  const expectedBuf = Buffer.from(expectedSecret);
+  if (providedBuf.length !== expectedBuf.length) return false;
+
+  return crypto.timingSafeEqual(providedBuf, expectedBuf);
 }
 
 /**

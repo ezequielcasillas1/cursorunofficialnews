@@ -15,21 +15,18 @@ async function fetchJson(path, options = {}) {
 
     const contentType = res.headers.get('content-type') || '';
     if (!contentType.includes('application/json')) {
-      throw new Error('Membership API returned an unexpected response');
+      throw new Error('Newsletter API returned an unexpected response');
     }
 
     const body = await res.json();
     if (!res.ok) {
-      const err = new Error(body.error || `Request failed (${res.status})`);
-      if (body.membershipStatus) {
-        err.membershipStatus = body.membershipStatus;
-      }
-      throw err;
+      throw new Error(body.error || `Request failed (${res.status})`);
     }
+
     return body;
   } catch (err) {
     if (err.name === 'AbortError') {
-      throw new Error('Membership check timed out — is the API running?');
+      throw new Error('Newsletter request timed out. Is the API running?');
     }
     throw err;
   } finally {
@@ -37,23 +34,23 @@ async function fetchJson(path, options = {}) {
   }
 }
 
-export function claimMembership(email) {
-  return fetchJson('/v1/membership/claim', {
+export function subscribeNewsletter({ email, categories, enabled = true }) {
+  return fetchJson('/v1/email/subscribe', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email }),
+    body: JSON.stringify({ email, categories, enabled }),
   });
 }
 
-export function fetchMembershipStatus(token) {
-  const params = new URLSearchParams({ token });
-  return fetchJson(`/v1/membership/status?${params.toString()}`);
-}
-
-export function verifyMembershipClaim(token) {
-  return fetchJson('/v1/membership/claim/verify', {
+export function unsubscribeNewsletter(token) {
+  return fetchJson('/v1/email/unsubscribe', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ token }),
   });
+}
+
+export function fetchNewsletterStatus(token) {
+  const params = new URLSearchParams({ token: String(token || '').trim() });
+  return fetchJson(`/v1/email/status?${params.toString()}`);
 }

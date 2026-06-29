@@ -1,6 +1,7 @@
 import {
   CATEGORY_LABELS,
 } from '../../../shared/notifications/constants.js';
+import { sanitizeExternalUrl } from '../../../shared/url/safe-external-url.js';
 
 function categoryLabel(category) {
   return CATEGORY_LABELS[category] || category;
@@ -53,10 +54,14 @@ function formatDate(iso) {
 function renderItemHtml(item) {
   const label = categoryLabel(item.category);
   const title = escapeHtml(item.title);
-  const url = escapeHtml(item.canonicalUrl);
+  const url = sanitizeExternalUrl(item.canonicalUrl);
   const excerpt = escapeHtml(truncate(item.excerpt, 220));
   const source = escapeHtml(item.sourceName || 'Cursor News');
   const date = formatDate(item.publishedAt);
+  const safeUrl = escapeHtml(url);
+  const titleMarkup = url
+    ? `<a href="${safeUrl}" style="color:#0a0a0f;font-family:Georgia,'Times New Roman',serif;font-size:20px;font-weight:600;line-height:1.35;text-decoration:none;">${title}</a>`
+    : `<span style="color:#0a0a0f;font-family:Georgia,'Times New Roman',serif;font-size:20px;font-weight:600;line-height:1.35;">${title}</span>`;
 
   return `
     <tr>
@@ -70,7 +75,7 @@ function renderItemHtml(item) {
           </tr>
           <tr>
             <td style="padding-top:12px;">
-              <a href="${url}" style="color:#0a0a0f;font-family:Georgia,'Times New Roman',serif;font-size:20px;font-weight:600;line-height:1.35;text-decoration:none;">${title}</a>
+              ${titleMarkup}
             </td>
           </tr>
           ${excerpt ? `<tr><td style="padding-top:8px;color:#1c1c24;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.55;">${excerpt}</td></tr>` : ''}
@@ -84,10 +89,11 @@ function renderItemHtml(item) {
 
 function renderItemText(item) {
   const label = categoryLabel(item.category);
+  const safeUrl = sanitizeExternalUrl(item.canonicalUrl);
   const lines = [
     `[${label}] ${item.title}`,
     item.excerpt ? truncate(item.excerpt, 300) : null,
-    item.canonicalUrl,
+    safeUrl || 'Original link unavailable',
     item.sourceName ? `— ${item.sourceName}` : null,
     '',
   ].filter((line) => line !== null);

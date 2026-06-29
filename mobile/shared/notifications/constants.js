@@ -7,6 +7,8 @@ export const CATEGORY_LABELS = {
   release: 'Release',
   blog: 'Blog',
   forum: 'Forum',
+  community: 'Community',
+  social: 'Social',
   video: 'Video',
   tutorial: 'Tutorial',
 };

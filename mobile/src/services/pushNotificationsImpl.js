@@ -1,6 +1,7 @@
 import Constants from 'expo-constants';
 import { Linking, Platform } from 'react-native';
 import { assembleSinglePush } from '../../shared/notifications/assemble-push.js';
+import { sanitizeExternalUrl } from '../../shared/url/safe-external-url.js';
 import { registerDevice, unregisterDevice } from '../api/newsClient';
 import { PUSH_REBUILD_HINT } from '../config/push';
 
@@ -118,7 +119,8 @@ export async function addNotificationResponseListener(onOpenUrl) {
     const Notifications = await loadNotifications();
     return Notifications.addNotificationResponseReceivedListener((response) => {
       const url = response.notification.request.content.data?.url;
-      if (url && onOpenUrl) onOpenUrl(url);
+      const safeUrl = sanitizeExternalUrl(url);
+      if (safeUrl && onOpenUrl) onOpenUrl(safeUrl);
     });
   } catch {
     return noopSubscription;
@@ -126,7 +128,8 @@ export async function addNotificationResponseListener(onOpenUrl) {
 }
 
 export async function openNotificationUrl(url) {
-  if (url) await Linking.openURL(url);
+  const safeUrl = sanitizeExternalUrl(url);
+  if (safeUrl) await Linking.openURL(safeUrl);
 }
 
 export async function scheduleLocalPreviewNotification(item) {

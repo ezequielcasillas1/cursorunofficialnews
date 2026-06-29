@@ -1,5 +1,6 @@
 import { Image, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { ExternalLink, Play } from 'lucide-react-native';
+import { sanitizeExternalUrl } from '../../shared/url/safe-external-url.js';
 import { colors, radii, shadows, spacing, typography } from '../theme/tokens';
 import { SourceOfficialBadge } from './SourceOfficialBadge';
 
@@ -72,21 +73,23 @@ function formatCategoryLabel(category, sourceName) {
 
 export function NewsListItem({ item, isOfficial = false }) {
   const isVideo = item.category === 'video';
-  const thumbnailUrl = isVideo ? getYouTubeThumbnail(item.canonicalUrl) : null;
+  const safeUrl = sanitizeExternalUrl(item.canonicalUrl);
+  const thumbnailUrl = isVideo ? getYouTubeThumbnail(safeUrl) : null;
   const categoryLabel = formatCategoryLabel(item.category, item.sourceName);
 
   async function openArticle() {
-    if (!item.canonicalUrl) return;
-    await Linking.openURL(item.canonicalUrl);
+    if (!safeUrl) return;
+    await Linking.openURL(safeUrl);
   }
 
   return (
     <Pressable
+      disabled={!safeUrl}
       onPress={openArticle}
       style={({ pressed }) => [
         styles.card,
         isOfficial && styles.cardOfficial,
-        pressed && styles.cardPressed,
+        pressed && safeUrl && styles.cardPressed,
       ]}
     >
       {thumbnailUrl ? (
@@ -114,7 +117,9 @@ export function NewsListItem({ item, isOfficial = false }) {
 
       <View style={styles.titleRow}>
         <Text style={styles.title}>{item.title}</Text>
-        <ExternalLink size={16} color={colors.goldMuted} strokeWidth={2} style={styles.linkIcon} />
+        {safeUrl ? (
+          <ExternalLink size={16} color={colors.goldMuted} strokeWidth={2} style={styles.linkIcon} />
+        ) : null}
       </View>
 
       <Text style={styles.sourceLine}>{item.sourceName}</Text>

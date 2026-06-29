@@ -55,7 +55,7 @@ export function NewsFeed({
           : (
               <>
                 {emptyMessage} Click <strong>Refresh feed</strong> to run ingest (set{' '}
-                <code>VITE_INGEST_SECRET</code> if the API requires it).
+                <code>VITE_INGEST_SECRET</code> in local dev if the API requires it).
               </>
             )}
       </p>

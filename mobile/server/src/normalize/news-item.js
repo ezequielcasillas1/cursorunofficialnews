@@ -1,3 +1,5 @@
+import { sanitizeExternalUrl } from '../../../shared/url/safe-external-url.js';
+
 const DEFAULT_EXCERPT = 300;
 
 function stripHtml(value) {
@@ -9,17 +11,7 @@ function stripHtml(value) {
 }
 
 function normalizeUrl(url) {
-  if (!url) return '';
-  try {
-    const parsed = new URL(url);
-    parsed.hash = '';
-    if (parsed.pathname.length > 1 && parsed.pathname.endsWith('/')) {
-      parsed.pathname = parsed.pathname.slice(0, -1);
-    }
-    return parsed.toString();
-  } catch {
-    return String(url).trim();
-  }
+  return sanitizeExternalUrl(url);
 }
 
 function parseDate(value) {

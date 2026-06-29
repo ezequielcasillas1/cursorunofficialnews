@@ -25,6 +25,7 @@ export function MonetizationSection() {
     checking,
     claiming,
     claimError,
+    claimNotice,
     supporterEmail,
     membershipStatus,
     claimAdFree,
@@ -58,6 +59,7 @@ export function MonetizationSection() {
         onClaim={claimAdFree}
         claiming={claiming}
         claimError={claimError}
+        claimNotice={claimNotice}
       />
       <AdSenseSlot className="monetization-ad" />
     </section>

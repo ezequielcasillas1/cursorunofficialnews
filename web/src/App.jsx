@@ -4,6 +4,7 @@ import { CategoryFilter } from './components/CategoryFilter.jsx';
 import { Footer } from './components/Footer.jsx';
 import { Header } from './components/Header.jsx';
 import { MonetizationSection } from './components/monetization/MonetizationSection.jsx';
+import { NewsletterSettings } from './components/newsletter/NewsletterSettings.jsx';
 import { NewsFeed } from './components/NewsFeed.jsx';
 import { getCategoryApiParam } from './config/feedCategories.js';
 import { INGEST_SECRET } from './config.js';
@@ -113,6 +114,7 @@ export default function App() {
           onOfficialOnlyChange={setOfficialOnly}
         />
         <MonetizationSection />
+        <NewsletterSettings />
         <main className="app-main">
           <NewsFeed
             items={items}

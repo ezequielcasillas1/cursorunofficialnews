@@ -6,7 +6,7 @@ import {
   TACO_TIER_AMOUNTS,
 } from '../../monetization/config.js';
 
-export function BuyMeTacoPanel({ onClaim, claiming, claimError, compact = false }) {
+export function BuyMeTacoPanel({ onClaim, claiming, claimError, claimNotice, compact = false }) {
   const [email, setEmail] = useState('');
   const [showClaimForm, setShowClaimForm] = useState(false);
 
@@ -60,7 +60,7 @@ export function BuyMeTacoPanel({ onClaim, claiming, claimError, compact = false 
       </div>
 
       <p className="taco-footnote">
-        Subscriptions are handled on Buy Me a Coffee. After joining, enter the same email above to hide ads.
+        Subscriptions are handled on Buy Me a Coffee. After joining, request a one-time verification link sent to the same email to hide ads.
       </p>
 
       {!showClaimForm ? (
@@ -81,12 +81,13 @@ export function BuyMeTacoPanel({ onClaim, claiming, claimError, compact = false 
               required
             />
             <button type="submit" className="btn" disabled={claiming}>
-              {claiming ? 'Checking…' : 'Verify'}
+              {claiming ? 'Sending…' : 'Email link'}
             </button>
           </div>
           {claimError ? <p className="taco-claim-error">{claimError}</p> : null}
         </form>
       )}
+      {claimNotice ? <p className="hint">{claimNotice}</p> : null}
     </section>
   );
 }

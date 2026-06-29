@@ -52,10 +52,6 @@ export function fetchStatus() {
   return fetchJson('/v1/status');
 }
 
-export function triggerIngest() {
-  return fetchJson('/v1/ingest', { method: 'POST' });
-}
-
 export function registerDevice({ token, platform, categories, enabled }) {
   return fetchJson('/v1/devices/register', {
     method: 'POST',

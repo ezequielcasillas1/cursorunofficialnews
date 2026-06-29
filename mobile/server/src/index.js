@@ -20,12 +20,12 @@ import {
   setLastIngestAt,
 } from './store/memory-cache.js';
 import {
-  getSubscriber,
-  isValidEmail,
+  buildSubscriberForClient,
+  buildSubscriberStatusForClient,
+  getSubscriberByToken,
   listSubscribers,
   subscribeEmail,
   unsubscribeByToken,
-  unsubscribeEmail,
 } from './store/email-subscribers.js';
 import {
   listDevices,
@@ -34,11 +34,20 @@ import {
 } from './store/device-tokens.js';
 import { handleBmcWebhook } from './monetization/bmc-webhook.js';
 import { registerMembershipRoutes } from './monetization/membership-routes.js';
+import { createCorsOptions } from './security/cors-options.js';
 
 const app = express();
 const port = Number(process.env.PORT || 8787);
 
-app.use(cors());
+app.disable('x-powered-by');
+app.use(cors(createCorsOptions()));
+app.use((req, res, next) => {
+  res.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  res.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.set('X-Content-Type-Options', 'nosniff');
+  res.set('X-Frame-Options', 'DENY');
+  next();
+});
 
 app.post(
   '/v1/bmc/webhook',
@@ -46,7 +55,7 @@ app.post(
   handleBmcWebhook,
 );
 
-app.use(express.json());
+app.use(express.json({ limit: '64kb' }));
 registerMembershipRoutes(app);
 
 /** In-process mutex — prevents concurrent ingests from double-notifying. */
@@ -71,12 +80,15 @@ app.get('/health', (_req, res) => {
 });
 
 app.get('/v1/status', (_req, res) => {
-  res.json({
+  const payload = {
     ...getStatus(),
     sourceCount: listSourcesForApi().filter((s) => s.enabled).length,
-    scrapeConfigured: isScrapeConfigured(),
-    twitterApiConfigured: isTwitterApiConfigured(),
-  });
+  };
+  if (process.env.NODE_ENV !== 'production') {
+    payload.scrapeConfigured = isScrapeConfigured();
+    payload.twitterApiConfigured = isTwitterApiConfigured();
+  }
+  res.json(payload);
 });
 
 app.get('/v1/sources', (_req, res) => {
@@ -84,14 +96,18 @@ app.get('/v1/sources', (_req, res) => {
 });
 
 app.get('/v1/news', (req, res) => {
-  const limit = req.query.limit ? Number(req.query.limit) : 50;
+  const parsedLimit = req.query.limit ? Number(req.query.limit) : 50;
+  const limit =
+    Number.isFinite(parsedLimit) && parsedLimit > 0
+      ? Math.min(Math.floor(parsedLimit), 200)
+      : 50;
   const category = req.query.category ? String(req.query.category) : undefined;
   const official = req.query.official === 'true';
   res.json({
     items: getNews({
       category,
       official,
-      limit: Number.isFinite(limit) ? limit : 50,
+      limit,
     }),
     lastIngestAt: getLastIngestAt(),
   });
@@ -163,7 +179,12 @@ function checkSubscribeRateLimit(key) {
   return true;
 }
 
+function noStore(res) {
+  res.set('Cache-Control', 'no-store');
+}
+
 app.post('/v1/email/subscribe', (req, res) => {
+  noStore(res);
   try {
     const { email, categories, enabled } = req.body || {};
     const rateKey = `${req.ip || 'unknown'}:${String(email || '').toLowerCase()}`;
@@ -172,20 +193,21 @@ app.post('/v1/email/subscribe', (req, res) => {
       return;
     }
     const subscriber = subscribeEmail({ email, categories, enabled });
-    res.json({ ok: true, subscriber: { ...subscriber, unsubscribeToken: undefined } });
+    res.json({ ok: true, subscriber: buildSubscriberForClient(subscriber) });
   } catch (err) {
     res.status(400).json({ error: err.message || 'Subscribe failed' });
   }
 });
 
 app.post('/v1/email/unsubscribe', (req, res) => {
+  noStore(res);
   try {
-    const email = req.body?.email || req.query?.email;
-    if (!email || !isValidEmail(email)) {
-      res.status(400).json({ error: 'A valid email address is required' });
+    const token = String(req.body?.token || req.query?.token || '').trim();
+    if (!token) {
+      res.status(400).json({ error: 'token is required' });
       return;
     }
-    const removed = unsubscribeEmail(email);
+    const removed = unsubscribeByToken(token);
     res.json({ ok: true, removed });
   } catch (err) {
     res.status(400).json({ error: err.message || 'Unsubscribe failed' });
@@ -193,6 +215,7 @@ app.post('/v1/email/unsubscribe', (req, res) => {
 });
 
 app.get('/v1/email/unsubscribe', (req, res) => {
+  noStore(res);
   const token = req.query?.token;
   if (!token) {
     if (req.headers.accept?.includes('application/json')) {
@@ -250,22 +273,14 @@ function unsubscribeHtmlPage(success, message) {
 }
 
 app.get('/v1/email/status', (req, res) => {
-  const email = req.query?.email;
-  if (!email) {
-    res.status(400).json({ error: 'email query parameter is required' });
+  noStore(res);
+  const token = String(req.query?.token || '').trim();
+  if (!token) {
+    res.status(400).json({ error: 'token query parameter is required' });
     return;
   }
-  if (!isValidEmail(email)) {
-    res.status(400).json({ error: 'Invalid email format' });
-    return;
-  }
-  const subscriber = getSubscriber(email);
-  res.json({
-    subscribed: Boolean(subscriber?.enabled),
-    subscriber: subscriber
-      ? { ...subscriber, unsubscribeToken: undefined }
-      : null,
-  });
+  const subscriber = getSubscriberByToken(token);
+  res.json(buildSubscriberStatusForClient(subscriber));
 });
 
 app.get('/v1/email/subscribers', (_req, res) => {
@@ -276,7 +291,7 @@ app.get('/v1/email/subscribers', (_req, res) => {
   res.json({
     subscribers: listSubscribers().map((s) => ({
       ...s,
-      unsubscribeToken: undefined,
+      manageToken: undefined,
     })),
   });
 });

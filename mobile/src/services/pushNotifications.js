@@ -1,5 +1,6 @@
 import { Linking } from 'react-native';
 import { PUSH_ENABLED, PUSH_REBUILD_HINT } from '../config/push';
+import { sanitizeExternalUrl } from '../../shared/url/safe-external-url.js';
 
 const noopSubscription = { remove: () => {} };
 
@@ -45,7 +46,8 @@ export async function addNotificationResponseListener(onOpenUrl) {
 }
 
 export async function openNotificationUrl(url) {
-  if (url) await Linking.openURL(url);
+  const safeUrl = sanitizeExternalUrl(url);
+  if (safeUrl) await Linking.openURL(safeUrl);
 }
 
 export async function scheduleLocalPreviewNotification(item) {

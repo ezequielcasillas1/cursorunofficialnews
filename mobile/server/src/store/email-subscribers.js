@@ -11,8 +11,12 @@ const subscribers = new Map();
 const EMAIL_RE =
   /^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$/i;
 
-function generateUnsubscribeToken() {
+function generateManageToken() {
   return crypto.randomBytes(32).toString('hex');
+}
+
+function recordToken(record) {
+  return record?.manageToken || record?.unsubscribeToken || '';
 }
 
 function loadFromDisk() {
@@ -21,8 +25,12 @@ function loadFromDisk() {
   let needsSave = false;
   for (const row of rows) {
     if (row?.email) {
-      if (!row.unsubscribeToken) {
-        row.unsubscribeToken = generateUnsubscribeToken();
+      if (!row.manageToken) {
+        row.manageToken = row.unsubscribeToken || generateManageToken();
+        needsSave = true;
+      }
+      if (row.unsubscribeToken) {
+        delete row.unsubscribeToken;
         needsSave = true;
       }
       subscribers.set(row.email, row);
@@ -71,7 +79,7 @@ export function subscribeEmail({ email, categories = [], enabled = true }) {
     email: normalized,
     categories: normalizedCategories,
     enabled: isEnabled,
-    unsubscribeToken: existing?.unsubscribeToken || generateUnsubscribeToken(),
+    manageToken: recordToken(existing) || generateManageToken(),
     subscribedAt: existing?.subscribedAt || new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
@@ -91,7 +99,7 @@ export function unsubscribeEmail(email) {
 export function unsubscribeByToken(token) {
   if (!token) return false;
   for (const [email, record] of subscribers.entries()) {
-    if (record.unsubscribeToken === token) {
+    if (recordToken(record) === token) {
       subscribers.delete(email);
       saveToDisk();
       return true;
@@ -103,7 +111,7 @@ export function unsubscribeByToken(token) {
 export function getSubscriberByToken(token) {
   if (!token) return null;
   for (const record of subscribers.values()) {
-    if (record.unsubscribeToken === token) return record;
+    if (recordToken(record) === token) return record;
   }
   return null;
 }
@@ -125,7 +133,39 @@ export function getSubscribedEmails(category) {
 
 export function getUnsubscribeUrl(subscriber) {
   const base = process.env.PUBLIC_API_BASE?.trim() || `http://127.0.0.1:${process.env.PORT || 8787}`;
-  const token = subscriber?.unsubscribeToken;
+  const token = recordToken(subscriber);
   if (!token) return null;
   return `${base.replace(/\/$/, '')}/v1/email/unsubscribe?token=${encodeURIComponent(token)}`;
+}
+
+export function buildSubscriberForClient(subscriber) {
+  if (!subscriber) return null;
+  return {
+    email: subscriber.email,
+    categories: Array.isArray(subscriber.categories) ? subscriber.categories : [],
+    enabled: Boolean(subscriber.enabled),
+    subscribedAt: subscriber.subscribedAt || null,
+    updatedAt: subscriber.updatedAt || null,
+    manageToken: recordToken(subscriber) || '',
+  };
+}
+
+export function buildSubscriberStatusForClient(subscriber) {
+  if (!subscriber) {
+    return {
+      subscribed: false,
+      subscriber: null,
+    };
+  }
+
+  return {
+    subscribed: Boolean(subscriber.enabled),
+    subscriber: {
+      email: subscriber.email,
+      categories: Array.isArray(subscriber.categories) ? subscriber.categories : [],
+      enabled: Boolean(subscriber.enabled),
+      subscribedAt: subscriber.subscribedAt || null,
+      updatedAt: subscriber.updatedAt || null,
+    },
+  };
 }
