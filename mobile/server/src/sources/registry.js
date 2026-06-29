@@ -221,7 +221,7 @@ export const SOURCES = [
     name: 'Learn Cursor — Work Tracks',
     category: 'tutorial',
     pageUrl: 'https://www.learncursor.dev/paths/cursor-at-work/tracks',
-    linkPathPattern: /^\/paths\/[^/]+\/tracks\/[^/]+/,
+    linkPathPattern: /^\/tracks\/[^/]+/,
     skipPathPattern: /^\/(sign-up|pricing|api)\//,
     ingestMethod: 'scrape',
     enabled: true,

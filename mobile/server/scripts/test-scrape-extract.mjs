@@ -10,9 +10,9 @@ const learncursorHtml = `
 `;
 
 const tracksHtml = `
-<a href="/paths/cursor-at-work/tracks/cursor-first-hour">Cursor First Hour</a>
-<a href="/paths/cursor-at-work/tracks/tab-and-inline-editing">Tab and Inline Editing</a>
-<a href="/paths/cursor-at-work">Back to path</a>
+<a href="/tracks/cursor-first-hour">Cursor First Hour</a>
+<a href="/tracks/tab-and-inline-editing">Tab and Inline Editing</a>
+<a href="/paths/cursor-at-work/tracks">Back to tracks hub</a>
 `;
 
 const guidesSource = getSourceById('learncursor-guides-scrape');

@@ -72,6 +72,7 @@ export default function App() {
         fetchNews({
           category: getCategoryApiParam(categoryId),
           official: official ? true : undefined,
+          limit: categoryId === 'tutorials' ? 100 : 50,
         }),
         fetchStatus().catch(() => null),
       ]);

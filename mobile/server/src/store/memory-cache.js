@@ -47,6 +47,57 @@ function parseCategories({ category, categories } = {}) {
     .filter(Boolean);
 }
 
+function sortByDateDesc(list) {
+  return [...list].sort((a, b) => {
+    const ta = a.publishedAt ? Date.parse(a.publishedAt) : 0;
+    const tb = b.publishedAt ? Date.parse(b.publishedAt) : 0;
+    return tb - ta;
+  });
+}
+
+/** Round-robin across sources so one sitemap feed cannot fill the whole page. */
+function diversifyBySource(list, limit) {
+  if (list.length <= limit) return sortByDateDesc(list);
+
+  const bySource = new Map();
+  for (const item of list) {
+    const key = item.sourceId || 'unknown';
+    if (!bySource.has(key)) bySource.set(key, []);
+    bySource.get(key).push(item);
+  }
+
+  for (const bucket of bySource.values()) {
+    bucket.sort((a, b) => {
+      const ta = a.publishedAt ? Date.parse(a.publishedAt) : 0;
+      const tb = b.publishedAt ? Date.parse(b.publishedAt) : 0;
+      return tb - ta;
+    });
+  }
+
+  const sourceIds = [...bySource.keys()].sort((a, b) => {
+    const pa = getSourceMeta(a)?.priority ?? 999;
+    const pb = getSourceMeta(b)?.priority ?? 999;
+    return pa - pb;
+  });
+
+  const result = [];
+  const cursor = Object.fromEntries(sourceIds.map((id) => [id, 0]));
+  let progress = true;
+  while (result.length < limit && progress) {
+    progress = false;
+    for (const sourceId of sourceIds) {
+      const bucket = bySource.get(sourceId);
+      const i = cursor[sourceId];
+      if (i < bucket.length && result.length < limit) {
+        result.push(bucket[i]);
+        cursor[sourceId] = i + 1;
+        progress = true;
+      }
+    }
+  }
+  return result;
+}
+
 export function getNews({ category, categories, official, limit = 50 } = {}) {
   let list = [...items];
   const categoryList = parseCategories({ category, categories });
@@ -54,15 +105,12 @@ export function getNews({ category, categories, official, limit = 50 } = {}) {
     const set = new Set(categoryList);
     list = list.filter((item) => set.has(item.category));
   }
-  if (official === true || official === 'true') {
+  const officialOnly = official === true || official === 'true';
+  if (officialOnly) {
     list = list.filter((item) => getSourceMeta(item.sourceId)?.isOfficial);
+    return sortByDateDesc(list).slice(0, limit);
   }
-  list.sort((a, b) => {
-    const ta = a.publishedAt ? Date.parse(a.publishedAt) : 0;
-    const tb = b.publishedAt ? Date.parse(b.publishedAt) : 0;
-    return tb - ta;
-  });
-  return list.slice(0, limit);
+  return diversifyBySource(list, limit);
 }
 
 export function replaceItems(nextItems) {

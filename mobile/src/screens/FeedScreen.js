@@ -231,11 +231,9 @@ export function FeedScreen({ onOpenAbout, onOpenAlerts }) {
       const categoryParam = getCategoryApiParam(selectedCategory);
 
       const newsOptions = {
-
         category: categoryParam,
-
         official: officialOnly ? true : undefined,
-
+        limit: selectedCategory === 'tutorials' ? 100 : 50,
       };
 
 
