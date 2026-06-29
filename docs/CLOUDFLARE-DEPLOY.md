@@ -93,6 +93,8 @@ Root `package.json` scripts:
 }
 ```
 
+Custom domains (`cursorunofficial.news`, `www`) are attached in the dashboard — **not** in `wrangler.jsonc` (CI deploy fails on duplicate `domains/records`).
+
 **Do not** set `"directory": "dist"` — Vite builds to `web/dist/`.
 
 To point at a different API host, change `vars.API_ORIGIN` or set it in the Cloudflare dashboard under **Settings → Variables**.
@@ -251,6 +253,7 @@ npx wrangler deploy --dry-run
 | Feed timeout / empty | API down or cold start on Fly | Check Fly health; first request may wake machine (~5–10s) |
 | JSON parse / `<!doctype` error | `/api` not proxied; HTML SPA fallback | Deploy Worker with `web/worker/index.js`; test `/api/v1/news` |
 | Wrong `VITE_API_BASE` | Direct Fly URL misconfigured | Omit `VITE_API_BASE` to use `/api` proxy, or set correct Fly URL |
+| `Some triggers failed to deploy` / `domains/records` | Custom domains duplicated in `wrangler.jsonc` | Remove `routes` from `wrangler.jsonc`; manage domains in dashboard only |
 | 404 on refresh / deep link | Missing SPA fallback | `not_found_handling: "single-page-application"` in `wrangler.jsonc` |
 | `_redirects` infinite loop (100324) | `/* /index.html 200` conflicts with wrangler SPA handling | Remove `web/public/_redirects`; rely on `not_found_handling` only |
 | CORS errors | Unlikely — API uses open CORS | Check browser console; confirm API URL is HTTPS |
