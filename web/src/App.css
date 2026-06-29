@@ -734,9 +734,9 @@
   color: var(--color-ink-light);
 }
 
-/* ── Newsletter settings ───────────────────────────────── */
+/* ── Collapsible panel (shared) ────────────────────────── */
 
-.newsletter-panel {
+.collapsible-panel {
   margin: 0 0 var(--space-2xl);
   padding: var(--space-xl);
   border: 1px solid var(--color-border);
@@ -745,12 +745,43 @@
   box-shadow: var(--shadow-card);
 }
 
-.newsletter-header {
-  margin-bottom: var(--space-lg);
+.collapsible-panel-header {
+  margin: 0;
 }
 
-.newsletter-eyebrow {
-  margin: 0 0 var(--space-xs);
+.collapsible-panel-trigger {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-md);
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+}
+
+.collapsible-panel-trigger:disabled {
+  cursor: wait;
+}
+
+.collapsible-panel-trigger:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 4px;
+  border-radius: var(--radius-sm);
+}
+
+.collapsible-panel-trigger-copy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  min-width: 0;
+}
+
+.collapsible-panel-eyebrow {
   font-family: var(--font-ui);
   font-size: 0.6875rem;
   font-weight: 600;
@@ -759,21 +790,46 @@
   color: var(--color-ink-light);
 }
 
-.newsletter-title {
-  margin: 0 0 var(--space-sm);
+.collapsible-panel-title {
   font-family: var(--font-display);
   font-size: 1.3rem;
   font-weight: 700;
   color: var(--color-ink);
 }
 
-.newsletter-subtitle {
-  margin: 0;
+.collapsible-panel-subtitle,
+.collapsible-panel-summary {
   font-family: var(--font-body);
   font-size: 0.95rem;
   line-height: 1.6;
   color: var(--color-ink-muted);
   max-width: 42rem;
+}
+
+.collapsible-panel-summary {
+  font-size: 0.85rem;
+}
+
+.collapsible-panel-chevron {
+  flex-shrink: 0;
+  margin-top: 0.35rem;
+  font-size: 1rem;
+  line-height: 1;
+  color: var(--color-ink-light);
+}
+
+.collapsible-panel--expanded .collapsible-panel-header {
+  margin-bottom: var(--space-lg);
+}
+
+.collapsible-panel-content[hidden] {
+  display: none;
+}
+
+/* ── Newsletter settings ───────────────────────────────── */
+
+.newsletter-panel {
+  /* inherits .collapsible-panel shell styles */
 }
 
 .newsletter-grid {

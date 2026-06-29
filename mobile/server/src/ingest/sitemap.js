@@ -11,18 +11,22 @@ function slugToTitle(slug) {
     .join(' ');
 }
 
-function titleFromLearnUrl(url) {
+function titleFromPathUrl(url, pathStrip = '/learn/') {
   try {
     const { pathname } = new URL(url);
-    const slug = pathname.replace(/^\/learn\/?/, '').split('/').filter(Boolean).pop();
-    if (!slug || slug === 'page.mdx') return null;
-    return slugToTitle(slug);
+    const stripRe = new RegExp(`^${String(pathStrip).replace(/\//g, '\\/')}\\/?`);
+    const segments = pathname.replace(stripRe, '').split('/').filter(Boolean);
+    if (segments.length === 0) return null;
+    const lastSlug = segments[segments.length - 1];
+    if (!lastSlug || lastSlug === 'page.mdx') return null;
+    if (segments.length === 1) return slugToTitle(lastSlug);
+    return segments.map((segment) => slugToTitle(segment)).join(' — ');
   } catch {
     return null;
   }
 }
 
-function parseSitemapUrls(xml, { urlPattern, skipPattern }) {
+function parseSitemapUrls(xml, { urlPattern, skipPattern, titlePathStrip }) {
   const blocks = xml.split(/<url>/i).slice(1);
   const items = [];
 
@@ -32,7 +36,7 @@ function parseSitemapUrls(xml, { urlPattern, skipPattern }) {
     if (skipPattern?.test(loc)) continue;
 
     const lastmod = block.match(/<lastmod>([^<]+)<\/lastmod>/i)?.[1]?.trim() || null;
-    const title = titleFromLearnUrl(loc);
+    const title = titleFromPathUrl(loc, titlePathStrip);
     if (!title) continue;
     items.push({ link: loc, pubDate: lastmod, title });
   }
@@ -59,11 +63,14 @@ async function fetchSitemapSource(source) {
   const entries = parseSitemapUrls(xml, {
     urlPattern: source.urlPattern,
     skipPattern: source.skipPattern,
+    titlePathStrip: source.titlePathStrip || '/learn/',
   });
+  const defaultSummary =
+    source.defaultExcerpt || 'Official Cursor tutorial — tap to open on cursor.com.';
   return entries.map((entry) =>
     normalizeScrapedEntry(source, {
       ...entry,
-      summary: 'Official Cursor tutorial — tap to open on cursor.com.',
+      summary: defaultSummary,
     }),
   );
 }

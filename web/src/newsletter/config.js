@@ -12,6 +12,9 @@ export const DEFAULT_NEWSLETTER_PREFS = {
 
 export const NEWSLETTER_PREFS_KEY = 'cursor_news_web_email_prefs';
 
+/** Newsletter settings panel starts collapsed on initial page load. */
+export const NEWSLETTER_PANEL_DEFAULT_EXPANDED = false;
+
 export function normalizeNewsletterPrefs(prefs) {
   return {
     ...DEFAULT_NEWSLETTER_PREFS,

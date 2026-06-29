@@ -67,7 +67,7 @@ export function getEmptyFeedMessage(categoryId, officialOnly) {
     community: 'No community posts found.',
     social: 'No social posts found.',
     videos: 'No YouTube videos found.',
-    tutorials: 'No Cursor Learn tutorials found.',
+    tutorials: 'No tutorials found yet. Try Refresh.',
   };
   let message = messages[categoryId] || messages.all;
   if (officialOnly) {

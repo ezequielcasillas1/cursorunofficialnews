@@ -125,7 +125,6 @@ export function useNewsletter() {
 
   const runSync = useCallback(
     async (nextPrefs, { syncServer = false, unsubscribe = false } = {}) => {
-      const previous = prefs;
       const normalized = persistPrefs(nextPrefs);
       setErrorMessage('');
       setStatusMessage('');
@@ -164,14 +163,13 @@ export function useNewsletter() {
         );
         return synced;
       } catch (err) {
-        persistPrefs(previous);
         setErrorMessage(err.message || 'Failed to save newsletter settings.');
         throw err;
       } finally {
         setSyncing(false);
       }
     },
-    [persistPrefs, prefs, syncToServer],
+    [persistPrefs, syncToServer],
   );
 
   const setEmail = useCallback(
@@ -185,7 +183,7 @@ export function useNewsletter() {
   );
 
   const toggleCategory = useCallback(
-    async (categoryId) => {
+    (categoryId) => {
       const set = new Set(prefs.categories);
       if (set.has(categoryId)) set.delete(categoryId);
       else set.add(categoryId);
@@ -193,11 +191,12 @@ export function useNewsletter() {
         ...prefs,
         categories: [...set],
       };
-
-      const shouldSync = next.enabled && isValidNewsletterEmail(next.email);
-      return runSync(next, { syncServer: shouldSync });
+      persistPrefs(next);
+      setErrorMessage('');
+      setStatusMessage('');
+      return next;
     },
-    [prefs, runSync],
+    [persistPrefs, prefs],
   );
 
   const setEnabled = useCallback(

@@ -1,12 +1,21 @@
 import {
   NEWSLETTER_CATEGORIES,
+  NEWSLETTER_PANEL_DEFAULT_EXPANDED,
 } from '../../newsletter/config.js';
 import {
   useNewsletter,
 } from '../../newsletter/useNewsletter.js';
+import { CollapsiblePanel } from '../ui/CollapsiblePanel.jsx';
 
 function digestStateLabel(prefs) {
   return prefs.enabled ? 'Subscribed · Digest mode' : 'Off — no emails sent';
+}
+
+function collapsedSummary(prefs) {
+  if (prefs.enabled && prefs.email) {
+    return `${digestStateLabel(prefs)} · ${prefs.email}`;
+  }
+  return digestStateLabel(prefs);
 }
 
 export function NewsletterSettings() {
@@ -23,29 +32,17 @@ export function NewsletterSettings() {
     unsubscribe,
   } = useNewsletter();
 
-  if (loading) {
-    return (
-      <section className="newsletter-panel" aria-busy="true">
-        <h2 className="newsletter-title">Email digest</h2>
-        <p className="hint">Loading newsletter settings…</p>
-      </section>
-    );
-  }
-
   return (
-    <section className="newsletter-panel">
-      <div className="newsletter-header">
-        <div>
-          <p className="newsletter-eyebrow">Email digest</p>
-          <h2 className="newsletter-title">Newsletter options</h2>
-          <p className="newsletter-subtitle">
-            Mirror the mobile app’s digest controls on web: choose topics, manage
-            your subscription, and keep state on this browser with a secure manage
-            token.
-          </p>
-        </div>
-      </div>
-
+    <CollapsiblePanel
+      id="newsletter-settings"
+      className="newsletter-panel"
+      eyebrow="Email digest"
+      title="Newsletter options"
+      subtitle="Mirror the mobile app’s digest controls on web: choose topics, manage your subscription, and keep state on this browser with a secure manage token."
+      summary={loading ? 'Loading newsletter settings…' : collapsedSummary(prefs)}
+      defaultExpanded={NEWSLETTER_PANEL_DEFAULT_EXPANDED}
+      loading={loading}
+    >
       <div className="newsletter-grid">
         <label className="newsletter-field" htmlFor="newsletter-email">
           <span className="newsletter-field-label">Email address</span>
@@ -96,7 +93,7 @@ export function NewsletterSettings() {
                   type="checkbox"
                   checked={prefs.categories.includes(category.id)}
                   onChange={() => {
-                    void toggleCategory(category.id);
+                    toggleCategory(category.id);
                   }}
                   disabled={syncing}
                 />
@@ -127,7 +124,7 @@ export function NewsletterSettings() {
           }}
           disabled={syncing}
         >
-          Subscribe
+          {prefs.enabled && prefs.manageToken ? 'Save changes' : 'Subscribe'}
         </button>
         <button
           type="button"
@@ -146,6 +143,6 @@ export function NewsletterSettings() {
         checks and unsubscribe stay tokenized. The secure unsubscribe link in each
         digest email also works if this browser loses local state.
       </p>
-    </section>
+    </CollapsiblePanel>
   );
 }
