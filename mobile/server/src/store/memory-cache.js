@@ -1,4 +1,4 @@
-import { getSourceMeta } from '../sources/registry.js';
+import { getSourceById, getSourceMeta } from '../sources/registry.js';
 import { loadJsonFile, saveJsonFile } from './json-persist.js';
 import { sanitizeExternalUrl } from '../../../shared/url/safe-external-url.js';
 
@@ -9,8 +9,10 @@ let lastIngestAt = null;
 
 function sanitizeNewsItem(item) {
   if (!item || typeof item !== 'object') return null;
+  const source = item.sourceId ? getSourceById(item.sourceId) : null;
   return {
     ...item,
+    category: source?.category || item.category,
     canonicalUrl: sanitizeExternalUrl(item.canonicalUrl),
   };
 }
