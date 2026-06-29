@@ -110,6 +110,10 @@ export function getNews({ category, categories, official, limit = 50 } = {}) {
     list = list.filter((item) => getSourceMeta(item.sourceId)?.isOfficial);
     return sortByDateDesc(list).slice(0, limit);
   }
+  // All sections: chronological timeline so tutorials sit at their real dates.
+  if (categoryList.length === 0) {
+    return sortByDateDesc(list).slice(0, limit);
+  }
   return diversifyBySource(list, limit);
 }
 
