@@ -18,7 +18,7 @@ export function Header({ onRefresh, refreshing }) {
         <p className="masthead-sub">Your morning briefing on Cursor — changelog, releases, and community</p>
         <div className="masthead-actions">
           <button type="button" className="btn" onClick={onRefresh} disabled={refreshing}>
-            {refreshing ? 'Refreshing…' : 'Refresh feed'}
+            {refreshing ? 'Refreshing…' : import.meta.env.PROD ? 'Reload feed' : 'Refresh feed'}
           </button>
           <SupporterSlot variant="inline" />
         </div>

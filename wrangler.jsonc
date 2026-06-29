@@ -10,15 +10,8 @@
     "directory": "./web/dist",
     "binding": "ASSETS",
     "not_found_handling": "single-page-application"
-  },
-  "routes": [
-    {
-      "pattern": "cursorunofficial.news",
-      "custom_domain": true
-    },
-    {
-      "pattern": "www.cursorunofficial.news",
-      "custom_domain": true
-    }
-  ]
+  }
+  // Custom domains (cursorunofficial.news, www) are attached in the Cloudflare
+  // dashboard under Workers → cursorunofficialnews → Domains & Routes.
+  // Do NOT duplicate them here — CI deploy fails on domains/records API conflicts.
 }
