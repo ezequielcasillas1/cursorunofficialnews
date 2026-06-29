@@ -52,11 +52,13 @@ function ingestHeaders() {
   return { 'X-API-Secret': INGEST_SECRET };
 }
 
-export function fetchNews({ category, official, limit = 50 } = {}) {
+export function fetchNews({ category, official, limit = 50, page, offset } = {}) {
   const params = new URLSearchParams();
   if (category) params.set('category', category);
   if (official) params.set('official', 'true');
   if (limit) params.set('limit', String(limit));
+  if (page) params.set('page', String(page));
+  if (offset !== undefined) params.set('offset', String(offset));
   const qs = params.toString();
   return fetchJson(`/v1/news${qs ? `?${qs}` : ''}`);
 }

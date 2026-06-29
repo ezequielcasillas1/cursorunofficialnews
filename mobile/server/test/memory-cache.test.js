@@ -65,7 +65,7 @@ test('getNews with no category returns items sorted by publishedAt desc', async 
     const result = cache.getNews({ limit: 10 });
 
     assert.deepEqual(
-      result.map((item) => item.id),
+      result.items.map((item) => item.id),
       ['changelog-new', 'tutorial-new', 'tutorial-old'],
     );
   });
@@ -103,8 +103,8 @@ test('sitemap-sourced items lose publishedAt and sink in chronological order', a
     ]);
 
     const result = cache.getNews({ limit: 10 });
-    const ids = result.map((item) => item.id);
-    const sitemapItem = result.find((item) => item.id === 'sitemap-tutorial-today');
+    const ids = result.items.map((item) => item.id);
+    const sitemapItem = result.items.find((item) => item.id === 'sitemap-tutorial-today');
 
     assert.equal(sitemapItem.publishedAt, null);
     assert.equal(ids[0], 'changelog-yesterday');
@@ -138,9 +138,33 @@ test('getNews with category filter still diversifies across sources', async () =
     cache.replaceItems([...tutorialItems, ...forumItems]);
 
     const result = cache.getNews({ category: 'tutorial', limit: 10 });
-    const sourceIds = new Set(result.map((item) => item.sourceId));
+    const sourceIds = new Set(result.items.map((item) => item.sourceId));
 
-    assert.equal(result.length, 10);
+    assert.equal(result.items.length, 10);
     assert.equal(sourceIds.size, 2);
+  });
+});
+
+test('getNews paginates with offset', async () => {
+  await withTempDataDir(async () => {
+    const cache = await loadCacheModule();
+
+    cache.replaceItems(
+      Array.from({ length: 5 }, (_, index) => ({
+        id: `item-${index}`,
+        sourceId: 'cursor-changelog-rss',
+        category: 'changelog',
+        title: `Item ${index}`,
+        publishedAt: `2026-06-${String(28 - index).padStart(2, '0')}T00:00:00.000Z`,
+        canonicalUrl: `https://cursor.com/changelog/${index}`,
+      })),
+    );
+
+    const page1 = cache.getNews({ limit: 2, offset: 0 });
+    const page2 = cache.getNews({ limit: 2, offset: 2 });
+
+    assert.equal(page1.total, 5);
+    assert.deepEqual(page1.items.map((item) => item.id), ['item-0', 'item-1']);
+    assert.deepEqual(page2.items.map((item) => item.id), ['item-2', 'item-3']);
   });
 });

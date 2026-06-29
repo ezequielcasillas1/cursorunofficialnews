@@ -101,14 +101,32 @@ app.get('/v1/news', (req, res) => {
     Number.isFinite(parsedLimit) && parsedLimit > 0
       ? Math.min(Math.floor(parsedLimit), 200)
       : 50;
+  const parsedPage = req.query.page ? Number(req.query.page) : 1;
+  const page =
+    Number.isFinite(parsedPage) && parsedPage >= 1 ? Math.floor(parsedPage) : 1;
+  const parsedOffset =
+    req.query.offset !== undefined ? Number(req.query.offset) : undefined;
+  const offset =
+    parsedOffset !== undefined &&
+    Number.isFinite(parsedOffset) &&
+    parsedOffset >= 0
+      ? Math.floor(parsedOffset)
+      : (page - 1) * limit;
   const category = req.query.category ? String(req.query.category) : undefined;
   const official = req.query.official === 'true';
+  const { items, total } = getNews({
+    category,
+    official,
+    limit,
+    offset,
+  });
+  const totalPages = total > 0 ? Math.ceil(total / limit) : 1;
   res.json({
-    items: getNews({
-      category,
-      official,
-      limit,
-    }),
+    items,
+    total,
+    page,
+    pageSize: limit,
+    totalPages,
     lastIngestAt: getLastIngestAt(),
   });
 });

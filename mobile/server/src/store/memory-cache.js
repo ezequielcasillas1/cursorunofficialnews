@@ -62,8 +62,8 @@ function sortByDateDesc(list) {
 }
 
 /** Round-robin across sources so one sitemap feed cannot fill the whole page. */
-function diversifyBySource(list, limit) {
-  if (list.length <= limit) return sortByDateDesc(list);
+function diversifyBySource(list) {
+  if (list.length <= 1) return sortByDateDesc(list);
 
   const bySource = new Map();
   for (const item of list) {
@@ -89,12 +89,12 @@ function diversifyBySource(list, limit) {
   const result = [];
   const cursor = Object.fromEntries(sourceIds.map((id) => [id, 0]));
   let progress = true;
-  while (result.length < limit && progress) {
+  while (result.length < list.length && progress) {
     progress = false;
     for (const sourceId of sourceIds) {
       const bucket = bySource.get(sourceId);
       const i = cursor[sourceId];
-      if (i < bucket.length && result.length < limit) {
+      if (i < bucket.length) {
         result.push(bucket[i]);
         cursor[sourceId] = i + 1;
         progress = true;
@@ -104,7 +104,18 @@ function diversifyBySource(list, limit) {
   return result;
 }
 
-export function getNews({ category, categories, official, limit = 50 } = {}) {
+function orderNewsList(list, { categoryList, officialOnly }) {
+  if (officialOnly) {
+    return sortByDateDesc(list);
+  }
+  // All sections: chronological timeline so tutorials sit at their real dates.
+  if (categoryList.length === 0) {
+    return sortByDateDesc(list);
+  }
+  return diversifyBySource(list);
+}
+
+export function getNews({ category, categories, official, limit = 50, offset = 0 } = {}) {
   let list = [...items];
   const categoryList = parseCategories({ category, categories });
   if (categoryList.length > 0) {
@@ -114,13 +125,15 @@ export function getNews({ category, categories, official, limit = 50 } = {}) {
   const officialOnly = official === true || official === 'true';
   if (officialOnly) {
     list = list.filter((item) => getSourceMeta(item.sourceId)?.isOfficial);
-    return sortByDateDesc(list).slice(0, limit);
   }
-  // All sections: chronological timeline so tutorials sit at their real dates.
-  if (categoryList.length === 0) {
-    return sortByDateDesc(list).slice(0, limit);
-  }
-  return diversifyBySource(list, limit);
+
+  const ordered = orderNewsList(list, { categoryList, officialOnly });
+  const total = ordered.length;
+  const safeOffset = Math.max(0, Math.floor(offset) || 0);
+  const safeLimit = Math.max(1, Math.floor(limit) || 50);
+  const pageItems = ordered.slice(safeOffset, safeOffset + safeLimit);
+
+  return { items: pageItems, total };
 }
 
 export function replaceItems(nextItems) {

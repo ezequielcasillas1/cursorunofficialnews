@@ -1,3 +1,8 @@
+export const FEED_PAGE_SIZE = 20;
+
+/** Max items fetched when client-side search is active (API cap is 200). */
+export const FEED_SEARCH_FETCH_LIMIT = 200;
+
 /** User-facing feed tabs → registry categories for GET /v1/news?category= */
 export const FEED_CATEGORIES = [
   { id: 'all', label: 'All', apiCategories: null },

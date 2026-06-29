@@ -33,6 +33,7 @@ export function NewsFeed({
   selectedCategory = 'all',
   officialOnly = false,
   searchQuery = '',
+  showFeaturedLead = true,
 }) {
   if (loading) {
     return <p className="status-msg">Loading news…</p>;
@@ -66,19 +67,22 @@ export function NewsFeed({
     );
   }
 
-  const [lead, ...rest] = items;
+  const [lead, ...rest] = showFeaturedLead ? items : [null, ...items];
+  const listItems = showFeaturedLead ? rest : items;
 
   return (
     <>
       <ul className="news-list">
-        <li key={lead.id}>
-          <NewsCard
-            item={lead}
-            isOfficial={Boolean(sourceMap?.[lead.sourceId]?.isOfficial)}
-            featured
-          />
-        </li>
-        {rest.map((item, index) => (
+        {showFeaturedLead && lead ? (
+          <li key={lead.id}>
+            <NewsCard
+              item={lead}
+              isOfficial={Boolean(sourceMap?.[lead.sourceId]?.isOfficial)}
+              featured
+            />
+          </li>
+        ) : null}
+        {listItems.map((item, index) => (
           <li key={item.id}>
             <NewsCard
               item={item}

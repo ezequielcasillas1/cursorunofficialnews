@@ -330,6 +330,80 @@
   border-top: none;
 }
 
+/* ── Feed pagination ───────────────────────────────────── */
+
+.feed-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  margin-top: var(--space-2xl);
+  padding-top: var(--space-xl);
+  border-top: 1px solid var(--rule-color);
+}
+
+.feed-pagination-btn {
+  min-width: 6.5rem;
+}
+
+.feed-pagination-pages {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.feed-pagination-page {
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-chip-bg);
+  color: var(--color-ink-muted);
+  min-width: 2.25rem;
+  height: 2.25rem;
+  padding: 0 0.5rem;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-ui);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.feed-pagination-page:hover:not(:disabled) {
+  color: var(--color-ink);
+  background: var(--color-accent-soft);
+}
+
+.feed-pagination-page:disabled {
+  cursor: default;
+}
+
+.feed-pagination-page-active {
+  background: var(--color-chip-active-bg);
+  color: var(--color-chip-active-text);
+  border-color: var(--color-navy);
+}
+
+.feed-pagination-ellipsis {
+  min-width: 1.5rem;
+  text-align: center;
+  color: var(--color-ink-light);
+  font-family: var(--font-ui);
+  font-size: 0.8125rem;
+}
+
+.feed-pagination-summary {
+  margin: var(--space-md) 0 0;
+  text-align: center;
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  color: var(--color-ink-muted);
+}
+
 /* ── Article media ─────────────────────────────────────── */
 
 .article-media {
@@ -887,6 +961,17 @@
 
 .newsletter-panel {
   /* inherits .collapsible-panel shell styles */
+}
+
+.newsletter-beta-notice {
+  margin: 0 0 var(--space-lg);
+  padding: var(--space-md) var(--space-lg);
+  background: var(--color-disclaimer-bg);
+  color: var(--color-disclaimer-text);
+  border-radius: var(--radius-md);
+  font-family: var(--font-ui);
+  font-size: 0.8125rem;
+  line-height: 1.55;
 }
 
 .newsletter-grid {
