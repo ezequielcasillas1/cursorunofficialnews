@@ -2,6 +2,7 @@ import { listSources } from '../sources/registry.js';
 import { normalizeScrapedEntry } from '../normalize/news-item.js';
 
 const SCRAPE_TIMEOUT_MS = 30_000;
+const DEFAULT_BLOG_PATH_PATTERN = /^\/blog\/[^/]+/;
 
 export function isScrapeConfigured() {
   return Boolean(process.env.SCRAPE_API_URL?.trim() && process.env.SCRAPE_API_KEY?.trim());
@@ -25,9 +26,35 @@ function parseBlogAnchorText(rawText) {
   };
 }
 
-function extractBlogLinks(html, baseUrl) {
+function parseGenericAnchorText(rawText) {
+  const inner = rawText.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  if (!inner || inner.length < 4) return null;
+
+  return {
+    title: inner.slice(0, 200),
+    pubDate: null,
+  };
+}
+
+function resolveLinkPathPatterns(source) {
+  if (source.linkPathPatterns?.length) return source.linkPathPatterns;
+  if (source.linkPathPattern) return [source.linkPathPattern];
+  return [DEFAULT_BLOG_PATH_PATTERN];
+}
+
+function pathMatchesPatterns(path, patterns) {
+  return patterns.some((pattern) => pattern.test(path));
+}
+
+export function extractPageLinks(html, baseUrl, source = {}) {
   if (!html) return [];
+
   const origin = new URL(baseUrl).origin;
+  const pagePath = new URL(baseUrl).pathname.replace(/\/$/, '') || '/';
+  const patterns = resolveLinkPathPatterns(source);
+  const parseAnchor =
+    source.scrapeLinkMode === 'blog' ? parseBlogAnchorText : parseGenericAnchorText;
+  const skipPattern = source.skipPathPattern;
   const seen = new Set();
   const items = [];
 
@@ -35,7 +62,11 @@ function extractBlogLinks(html, baseUrl) {
   let match;
   while ((match = anchorRe.exec(html)) !== null) {
     const href = match[1];
-    const parsed = parseBlogAnchorText(match[2]);
+    if (href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('javascript:')) {
+      continue;
+    }
+
+    const parsed = parseAnchor(match[2]);
     if (!parsed?.title) continue;
 
     let absolute;
@@ -46,10 +77,17 @@ function extractBlogLinks(html, baseUrl) {
     }
 
     if (!absolute.startsWith(origin)) continue;
+
     const path = new URL(absolute).pathname;
-    if (!/^\/blog\/[^/]+/.test(path)) continue;
-    if (path === '/blog' || path === '/blog/') continue;
-    if (/^\/blog\/topic\//.test(path)) continue;
+    if (!pathMatchesPatterns(path, patterns)) continue;
+    if (skipPattern?.test(path)) continue;
+    if (path.replace(/\/$/, '') === pagePath) continue;
+
+    if (source.scrapeLinkMode === 'blog' || !source.linkPathPattern) {
+      if (path === '/blog' || path === '/blog/') continue;
+      if (/^\/blog\/topic\//.test(path)) continue;
+    }
+
     if (seen.has(absolute)) continue;
     seen.add(absolute);
 
@@ -124,7 +162,7 @@ async function fetchScrapeSource(source) {
     html = await fetchPageHtml(source.pageUrl);
   }
 
-  let entries = extractBlogLinks(html, source.pageUrl);
+  let entries = extractPageLinks(html, source.pageUrl, source);
 
   if (entries.length === 0 && metadata.title && metadata.sourceURL) {
     entries = [{
@@ -135,11 +173,17 @@ async function fetchScrapeSource(source) {
     }];
   }
 
-  return entries.map((entry) => normalizeScrapedEntry(source, entry));
+  const defaultSummary = source.defaultExcerpt || '';
+  return entries.map((entry) =>
+    normalizeScrapedEntry(source, {
+      ...entry,
+      summary: entry.summary || defaultSummary,
+    }),
+  );
 }
 
 export async function ingestScrapeSources() {
-  const sources = listSources().filter((s) => s.ingestMethod === 'scrape');
+  const sources = listSources().filter((s) => s.ingestMethod === 'scrape' && s.enabled);
   if (sources.length === 0) return [];
 
   if (!isScrapeConfigured()) {

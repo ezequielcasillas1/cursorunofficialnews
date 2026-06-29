@@ -56,7 +56,8 @@ export function AboutScreen({ onBack }) {
         <Text style={styles.body}>
           • Official changelog RSS and GitHub releases{'\n'}
           • Forum announcements and blog posts (RSS + optional scrape){'\n'}
-          • YouTube channel videos and Cursor Learn tutorials{'\n'}
+          • Tutorials from Cursor Learn, community guides (RSS, sitemap + scrape){'\n'}
+          • YouTube channel videos{'\n'}
           • Deduplicated timeline — official source wins on duplicates{'\n'}
           • Category filters: All, Updates, News, Forum, Videos, Tutorials{'\n'}
           • Official-only filter and pull-to-refresh{'\n'}
