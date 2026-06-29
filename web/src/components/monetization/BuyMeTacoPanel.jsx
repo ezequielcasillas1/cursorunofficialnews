@@ -1,10 +1,47 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   BMC_USERNAME,
   getTacoTierUrl,
   isBmcConfigured,
   TACO_TIER_AMOUNTS,
 } from '../../monetization/config.js';
+
+const MEMBERSHIP_EMAIL_INFO =
+  'Use the same email as your Buy Me a Coffee membership. We send a one-time verification link to confirm your active subscription, then ads are hidden on this device.';
+
+function MembershipEmailInfoButton() {
+  const dialogRef = useRef(null);
+
+  return (
+    <>
+      <button
+        type="button"
+        className="taco-info-btn"
+        aria-label="Why is email required?"
+        onClick={() => dialogRef.current?.showModal()}
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true" className="taco-info-icon">
+          <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="1.75" />
+          <path
+            d="M12 11v5M12 8.5h.01"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.75"
+            strokeLinecap="round"
+          />
+        </svg>
+      </button>
+      <dialog ref={dialogRef} className="taco-info-dialog">
+        <p className="taco-info-dialog-text">{MEMBERSHIP_EMAIL_INFO}</p>
+        <form method="dialog">
+          <button type="submit" className="btn taco-info-dialog-close">
+            Got it
+          </button>
+        </form>
+      </dialog>
+    </>
+  );
+}
 
 export function BuyMeTacoPanel({ onClaim, claiming, claimError, claimNotice, compact = false }) {
   const [email, setEmail] = useState('');
@@ -64,9 +101,12 @@ export function BuyMeTacoPanel({ onClaim, claiming, claimError, claimNotice, com
       </p>
 
       {!showClaimForm ? (
-        <button type="button" className="taco-claim-toggle" onClick={() => setShowClaimForm(true)}>
-          Already subscribed? Hide ads
-        </button>
+        <div className="taco-claim-actions">
+          <button type="button" className="taco-claim-toggle" onClick={() => setShowClaimForm(true)}>
+            Already subscribed? Hide ads
+          </button>
+          <MembershipEmailInfoButton />
+        </div>
       ) : (
         <form className="taco-claim-form" onSubmit={handleClaimSubmit}>
           <label htmlFor="taco-claim-email">Membership email</label>
