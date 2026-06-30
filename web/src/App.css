@@ -1062,7 +1062,8 @@
   /* inherits .collapsible-panel shell styles */
 }
 
-.newsletter-beta-notice {
+.newsletter-beta-notice,
+.newsletter-pending-notice {
   margin: 0 0 var(--space-lg);
   padding: var(--space-md) var(--space-lg);
   background: var(--color-disclaimer-bg);
@@ -1071,6 +1072,10 @@
   font-family: var(--font-ui);
   font-size: 0.8125rem;
   line-height: 1.55;
+}
+
+.newsletter-pending-notice {
+  background: color-mix(in srgb, var(--color-link) 8%, var(--color-disclaimer-bg));
 }
 
 .newsletter-grid {

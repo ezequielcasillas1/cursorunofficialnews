@@ -155,7 +155,7 @@ export function NotificationSettingsScreen({ onBack, previewItem }) {
       if (unsubscribe) {
         if (!nextEmailPrefs.manageToken) {
           throw new Error(
-            'This device needs a fresh secure management token. Tap Subscribe once, or use the unsubscribe link from an email digest.',
+            'Could not update settings on this device. Tap Subscribe again, or use the Unsubscribe link in any digest email you have received.',
           );
         }
         await unsubscribeEmail(nextEmailPrefs.manageToken);
@@ -343,7 +343,11 @@ export function NotificationSettingsScreen({ onBack, previewItem }) {
         <View style={styles.masterText}>
           <Text style={styles.masterLabel}>Enable email digest</Text>
           <Text style={styles.masterHint}>
-            {emailPrefs.enabled ? 'Subscribed · Digest mode' : 'Off — no emails sent'}
+            {emailPrefs.pendingVerification
+              ? 'Waiting for email confirmation'
+              : emailPrefs.enabled
+                ? 'Subscribed · Digest mode'
+                : 'Off — no emails sent'}
           </Text>
         </View>
         <Switch
@@ -354,6 +358,15 @@ export function NotificationSettingsScreen({ onBack, previewItem }) {
           thumbColor={emailPrefs.enabled ? colors.gold : colors.accentSoft}
         />
       </View>
+
+      {emailPrefs.pendingVerification ? (
+        <View style={styles.emailPendingBanner}>
+          <Text style={styles.emailPendingBannerText}>
+            We sent a confirmation link to {emailPrefs.email}. Open that email and tap
+            Confirm subscription to finish signing up. Digests start only after you confirm.
+          </Text>
+        </View>
+      ) : null}
 
       {emailSyncing ? (
         <ActivityIndicator style={styles.syncSpinner} size="small" color={colors.navy} />
@@ -585,6 +598,18 @@ const styles = StyleSheet.create({
     ...typography.uiButton,
     color: colors.inkSoft,
     textTransform: 'none',
+  },
+  emailPendingBanner: {
+    backgroundColor: colors.accentSoft,
+    borderColor: colors.borderStrong,
+    borderRadius: radii.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    marginBottom: spacing.md,
+    padding: spacing.md,
+  },
+  emailPendingBannerText: {
+    ...typography.bodySmall,
+    lineHeight: 20,
   },
   emailDisclaimer: {
     backgroundColor: colors.accentSoft,

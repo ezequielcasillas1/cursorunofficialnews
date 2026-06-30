@@ -39,7 +39,7 @@ export function NewsletterSettings() {
       className="newsletter-panel"
       eyebrow="Email digest · Beta"
       title="Newsletter options"
-      subtitle="Mirror the mobile app’s digest controls on web: choose topics, manage your subscription, and keep state on this browser with a secure manage token."
+      subtitle="Choose topics, manage your subscription, and save your preferences in this browser."
       summary={loading ? 'Loading newsletter settings…' : collapsedSummary(prefs)}
       defaultExpanded={NEWSLETTER_PANEL_DEFAULT_EXPANDED}
       loading={loading}
@@ -51,6 +51,14 @@ export function NewsletterSettings() {
         beta — but if digests are already going out, you could keep receiving them. We
         cannot promise either outcome yet.
       </p>
+
+      {prefs.pendingVerification ? (
+        <p className="newsletter-pending-notice" role="status">
+          We sent a confirmation link to <strong>{prefs.email}</strong>. Open that email
+          and click <strong>Confirm subscription</strong> to finish signing up. Digests
+          start only after you confirm.
+        </p>
+      ) : null}
 
       <div className="newsletter-grid">
         <label className="newsletter-field" htmlFor="newsletter-email">
@@ -148,9 +156,9 @@ export function NewsletterSettings() {
       </div>
 
       <p className="hint newsletter-footer-note">
-        This browser stores a secure manage token after subscribe/update so status
-        checks and unsubscribe stay tokenized. The secure unsubscribe link in each
-        digest email also works if this browser loses local state.
+        New sign-ups must confirm via the email we send before digests begin. This
+        browser remembers your settings after you subscribe. You can also unsubscribe
+        anytime from the link at the bottom of every digest email.
       </p>
     </CollapsiblePanel>
   );

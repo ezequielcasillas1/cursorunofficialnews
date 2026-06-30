@@ -211,7 +211,7 @@ export function useNewsletter() {
         if (unsubscribe) {
           if (!normalized.manageToken) {
             throw new Error(
-              'This browser needs a fresh secure manage token. Subscribe once here, or use the unsubscribe link from a digest email.',
+              'Could not update settings from this browser. Subscribe again here, or use the Unsubscribe link in any digest email you have received.',
             );
           }
           await unsubscribeNewsletter(normalized.manageToken);
