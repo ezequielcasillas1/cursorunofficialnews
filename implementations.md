@@ -1,3 +1,8 @@
+### [2026-06-30] - Issue + Discussion category tabs
+**Status:** PENDING USER VERIFY
+**Files:** mobile/server/src/classify/{content-signals,classify-news-item,index}.js, test/classify-news-item.test.js; mobile/shared/notifications/constants.js; mobile/src/{config/constants.js,components/NewsListItem.js,screens/AboutScreen.js}; web/src/{config/feedCategories.js,utils/articleMedia.js}
+**Result:** Classifier now promotes bug/broken/uninstall posts to `issue` and opinion/roundup pieces to `discussion`. Two new feed tabs (Issues, Discussion) added to mobile + web; 14/14 unit tests pass.
+
 ### [2026-06-30] - Feed category classifier service layer
 **Status:** PENDING USER VERIFY
 **Files:** mobile/server/src/classify/{index,classify-news-item,url-rules,content-signals}.js, normalize/news-item.js, store/memory-cache.js, sources/registry.js, test/classify-news-item.test.js

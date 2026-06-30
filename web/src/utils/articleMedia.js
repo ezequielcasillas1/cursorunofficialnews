@@ -5,8 +5,12 @@ const CATEGORY_LABELS = {
   release: 'Release',
   blog: 'Blog',
   forum: 'Forum',
+  community: 'Community',
+  social: 'Social',
   video: 'Video',
   tutorial: 'Tutorial',
+  issue: 'Issue',
+  discussion: 'Discussion',
 };
 
 const CATEGORY_ACCENTS = {
@@ -14,8 +18,12 @@ const CATEGORY_ACCENTS = {
   release: 'gold',
   blog: 'warm',
   forum: 'blue',
+  community: 'warm',
+  social: 'warm',
   video: 'crimson',
   tutorial: 'green',
+  issue: 'crimson',
+  discussion: 'navy',
 };
 
 export function formatCategoryLabel(category) {

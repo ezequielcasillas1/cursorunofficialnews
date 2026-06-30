@@ -65,8 +65,12 @@ function formatCategoryLabel(category, sourceName) {
     release: 'Release',
     blog: 'Blog',
     forum: 'Forum',
+    community: 'Community',
+    social: 'Social',
     video: 'Video',
     tutorial: 'Tutorial',
+    issue: 'Issue',
+    discussion: 'Discussion',
   };
   return labels[category] || category || sourceName || 'News';
 }

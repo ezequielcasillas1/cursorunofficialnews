@@ -2,18 +2,18 @@ import { getSourceById } from '../sources/registry.js';
 import {
   classifyByContent,
   CONTENT_CLASSIFIED_SOURCE_IDS,
+  DISCUSSION_PROMOTABLE_BASES,
+  discussionScore,
+  ISSUE_PROMOTABLE_BASES,
+  issueScore,
   LOCKED_SOURCE_CATEGORIES,
 } from './content-signals.js';
 import { categoryFromUrl } from './url-rules.js';
 
-/**
- * Resolve the feed category for a news item.
- * URL rules beat registry defaults; content heuristics refine ambiguous third-party feeds.
- */
-export function classifyNewsItem(item, source = null) {
-  if (!item || typeof item !== 'object') return item?.category || 'community';
+const ISSUE_PROMOTE_THRESHOLD = 3;
+const DISCUSSION_PROMOTE_THRESHOLD = 3;
 
-  const resolvedSource = source || (item.sourceId ? getSourceById(item.sourceId) : null);
+function baseCategory(item, resolvedSource) {
   const registryCategory = resolvedSource?.category || item.category || 'community';
   const url = item.canonicalUrl || '';
 
@@ -34,11 +34,32 @@ export function classifyNewsItem(item, source = null) {
       sourceCategory: registryCategory,
     });
     if (contentCategory) return contentCategory;
-    // Tag feeds (dev.to, medium) are tutorial-hinted in registry — default ambiguous items to community.
     if (registryCategory === 'tutorial') return 'community';
   }
 
   return registryCategory;
+}
+
+/**
+ * Resolve the feed category for a news item.
+ * Layered: URL rules → registry/content base → issue/discussion override.
+ */
+export function classifyNewsItem(item, source = null) {
+  if (!item || typeof item !== 'object') return item?.category || 'community';
+
+  const resolvedSource = source || (item.sourceId ? getSourceById(item.sourceId) : null);
+  const base = baseCategory(item, resolvedSource);
+  const { title, excerpt } = item;
+
+  if (ISSUE_PROMOTABLE_BASES.has(base)) {
+    if (issueScore(title, excerpt) >= ISSUE_PROMOTE_THRESHOLD) return 'issue';
+  }
+
+  if (DISCUSSION_PROMOTABLE_BASES.has(base)) {
+    if (discussionScore(title, excerpt) >= DISCUSSION_PROMOTE_THRESHOLD) return 'discussion';
+  }
+
+  return base;
 }
 
 export function applyCategoryClassification(item) {

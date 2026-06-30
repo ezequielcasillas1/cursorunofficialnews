@@ -4,6 +4,10 @@ export {
   classifyByContent,
   tutorialScore,
   questionOrSupportScore,
+  issueScore,
+  discussionScore,
   CONTENT_CLASSIFIED_SOURCE_IDS,
   LOCKED_SOURCE_CATEGORIES,
+  ISSUE_PROMOTABLE_BASES,
+  DISCUSSION_PROMOTABLE_BASES,
 } from './content-signals.js';

@@ -11,6 +11,8 @@ export const CATEGORY_LABELS = {
   social: 'Social',
   video: 'Video',
   tutorial: 'Tutorial',
+  issue: 'Issue',
+  discussion: 'Discussion',
 };
 
 export const VALID_CATEGORY_IDS = Object.keys(CATEGORY_LABELS);

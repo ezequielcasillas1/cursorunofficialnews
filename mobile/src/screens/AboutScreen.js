@@ -59,7 +59,7 @@ export function AboutScreen({ onBack }) {
           • Tutorials from Cursor Learn, community guides (RSS, sitemap + scrape){'\n'}
           • YouTube channel videos{'\n'}
           • Deduplicated timeline — official source wins on duplicates{'\n'}
-          • Category filters: All, Updates, News, Forum, Videos, Tutorials{'\n'}
+          • Category filters: All, Updates, News, Forum, Issues, Community, Discussion, Social, Videos, Tutorials{'\n'}
           • Official-only filter and pull-to-refresh{'\n'}
           • Opt-in digest alerts (Settings → Alerts)
         </Text>
