@@ -281,18 +281,10 @@
 
 .category-filter {
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: var(--space-xs);
-  overflow-x: auto;
-  margin-left: calc(-1 * var(--space-lg));
-  margin-right: calc(-1 * var(--space-lg));
-  padding: 0 var(--space-lg) var(--space-sm);
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-}
-
-.category-filter::-webkit-scrollbar {
-  display: none;
+  padding-bottom: var(--space-sm);
 }
 
 .official-filter {
