@@ -13,7 +13,10 @@ export function FeedCategoryFilter({
       <Text style={styles.label}>Sections</Text>
       <ScrollView
         horizontal
+        nestedScrollEnabled
+        clipToPadding={false}
         showsHorizontalScrollIndicator={false}
+        style={styles.chipScroll}
         contentContainerStyle={styles.chipRow}
       >
         {FEED_CATEGORIES.map((cat) => {
@@ -53,10 +56,14 @@ const styles = StyleSheet.create({
     ...typography.sectionLabel,
     marginBottom: spacing.sm,
   },
+  chipScroll: {
+    marginHorizontal: -spacing.lg,
+  },
   chipRow: {
+    alignItems: 'center',
     flexDirection: 'row',
     gap: spacing.sm,
-    paddingRight: spacing.lg,
+    paddingHorizontal: spacing.lg,
   },
   officialRow: {
     flexDirection: 'row',
@@ -81,6 +88,7 @@ const styles = StyleSheet.create({
   chipText: {
     ...typography.uiLabel,
     color: colors.inkSoft,
+    flexShrink: 0,
   },
   chipTextActive: {
     color: colors.chipActiveText,
