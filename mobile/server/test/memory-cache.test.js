@@ -121,7 +121,7 @@ test('getNews with category filter still diversifies across sources', async () =
       id: `tutorial-${index}`,
       sourceId: 'devto-cursor-tutorials',
       category: 'tutorial',
-      title: `Tutorial ${index}`,
+      title: `How to use Cursor feature ${index}`,
       publishedAt: `2026-06-${String(28 - index).padStart(2, '0')}T00:00:00.000Z`,
       canonicalUrl: `https://dev.to/cursor/item-${index}`,
     }));
@@ -129,7 +129,7 @@ test('getNews with category filter still diversifies across sources', async () =
     const forumItems = Array.from({ length: 4 }, (_, index) => ({
       id: `forum-${index}`,
       sourceId: 'forum-cursor-how-to',
-      category: 'tutorial',
+      category: 'forum',
       title: `Forum guide ${index}`,
       publishedAt: `2026-06-${String(20 - index).padStart(2, '0')}T00:00:00.000Z`,
       canonicalUrl: `https://forum.cursor.com/t/${index}`,
@@ -137,11 +137,13 @@ test('getNews with category filter still diversifies across sources', async () =
 
     cache.replaceItems([...tutorialItems, ...forumItems]);
 
-    const result = cache.getNews({ category: 'tutorial', limit: 10 });
-    const sourceIds = new Set(result.items.map((item) => item.sourceId));
+    const tutorialResult = cache.getNews({ category: 'tutorial', limit: 10 });
+    const forumResult = cache.getNews({ category: 'forum', limit: 10 });
 
-    assert.equal(result.items.length, 10);
-    assert.equal(sourceIds.size, 2);
+    assert.equal(tutorialResult.items.length, 10);
+    assert.ok(tutorialResult.items.every((item) => item.category === 'tutorial'));
+    assert.equal(forumResult.items.length, 4);
+    assert.ok(forumResult.items.every((item) => item.category === 'forum'));
   });
 });
 

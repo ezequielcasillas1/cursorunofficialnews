@@ -1,3 +1,4 @@
+import { applyCategoryClassification } from '../classify/index.js';
 import { getSourceById, getSourceMeta } from '../sources/registry.js';
 import { loadJsonFile, saveJsonFile } from './json-persist.js';
 import { sanitizeExternalUrl } from '../../../shared/url/safe-external-url.js';
@@ -15,12 +16,12 @@ function sanitizeNewsItem(item) {
   // cannot pose as today's news in the chronological All feed.
   const publishedAt =
     source?.ingestMethod === 'sitemap' ? null : item.publishedAt;
-  return {
+  const sanitized = {
     ...item,
-    category: source?.category || item.category,
     canonicalUrl: sanitizeExternalUrl(item.canonicalUrl),
     publishedAt,
   };
+  return applyCategoryClassification(sanitized);
 }
 
 function sanitizeNewsItems(nextItems) {

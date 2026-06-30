@@ -28,6 +28,8 @@ import {
 import { handleBmcWebhook } from './monetization/bmc-webhook.js';
 import { registerMembershipRoutes } from './monetization/membership-routes.js';
 import { createCorsOptions } from './security/cors-options.js';
+import { isLmStudioConfigured } from './llm/config.js';
+import { registerLlmRoutes } from './llm/llm-routes.js';
 
 const app = express();
 const port = Number(process.env.PORT || 8787);
@@ -51,6 +53,7 @@ app.post(
 app.use(express.json({ limit: '64kb' }));
 registerMembershipRoutes(app);
 registerEmailRoutes(app);
+registerLlmRoutes(app);
 
 /** In-process mutex — prevents concurrent ingests from double-notifying. */
 let ingestLock = Promise.resolve();
@@ -81,6 +84,7 @@ app.get('/v1/status', (_req, res) => {
   if (process.env.NODE_ENV !== 'production') {
     payload.scrapeConfigured = isScrapeConfigured();
     payload.twitterApiConfigured = isTwitterApiConfigured();
+    payload.lmStudioConfigured = isLmStudioConfigured();
   }
   res.json(payload);
 });

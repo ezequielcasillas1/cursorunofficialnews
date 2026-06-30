@@ -1,3 +1,4 @@
+import { applyCategoryClassification } from '../classify/index.js';
 import { sanitizeExternalUrl } from '../../../shared/url/safe-external-url.js';
 
 const DEFAULT_EXCERPT = 300;
@@ -76,7 +77,7 @@ function buildNewsItem(source, { canonicalUrl, title, publishedAt, rawExcerpt })
   const maxChars = source.maxExcerptChars || DEFAULT_EXCERPT;
   const excerpt = stripHtml(rawExcerpt).slice(0, maxChars);
 
-  return {
+  return applyCategoryClassification({
     id: buildDedupeKey({
       canonicalUrl,
       title,
@@ -91,7 +92,7 @@ function buildNewsItem(source, { canonicalUrl, title, publishedAt, rawExcerpt })
     sourceId: source.id,
     sourceName: source.name,
     attributionLabel: source.attributionLabel || source.name,
-  };
+  });
 }
 
 export function normalizeFeedEntry(source, entry) {

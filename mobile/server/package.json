@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "node --use-system-ca --watch src/index.js",
     "start": "node src/index.js",
-    "ingest:trigger": "node scripts/trigger-ingest.js"
+    "ingest:trigger": "node scripts/trigger-ingest.js",
+    "llm:test": "node scripts/test-lm-studio.js"
   },
   "dependencies": {
     "cors": "^2.8.5",

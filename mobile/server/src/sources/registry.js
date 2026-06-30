@@ -108,7 +108,7 @@ export const SOURCES = [
   {
     id: 'stackoverflow-cursor-ide',
     name: 'Stack Overflow — Cursor IDE',
-    category: 'tutorial',
+    category: 'community',
     feedUrl: 'https://stackoverflow.com/feeds/tag?tagnames=cursor-ide&sort=newest',
     ingestMethod: 'atom',
     enabled: true,
@@ -120,7 +120,7 @@ export const SOURCES = [
   {
     id: 'forum-cursor-how-to',
     name: 'Cursor Forum — How To',
-    category: 'tutorial',
+    category: 'forum',
     feedUrl: 'https://forum.cursor.com/c/how-to/8.rss',
     ingestMethod: 'rss',
     enabled: true,
@@ -132,7 +132,7 @@ export const SOURCES = [
   {
     id: 'forum-cursor-tips',
     name: 'Cursor Forum — Tips',
-    category: 'tutorial',
+    category: 'forum',
     feedUrl: 'https://forum.cursor.com/c/tips/9.rss',
     ingestMethod: 'rss',
     enabled: true,
@@ -144,7 +144,7 @@ export const SOURCES = [
   {
     id: 'forum-cursor-guides',
     name: 'Cursor Forum — Guides',
-    category: 'tutorial',
+    category: 'forum',
     feedUrl: 'https://forum.cursor.com/c/guides/20.rss',
     ingestMethod: 'rss',
     enabled: true,
@@ -168,7 +168,7 @@ export const SOURCES = [
   {
     id: 'stackoverflow-cursor-ai',
     name: 'Stack Overflow — Cursor AI',
-    category: 'tutorial',
+    category: 'community',
     feedUrl: 'https://stackoverflow.com/feeds/tag?tagnames=cursor-ai&sort=newest',
     ingestMethod: 'atom',
     enabled: true,
@@ -180,7 +180,7 @@ export const SOURCES = [
   {
     id: 'github-cursor-discussions',
     name: 'GitHub — Cursor Discussions',
-    category: 'tutorial',
+    category: 'community',
     feedUrl: 'https://github.com/getcursor/cursor/discussions.atom',
     ingestMethod: 'atom',
     enabled: true,

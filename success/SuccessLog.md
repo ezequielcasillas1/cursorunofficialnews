@@ -1,3 +1,13 @@
+﻿### [2026-06-29] - Remove taco-unlock + source-hide gating + cookie freeze
+**Status:** SUCCESS
+**Files:** web App.jsx, FeedSearch, AboutPanel, NewsFeed/NewsCard/ArticleMedia; mobile FeedScreen, AboutScreen, App.js; deleted taco-unlock/consent/source-hide modules; shared/monetization/bmc-config.js
+**Result:** Commit 6b8bb76 on main. Honor-system unlock, source-hide, and cookie freeze removed; search/sources ungated for everyone. request.md notes future subscription-gated rebuild.
+
+### [2026-06-29] - Web API timeout (Fly internal_port)
+**Status:** SUCCESS
+**Files:** fly.toml, web/vite.config.js
+**Result:** Config fix in 6b8bb76 (internal_port=8787). User confirmed manual Fly redeploy restored /api.
+
 ### [2026-06-26] - Phase 1 vertical slice
 **Status:** SUCCESS
 **Files:** [api/src/sources/registry.js, api/package.json, api/src/index.js, api/src/ingest/feeds.js, api/src/normalize/news-item.js, api/src/store/memory-cache.js, mobile/src/config/constants.js, mobile/src/screens/FeedScreen.js, docs/AGENT-CONTEXT.md, docs/CURSOR-AI-NEWS-PHASE-PLAN.md]
@@ -11,7 +21,7 @@
 ### [2026-06-27] - Phase 3 expand coverage
 **Status:** SUCCESS
 **Files:** [api/src/ingest/scrape.js, api/src/ingest/feeds.js, api/src/sources/registry.js, docs/SOURCE-STRATEGY.md, docs/CURSOR-AI-NEWS-PHASE-PLAN.md, docs/AGENT-CONTEXT.md]
-**Result:** Forum announcements RSS live; scrape ingest path env-gated (SCRAPE_API_URL/KEY); blog scrape source registered; ≥2 ingest methods (RSS/Atom + scrape); Releasebot disabled until RSS verified.
+**Result:** Forum announcements RSS live; scrape ingest path env-gated (SCRAPE_API_URL/KEY); blog scrape source registered; >=2 ingest methods (RSS/Atom + scrape); Releasebot disabled until RSS verified.
 
 ### [2026-06-29] - BMC tier 404 fallback + AdSense slot config
 **Status:** SUCCESS
