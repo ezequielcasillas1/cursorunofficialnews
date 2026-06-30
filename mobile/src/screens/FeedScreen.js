@@ -44,11 +44,6 @@ import { NewSinceBanner } from '../components/NewSinceBanner';
 
 import { NewsListItem } from '../components/NewsListItem';
 
-import {
-  SourceVisibilityControls,
-  useSourceVisibility,
-} from '../components/SourceVisibilityControls';
-
 import { getLastSeenAt, setLastSeenAt } from '../services/notificationPrefs';
 
 import { colors, fontFamilies, spacing, typography } from '../theme/tokens';
@@ -174,9 +169,6 @@ export function FeedScreen({ onOpenAbout, onOpenAlerts }) {
   const [newSinceCount, setNewSinceCount] = useState(0);
 
   const [bannerDismissed, setBannerDismissed] = useState(false);
-
-  const { sourcesHidden, loaded: visibilityLoaded, hideSources, unlockSources } =
-    useSourceVisibility();
 
   const isInitialLoad = useRef(true);
 
@@ -459,15 +451,6 @@ export function FeedScreen({ onOpenAbout, onOpenAlerts }) {
 
           />
 
-          {visibilityLoaded ? (
-            <SourceVisibilityControls
-              sourcesHidden={sourcesHidden}
-              onHide={hideSources}
-              onUnlock={unlockSources}
-              onOpenAbout={onOpenAbout}
-            />
-          ) : null}
-
           {!bannerDismissed && newSinceCount > 0 ? (
 
             <NewSinceBanner
@@ -596,8 +579,6 @@ export function FeedScreen({ onOpenAbout, onOpenAlerts }) {
             item={item}
 
             isOfficial={Boolean(sourceMap[item.sourceId]?.isOfficial)}
-
-            hideSources={!visibilityLoaded || sourcesHidden}
 
           />
 

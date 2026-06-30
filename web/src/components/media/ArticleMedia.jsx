@@ -16,7 +16,7 @@ function PlayOverlay({ label = 'Watch video' }) {
   );
 }
 
-export function ArticleMedia({ item, featured = false, className = '', hideSources = false }) {
+export function ArticleMedia({ item, featured = false, className = '' }) {
   const [imageFailed, setImageFailed] = useState(false);
   const media = resolveArticleMedia(item);
   const safeUrl = sanitizeExternalUrl(item?.canonicalUrl);
@@ -50,7 +50,7 @@ export function ArticleMedia({ item, featured = false, className = '', hideSourc
     <MediaPlaceholder
       accent={media.accent}
       label={media.label}
-      sourceLabel={hideSources ? null : media.sourceLabel}
+      sourceLabel={media.sourceLabel}
       isVideo={media.isVideo}
       featured={featured}
       title={featured ? item?.title : undefined}

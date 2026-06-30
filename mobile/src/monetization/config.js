@@ -1,4 +1,4 @@
-import { BMC_USERNAME_DEFAULT, getBmcPageUrl } from '../../shared/sources/visibility-config.js';
+import { BMC_USERNAME_DEFAULT, getBmcPageUrl } from '../../shared/monetization/bmc-config.js';
 
 const BMC_USERNAME =
   process.env.EXPO_PUBLIC_BMC_USERNAME?.trim() ||

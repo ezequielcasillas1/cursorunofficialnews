@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -13,22 +13,12 @@ import { DISCLAIMER } from '../config/constants';
 import { DisclaimerBanner } from '../components/DisclaimerBanner';
 import { EditorialDivider } from '../components/EditorialDivider';
 import { SourceOfficialBadge } from '../components/SourceOfficialBadge';
-import {
-  SourceVisibilityControls,
-  TacoUnlockModal,
-  useSourceVisibility,
-} from '../components/SourceVisibilityControls';
-import { TACO_SOURCES_HIDDEN_TEASER } from '../../shared/taco-unlock/config';
 import { colors, radii, spacing, typography } from '../theme/tokens';
 
-export function AboutScreen({ onBack, scrollToSources = false }) {
-  const scrollRef = useRef(null);
-  const sourcesOffsetY = useRef(0);
+export function AboutScreen({ onBack }) {
   const [sources, setSources] = useState([]);
   const [loadingSources, setLoadingSources] = useState(true);
   const [sourcesError, setSourcesError] = useState('');
-  const { sourcesHidden, hideSources, unlockFeatures } = useSourceVisibility();
-  const [unlockVisible, setUnlockVisible] = useState(false);
 
   useEffect(() => {
     fetchSources()
@@ -39,19 +29,8 @@ export function AboutScreen({ onBack, scrollToSources = false }) {
       .finally(() => setLoadingSources(false));
   }, []);
 
-  useEffect(() => {
-    if (!scrollToSources || sourcesHidden || loadingSources) return undefined;
-    const timer = setTimeout(() => {
-      scrollRef.current?.scrollTo({
-        y: Math.max(0, sourcesOffsetY.current - spacing.lg),
-        animated: true,
-      });
-    }, 200);
-    return () => clearTimeout(timer);
-  }, [scrollToSources, sourcesHidden, loadingSources]);
-
   return (
-    <ScrollView ref={scrollRef} style={styles.root} contentContainerStyle={styles.container}>
+    <ScrollView style={styles.root} contentContainerStyle={styles.container}>
       <DisclaimerBanner />
       <Pressable onPress={onBack} style={styles.back}>
         <ArrowLeft size={18} color={colors.link} strokeWidth={2} />
@@ -86,57 +65,32 @@ export function AboutScreen({ onBack, scrollToSources = false }) {
         </Text>
       </View>
 
-      <View
-        style={styles.section}
-        onLayout={(event) => {
-          sourcesOffsetY.current = event.nativeEvent.layout.y;
-        }}
-      >
+      <View style={styles.section}>
         <Text style={styles.sectionTitle}>Sources</Text>
-        {sourcesHidden ? (
-          <>
-            <Text style={styles.body}>{TACO_SOURCES_HIDDEN_TEASER}</Text>
-            <Pressable
-              onPress={() => setUnlockVisible(true)}
-              style={styles.unlockChip}
-            >
-              <Text style={styles.unlockChipText}>Unlock sources</Text>
-            </Pressable>
-            <TacoUnlockModal
-              visible={unlockVisible}
-              onClose={() => setUnlockVisible(false)}
-              onUnlock={unlockFeatures}
-            />
-          </>
+        {loadingSources ? (
+          <ActivityIndicator color={colors.navy} style={styles.loader} />
+        ) : sourcesError ? (
+          <Text style={styles.error}>{sourcesError}</Text>
+        ) : sources.length === 0 ? (
+          <Text style={styles.body}>No sources registered.</Text>
         ) : (
-          <>
-            <SourceVisibilityControls sourcesHidden={false} onHide={hideSources} />
-            {loadingSources ? (
-              <ActivityIndicator color={colors.navy} style={styles.loader} />
-            ) : sourcesError ? (
-              <Text style={styles.error}>{sourcesError}</Text>
-            ) : sources.length === 0 ? (
-              <Text style={styles.body}>No sources registered.</Text>
-            ) : (
-              sources.map((source) => (
-                <View key={source.id} style={styles.sourceRow}>
-                  <View style={styles.sourceHeader}>
-                    <Text style={styles.sourceName}>{source.name}</Text>
-                    {source.isOfficial ? <SourceOfficialBadge /> : null}
-                  </View>
-                  <Text style={styles.sourceMeta}>
-                    {source.category} · {source.ingestMethod || 'rss'}
-                    {source.enabled ? '' : ' · disabled'}
-                  </Text>
-                  {source.attributionLabel ? (
-                    <Text style={styles.sourceMeta}>
-                      Attribution: {source.attributionLabel}
-                    </Text>
-                  ) : null}
-                </View>
-              ))
-            )}
-          </>
+          sources.map((source) => (
+            <View key={source.id} style={styles.sourceRow}>
+              <View style={styles.sourceHeader}>
+                <Text style={styles.sourceName}>{source.name}</Text>
+                {source.isOfficial ? <SourceOfficialBadge /> : null}
+              </View>
+              <Text style={styles.sourceMeta}>
+                {source.category} · {source.ingestMethod || 'rss'}
+                {source.enabled ? '' : ' · disabled'}
+              </Text>
+              {source.attributionLabel ? (
+                <Text style={styles.sourceMeta}>
+                  Attribution: {source.attributionLabel}
+                </Text>
+              ) : null}
+            </View>
+          ))
         )}
       </View>
 
@@ -231,19 +185,5 @@ const styles = StyleSheet.create({
   sourceMeta: {
     ...typography.meta,
     lineHeight: 18,
-  },
-  unlockChip: {
-    alignSelf: 'flex-start',
-    backgroundColor: colors.accentSoft,
-    borderColor: colors.gold,
-    borderRadius: radii.pill,
-    borderWidth: StyleSheet.hairlineWidth,
-    marginTop: spacing.sm,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-  },
-  unlockChipText: {
-    ...typography.uiLabel,
-    color: colors.navy,
   },
 });
