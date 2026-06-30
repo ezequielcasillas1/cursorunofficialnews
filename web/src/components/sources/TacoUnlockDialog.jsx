@@ -1,9 +1,9 @@
 import { useEffect, useRef } from 'react';
-import { BMC_USERNAME_DEFAULT, getBmcPageUrl } from '../../../mobile/shared/sources/visibility-config.js';
+import { BMC_USERNAME_DEFAULT, getBmcPageUrl } from '../../../../mobile/shared/sources/visibility-config.js';
 import {
   TACO_UNLOCK_BODY,
   TACO_UNLOCK_CONFIRM_LABEL,
-} from '../../../mobile/shared/taco-unlock/config.js';
+} from '../../../../mobile/shared/taco-unlock/config.js';
 import { getBmcPageUrl as getConfiguredBmcPageUrl } from '../../monetization/config.js';
 
 export function TacoUnlockDialog({ open, onClose, onUnlock }) {

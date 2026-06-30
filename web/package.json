@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node --test src/newsletter/panelDefaults.test.js src/feed/getPaginationRange.test.js src/theme/resolveTheme.test.js"
+    "test": "node --test src/newsletter/panelDefaults.test.js src/feed/getPaginationRange.test.js src/feed/filterNewsItems.test.js src/theme/resolveTheme.test.js src/taco-unlock/storage.test.js src/sources/storage.test.js"
   },
   "dependencies": {
     "react": "^19.1.0",

@@ -47,7 +47,8 @@ function saveFilterPrefs(category, officialOnly) {
 
 export default function App() {
   const { hasConsent, acceptConsent } = useCookieConsent();
-  const { tacoUnlocked, sourcesHidden, hideSources, unlockFeatures } = useTacoUnlock();
+  const { tacoUnlocked, sourcesHidden, loaded: tacoPrefsLoaded, hideSources, unlockFeatures } =
+    useTacoUnlock();
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [officialOnly, setOfficialOnly] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -107,7 +108,7 @@ export default function App() {
     }
   }, []);
 
-  const isSearching = tacoUnlocked && searchQuery.trim().length > 0;
+  const isSearching = tacoPrefsLoaded && tacoUnlocked && searchQuery.trim().length > 0;
 
   useEffect(() => {
     loadNews(selectedCategory, officialOnly, feedPage, isSearching);
@@ -120,8 +121,8 @@ export default function App() {
   }, [feedPage, loading, isSearching]);
 
   const filteredItems = useMemo(
-    () => (tacoUnlocked ? filterNewsItems(items, searchQuery) : items),
-    [items, searchQuery, tacoUnlocked],
+    () => (tacoPrefsLoaded && tacoUnlocked ? filterNewsItems(items, searchQuery) : items),
+    [items, searchQuery, tacoUnlocked, tacoPrefsLoaded],
   );
 
   async function handleRefresh() {
@@ -151,7 +152,7 @@ export default function App() {
   }
 
   function handleSearchChange(nextQuery) {
-    if (!tacoUnlocked) {
+    if (!tacoPrefsLoaded || !tacoUnlocked) {
       setSearchUnlockOpen(true);
       return;
     }
@@ -179,7 +180,7 @@ export default function App() {
         <StatusBar
           lastIngestAt={status.lastIngestAt}
           sourceCount={status.sourceCount}
-          sourcesHidden={sourcesHidden}
+          sourcesHidden={tacoPrefsLoaded && sourcesHidden}
         />
         <CategoryFilter
           selectedCategory={selectedCategory}
@@ -187,13 +188,15 @@ export default function App() {
           onCategoryChange={handleCategoryChange}
           onOfficialOnlyChange={handleOfficialOnlyChange}
         />
-        <SourceVisibilityControls
-          sourcesHidden={sourcesHidden}
-          onHide={hideSources}
-          onUnlock={unlockFeatures}
-        />
+        {tacoPrefsLoaded ? (
+          <SourceVisibilityControls
+            sourcesHidden={sourcesHidden}
+            onHide={hideSources}
+            onUnlock={unlockFeatures}
+          />
+        ) : null}
         <FeedSearch
-          locked={!tacoUnlocked}
+          locked={!tacoPrefsLoaded || !tacoUnlocked}
           onLockedInteract={() => setSearchUnlockOpen(true)}
           value={searchQuery}
           onChange={handleSearchChange}
@@ -217,7 +220,7 @@ export default function App() {
             officialOnly={officialOnly}
             searchQuery={searchQuery}
             showFeaturedLead={feedPage === 1 && !isSearching}
-            hideSources={sourcesHidden}
+            hideSources={tacoPrefsLoaded && sourcesHidden}
           />
           {showPagination ? (
             <FeedPagination
@@ -234,7 +237,10 @@ export default function App() {
             </p>
           ) : null}
         </main>
-        <AboutPanel sourcesHidden={sourcesHidden} onUnlock={unlockFeatures} />
+        <AboutPanel
+          sourcesHidden={tacoPrefsLoaded && sourcesHidden}
+          onUnlock={unlockFeatures}
+        />
       </div>
       <Footer />
       </div>
