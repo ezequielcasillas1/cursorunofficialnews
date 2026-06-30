@@ -1,4 +1,9 @@
-﻿### [2026-06-29] - Remove taco-unlock + source-hide gating + cookie freeze
+﻿### [June 30, 2026] - Discussion tab classification + scrape pagination support
+**Status:** SUCCESS
+**Files:** mobile/server/src/classify/classify-news-item.js, content-signals.js, url-rules.js, ingest/scrape.js, test/classify-news-item.test.js
+**Result:** Discussion items increased from ~2 to ~23 after relaxing classification threshold and broadening signals; optional multi-page scrape support added.
+
+### [2026-06-29] - Remove taco-unlock + source-hide gating + cookie freeze
 **Status:** SUCCESS
 **Files:** web App.jsx, FeedSearch, AboutPanel, NewsFeed/NewsCard/ArticleMedia; mobile FeedScreen, AboutScreen, App.js; deleted taco-unlock/consent/source-hide modules; shared/monetization/bmc-config.js
 **Result:** Commit 6b8bb76 on main. Honor-system unlock, source-hide, and cookie freeze removed; search/sources ungated for everyone. request.md notes future subscription-gated rebuild.

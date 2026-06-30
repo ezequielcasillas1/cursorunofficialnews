@@ -11,7 +11,7 @@ export const URL_CATEGORY_RULES = [
   { pattern: /(?:nitter\.net|twitter\.com|x\.com)\//i, category: 'social' },
   { pattern: /(?:news\.ycombinator\.com|hnrss\.org)/i, category: 'community' },
   { pattern: /stackoverflow\.com/i, category: 'community' },
-  { pattern: /github\.com\/[^/]+\/[^/]+\/discussions/i, category: 'community' },
+  { pattern: /github\.com\/[^/]+\/[^/]+\/discussions/i, category: 'discussion' },
   { pattern: /learncursor\.dev/i, category: 'tutorial' },
   { pattern: /cursor\.directory/i, category: 'tutorial' },
 ];

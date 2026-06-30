@@ -11,7 +11,7 @@ import {
 import { categoryFromUrl } from './url-rules.js';
 
 const ISSUE_PROMOTE_THRESHOLD = 3;
-const DISCUSSION_PROMOTE_THRESHOLD = 3;
+const DISCUSSION_PROMOTE_THRESHOLD = 2;
 
 function baseCategory(item, resolvedSource) {
   const registryCategory = resolvedSource?.category || item.category || 'community';

@@ -151,30 +151,48 @@ async function callScrapeApi(pageUrl) {
 }
 
 async function fetchScrapeSource(source) {
-  if (!source.pageUrl) return [];
+  const pageUrls =
+    source.scrapePageUrls?.length > 0
+      ? source.scrapePageUrls
+      : source.pageUrl
+        ? [source.pageUrl]
+        : [];
+  if (pageUrls.length === 0) return [];
 
-  let html;
-  let metadata = {};
+  const seenLinks = new Set();
+  const mergedEntries = [];
 
-  if (isScrapeConfigured()) {
-    ({ html, metadata } = await callScrapeApi(source.pageUrl));
-  } else {
-    html = await fetchPageHtml(source.pageUrl);
-  }
+  for (const pageUrl of pageUrls) {
+    let html;
+    let metadata = {};
 
-  let entries = extractPageLinks(html, source.pageUrl, source);
+    if (isScrapeConfigured()) {
+      ({ html, metadata } = await callScrapeApi(pageUrl));
+    } else {
+      html = await fetchPageHtml(pageUrl);
+    }
 
-  if (entries.length === 0 && metadata.title && metadata.sourceURL) {
-    entries = [{
-      title: metadata.title,
-      link: metadata.sourceURL,
-      summary: metadata.description || '',
-      pubDate: metadata.publishedTime || metadata.modifiedTime || null,
-    }];
+    let entries = extractPageLinks(html, pageUrl, source);
+
+    if (entries.length === 0 && metadata.title && metadata.sourceURL) {
+      entries = [{
+        title: metadata.title,
+        link: metadata.sourceURL,
+        summary: metadata.description || '',
+        pubDate: metadata.publishedTime || metadata.modifiedTime || null,
+      }];
+    }
+
+    for (const entry of entries) {
+      const link = entry.link || entry.url;
+      if (!link || seenLinks.has(link)) continue;
+      seenLinks.add(link);
+      mergedEntries.push(entry);
+    }
   }
 
   const defaultSummary = source.defaultExcerpt || '';
-  return entries.map((entry) =>
+  return mergedEntries.map((entry) =>
     normalizeScrapedEntry(source, {
       ...entry,
       summary: entry.summary || defaultSummary,

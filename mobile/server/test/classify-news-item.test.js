@@ -35,7 +35,7 @@ test('official docs and learn URLs stay tutorial', () => {
   );
 });
 
-test('stackoverflow and github discussions classify as community', () => {
+test('stackoverflow and github discussions classify correctly', () => {
   assert.equal(
     classifyNewsItem({
       sourceId: 'stackoverflow-cursor-ide',
@@ -51,7 +51,7 @@ test('stackoverflow and github discussions classify as community', () => {
       title: 'Feature request: respect editor mode',
       canonicalUrl: 'https://github.com/getcursor/cursor/discussions/456',
     }),
-    'community',
+    'discussion',
   );
 });
 
@@ -137,7 +137,7 @@ test('Reddit rants about broken behavior promote to issue', () => {
   );
 });
 
-test('non-issue forum posts stay forum', () => {
+test('forum opinion threads promote to discussion', () => {
   assert.equal(
     classifyNewsItem({
       sourceId: 'cursor-forum-general',
@@ -145,6 +145,18 @@ test('non-issue forum posts stay forum', () => {
       excerpt:
         'I have been experimenting with VibeCode DB and it made me think about how much time we spend on database setup.',
       canonicalUrl: 'https://forum.cursor.com/t/db-friction/123',
+    }),
+    'discussion',
+  );
+});
+
+test('non-opinion forum support posts stay forum', () => {
+  assert.equal(
+    classifyNewsItem({
+      sourceId: 'cursor-forum-general',
+      title: 'How do I reset my billing cycle?',
+      excerpt: 'I need help updating my subscription before the next charge.',
+      canonicalUrl: 'https://forum.cursor.com/t/billing-reset/456',
     }),
     'forum',
   );

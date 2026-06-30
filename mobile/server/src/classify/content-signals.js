@@ -17,10 +17,10 @@ const ISSUE_BODY_RE =
   /\b(not working|doesn'?t work|won'?t work|is broken\b|breaks (?:my|the|custom)|crash(?:es|ed|ing)?\b|uninstall(?:s|ing|ed)?\b|stopped working\b|forcing me\b|forces? me into\b|reproduce the bug\b|how to fix this\b|cannot (?:use|open|launch|sign in|connect)|can'?t (?:use|open|launch|sign in|connect)|already raised since\b|waste of time\b|every few days)\b/i;
 
 const DISCUSSION_TITLE_RE =
-  /^(why\s+(?:ai|cursor|claude|the|are|is|i|we)\b|are we\b|inside\b|underestimating\b|the rise of\b|state of\b|a timeline\b|the case (?:for|against)\b)|(\broundups?\s+have\b|\bconverging on\b)/i;
+  /^(why\s+(?:ai|cursor|claude|the|are|is|i|we)\b|are we\b|thoughts on\b|my take on\b|unpopular opinion\b|what if\b|anyone else\b|inside\b|underestimating\b|the rise of\b|state of\b|a timeline\b|the case (?:for|against)\b|should we\b|do we need\b|is it worth\b|the future of\b)|(\broundups?\s+have\b|\bconverging on\b|\bthoughts on\b|\bmy experience\b|\bvs\.?\s|\bversus\b|\bcompared to\b|\bdebate\b|\bperspective on\b|\bchange my mind\b|\bam i the only\b|\bwhat do you think\b|\boverrated\b|\bunderrated\b)/i;
 
 const DISCUSSION_BODY_RE =
-  /\b(i went down a rabbit hole|opinion piece\b|the thing that finally crystallized\b|product cycle\b|values doc\b|hot take\b|stop and think\b|rabbit hole this morning|five .+ roundups?)\b/i;
+  /\b(i went down a rabbit hole|opinion piece\b|the thing that finally crystallized\b|product cycle\b|values doc\b|hot take\b|stop and think\b|rabbit hole this morning|five .+ roundups?|makes me wonder\b|food for thought\b|curious what others think\b|share your thoughts\b|interesting discussion\b)\b/i;
 
 /** Sources whose registry category should win unless URL rules override. */
 export const LOCKED_SOURCE_CATEGORIES = new Set([
@@ -64,7 +64,7 @@ export const ISSUE_PROMOTABLE_BASES = new Set([
 ]);
 
 /** Base categories that can be promoted to `discussion` (opinion/analysis). */
-export const DISCUSSION_PROMOTABLE_BASES = new Set(['community', 'tutorial']);
+export const DISCUSSION_PROMOTABLE_BASES = new Set(['community', 'tutorial', 'forum']);
 
 export function tutorialScore(title, excerpt) {
   const t = String(title || '').trim();
@@ -104,6 +104,7 @@ export function discussionScore(title, excerpt) {
   let score = 0;
   if (DISCUSSION_TITLE_RE.test(t)) score += 3;
   if (DISCUSSION_BODY_RE.test(body)) score += 2;
+  if (/\b(unpopular opinion|hot take|thoughts on|my take on|change my mind)\b/i.test(t)) score += 2;
   if (/\b(faster than (?:anyone|expected)|underestimating\b|underrated\b|overrated\b)/i.test(body)) score += 1;
   return score;
 }
