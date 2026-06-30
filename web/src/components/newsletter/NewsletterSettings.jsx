@@ -8,6 +8,7 @@ import {
 import { CollapsiblePanel } from '../ui/CollapsiblePanel.jsx';
 
 function digestStateLabel(prefs) {
+  if (prefs.pendingVerification) return 'Pending — check your email';
   return prefs.enabled ? 'Subscribed · Digest mode' : 'Off — no emails sent';
 }
 

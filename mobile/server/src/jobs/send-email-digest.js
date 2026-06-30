@@ -4,10 +4,15 @@ import {
   getTransactionalFromAddress,
   isResendConfigured,
 } from '../notifications/resend-client.js';
-import { getUnsubscribeUrl, listSubscribers } from '../store/email-subscribers.js';
+import {
+  getUnsubscribeUrl,
+  isSubscriberVerified,
+  listSubscribers,
+} from '../store/email-subscribers.js';
 
 function getItemsForSubscriber(subscriber, newItems) {
   if (!subscriber.enabled) return [];
+  if (!isSubscriberVerified(subscriber)) return [];
   if (!subscriber.categories?.length) return [];
   return newItems.filter((item) => subscriber.categories.includes(item.category));
 }

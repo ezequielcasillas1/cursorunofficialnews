@@ -34,6 +34,7 @@ export function NewsFeed({
   officialOnly = false,
   searchQuery = '',
   showFeaturedLead = true,
+  hideSources = false,
 }) {
   if (loading) {
     return <p className="status-msg">Loading news…</p>;
@@ -79,6 +80,7 @@ export function NewsFeed({
               item={lead}
               isOfficial={Boolean(sourceMap?.[lead.sourceId]?.isOfficial)}
               featured
+              hideSources={hideSources}
             />
           </li>
         ) : null}
@@ -87,6 +89,7 @@ export function NewsFeed({
             <NewsCard
               item={item}
               isOfficial={Boolean(sourceMap?.[item.sourceId]?.isOfficial)}
+              hideSources={hideSources}
             />
             {index === 2 ? <AdSlot /> : null}
             {index === 5 ? <SupporterSlot /> : null}

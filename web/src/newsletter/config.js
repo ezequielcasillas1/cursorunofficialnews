@@ -8,6 +8,7 @@ export const DEFAULT_NEWSLETTER_PREFS = {
   ...DEFAULT_NOTIFICATION_PREFS,
   email: '',
   manageToken: '',
+  pendingVerification: false,
 };
 
 export const NEWSLETTER_PREFS_KEY = 'cursor_news_web_email_prefs';
@@ -26,6 +27,7 @@ export function normalizeNewsletterPrefs(prefs) {
       typeof prefs?.manageToken === 'string'
         ? prefs.manageToken
         : DEFAULT_NEWSLETTER_PREFS.manageToken,
+    pendingVerification: Boolean(prefs?.pendingVerification),
     email:
       typeof prefs?.email === 'string'
         ? prefs.email.trim().toLowerCase()

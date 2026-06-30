@@ -128,10 +128,19 @@ export function NotificationSettingsScreen({ onBack, previewItem }) {
       categories,
       enabled: prefs.enabled,
     });
+    if (response?.pending) {
+      return {
+        ...prefs,
+        enabled: false,
+        pendingVerification: true,
+        manageToken: '',
+      };
+    }
     return {
       ...prefs,
       email: response?.subscriber?.email || prefs.email,
       manageToken: response?.subscriber?.manageToken || prefs.manageToken || '',
+      pendingVerification: false,
     };
   }
 
@@ -150,7 +159,12 @@ export function NotificationSettingsScreen({ onBack, previewItem }) {
           );
         }
         await unsubscribeEmail(nextEmailPrefs.manageToken);
-        const cleared = { ...nextEmailPrefs, enabled: false, manageToken: '' };
+        const cleared = {
+          ...nextEmailPrefs,
+          enabled: false,
+          manageToken: '',
+          pendingVerification: false,
+        };
         await saveEmailPrefs(cleared);
         setEmailPrefs(cleared);
         setEmailStatus('Unsubscribed — no more digest emails.');
@@ -162,9 +176,11 @@ export function NotificationSettingsScreen({ onBack, previewItem }) {
         await saveEmailPrefs(syncedPrefs);
         setEmailPrefs(syncedPrefs);
         setEmailStatus(
-          nextEmailPrefs.enabled
-            ? 'Subscribed — one digest email when new headlines arrive.'
-            : 'Email digest paused.',
+          syncedPrefs.pendingVerification
+            ? 'Check your email to confirm your subscription.'
+            : nextEmailPrefs.enabled
+              ? 'Subscribed — one digest email when new headlines arrive.'
+              : 'Email digest paused.',
         );
       } else if (!nextEmailPrefs.enabled) {
         setEmailStatus('Email digest paused.');

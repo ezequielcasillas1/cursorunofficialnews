@@ -18,16 +18,19 @@ export function Header({ onRefresh, refreshing }) {
   return (
     <header className="masthead">
       <div className="masthead-inner">
-        <nav className="masthead-social" aria-label="Follow on social media">
-          {SOCIAL_LINKS.map((link, index) => (
-            <span key={link.label} className="masthead-social-item">
-              {index > 0 ? <span className="masthead-social-sep" aria-hidden="true">·</span> : null}
-              <a href={link.href} target="_blank" rel="noopener noreferrer">
-                {link.label}
-              </a>
-            </span>
-          ))}
-        </nav>
+        <div className="masthead-follow">
+          <p className="masthead-follow-label">Follow Me</p>
+          <nav className="masthead-social" aria-label="Follow on social media">
+            {SOCIAL_LINKS.map((link, index) => (
+              <span key={link.label} className="masthead-social-item">
+                {index > 0 ? <span className="masthead-social-sep" aria-hidden="true">·</span> : null}
+                <a href={link.href} target="_blank" rel="noopener noreferrer">
+                  {link.label}
+                </a>
+              </span>
+            ))}
+          </nav>
+        </div>
         <p className="masthead-eyebrow">{today}</p>
         <h1>{APP_NAME}</h1>
         <hr className="masthead-rule" />

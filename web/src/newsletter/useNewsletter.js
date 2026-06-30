@@ -3,11 +3,16 @@ import {
   DEFAULT_NEWSLETTER_PREFS,
   normalizeNewsletterPrefs,
 } from './config.js';
-import { loadNewsletterPrefs, saveNewsletterPrefs } from './storage.js';
+import {
+  consumeNewsletterVerifyTokenFromUrl,
+  loadNewsletterPrefs,
+  saveNewsletterPrefs,
+} from './storage.js';
 import {
   fetchNewsletterStatus,
   subscribeNewsletter,
   unsubscribeNewsletter,
+  verifyNewsletterSubscription,
 } from './services/newsletterApi.js';
 
 export function isValidNewsletterEmail(email) {
@@ -22,6 +27,7 @@ function syncablePrefs(prefs) {
     categories: Array.isArray(prefs.categories) ? prefs.categories : [],
     enabled: Boolean(prefs.enabled),
     manageToken: String(prefs.manageToken || '').trim(),
+    pendingVerification: Boolean(prefs.pendingVerification),
   };
 }
 
@@ -37,6 +43,7 @@ function mergeSubscriber(basePrefs, subscriber, manageToken) {
         ? subscriber.enabled
         : basePrefs.enabled,
     manageToken: manageToken ?? basePrefs.manageToken,
+    pendingVerification: Boolean(subscriber?.pending),
   });
 }
 
@@ -69,6 +76,15 @@ export function useNewsletter() {
       enabled: clean.enabled,
     });
 
+    if (response?.pending) {
+      return normalizeNewsletterPrefs({
+        ...nextPrefs,
+        enabled: false,
+        pendingVerification: true,
+        manageToken: '',
+      });
+    }
+
     return mergeSubscriber(
       nextPrefs,
       response?.subscriber,
@@ -76,12 +92,54 @@ export function useNewsletter() {
     );
   }, []);
 
+  const verifyFromUrlToken = useCallback(
+    async (verifyToken, basePrefs) => {
+      setSyncing(true);
+      setErrorMessage('');
+      setStatusMessage('');
+      try {
+        const data = await verifyNewsletterSubscription(verifyToken);
+        const synced = mergeSubscriber(
+          basePrefs,
+          data?.subscriber,
+          data?.subscriber?.manageToken,
+        );
+        const confirmed = persistPrefs({
+          ...synced,
+          enabled: true,
+          pendingVerification: false,
+        });
+        setStatusMessage(
+          'Subscription confirmed — one digest email when new headlines arrive.',
+        );
+        return confirmed;
+      } catch (err) {
+        setErrorMessage(err.message || 'Could not confirm subscription link.');
+        throw err;
+      } finally {
+        setSyncing(false);
+      }
+    },
+    [persistPrefs],
+  );
+
   useEffect(() => {
     let cancelled = false;
     const initial = loadNewsletterPrefs();
     persistPrefs(initial);
 
     async function boot() {
+      const verifyToken = consumeNewsletterVerifyTokenFromUrl();
+      if (verifyToken) {
+        try {
+          await verifyFromUrlToken(verifyToken, initial);
+        } catch {
+          /* surfaced via errorMessage */
+        }
+        if (!cancelled) setLoading(false);
+        return;
+      }
+
       if (!initial.manageToken) {
         if (!cancelled) setLoading(false);
         return;
@@ -92,13 +150,23 @@ export function useNewsletter() {
         const data = await fetchNewsletterStatus(initial.manageToken);
         if (cancelled) return;
 
-        if (data.subscribed && data.subscriber) {
+        if (data.pending) {
+          persistPrefs({
+            ...initial,
+            enabled: false,
+            pendingVerification: true,
+          });
+          setStatusMessage(
+            'Check your email to confirm your subscription before digests start.',
+          );
+        } else if (data.subscribed && data.subscriber) {
           persistPrefs(mergeSubscriber(initial, data.subscriber, initial.manageToken));
           setStatusMessage('Loaded saved email digest settings.');
         } else {
           persistPrefs({
             ...initial,
             enabled: false,
+            pendingVerification: false,
             manageToken: '',
           });
           setStatusMessage(
@@ -121,7 +189,7 @@ export function useNewsletter() {
     return () => {
       cancelled = true;
     };
-  }, [persistPrefs]);
+  }, [persistPrefs, verifyFromUrlToken]);
 
   const runSync = useCallback(
     async (nextPrefs, { syncServer = false, unsubscribe = false } = {}) => {
@@ -130,7 +198,9 @@ export function useNewsletter() {
       setStatusMessage('');
 
       if (!syncServer && !unsubscribe) {
-        if (!normalized.enabled) {
+        if (normalized.pendingVerification) {
+          setStatusMessage('Check your email to confirm your subscription.');
+        } else if (!normalized.enabled) {
           setStatusMessage('Email digest paused.');
         }
         return normalized;
@@ -148,6 +218,7 @@ export function useNewsletter() {
           const cleared = persistPrefs({
             ...normalized,
             enabled: false,
+            pendingVerification: false,
             manageToken: '',
           });
           setStatusMessage('Unsubscribed — no more digest emails.');
@@ -156,11 +227,15 @@ export function useNewsletter() {
 
         const synced = await syncToServer(normalized);
         persistPrefs(synced);
-        setStatusMessage(
-          synced.enabled
-            ? 'Subscribed — one digest email when new headlines arrive.'
-            : 'Email digest paused.',
-        );
+        if (synced.pendingVerification) {
+          setStatusMessage('Check your email to confirm your subscription.');
+        } else {
+          setStatusMessage(
+            synced.enabled
+              ? 'Subscribed — one digest email when new headlines arrive.'
+              : 'Email digest paused.',
+          );
+        }
         return synced;
       } catch (err) {
         setErrorMessage(err.message || 'Failed to save newsletter settings.');
@@ -174,7 +249,11 @@ export function useNewsletter() {
 
   const setEmail = useCallback(
     (email) => {
-      const next = persistPrefs({ ...prefs, email });
+      const next = persistPrefs({
+        ...prefs,
+        email,
+        pendingVerification: false,
+      });
       setErrorMessage('');
       setStatusMessage('');
       return next;

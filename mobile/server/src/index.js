@@ -19,14 +19,7 @@ import {
   replaceItems,
   setLastIngestAt,
 } from './store/memory-cache.js';
-import {
-  buildSubscriberForClient,
-  buildSubscriberStatusForClient,
-  getSubscriberByToken,
-  listSubscribers,
-  subscribeEmail,
-  unsubscribeByToken,
-} from './store/email-subscribers.js';
+import { registerEmailRoutes } from './notifications/email-routes.js';
 import {
   listDevices,
   registerDevice,
@@ -57,6 +50,7 @@ app.post(
 
 app.use(express.json({ limit: '64kb' }));
 registerMembershipRoutes(app);
+registerEmailRoutes(app);
 
 /** In-process mutex — prevents concurrent ingests from double-notifying. */
 let ingestLock = Promise.resolve();
@@ -182,136 +176,6 @@ app.get('/v1/devices', (_req, res) => {
     return;
   }
   res.json({ devices: listDevices() });
-});
-
-const subscribeRateLimit = new Map();
-const SUBSCRIBE_RATE_MS = 30_000;
-
-function checkSubscribeRateLimit(key) {
-  const now = Date.now();
-  const last = subscribeRateLimit.get(key);
-  if (last && now - last < SUBSCRIBE_RATE_MS) {
-    return false;
-  }
-  subscribeRateLimit.set(key, now);
-  return true;
-}
-
-function noStore(res) {
-  res.set('Cache-Control', 'no-store');
-}
-
-app.post('/v1/email/subscribe', (req, res) => {
-  noStore(res);
-  try {
-    const { email, categories, enabled } = req.body || {};
-    const rateKey = `${req.ip || 'unknown'}:${String(email || '').toLowerCase()}`;
-    if (!checkSubscribeRateLimit(rateKey)) {
-      res.status(429).json({ error: 'Too many requests — try again shortly' });
-      return;
-    }
-    const subscriber = subscribeEmail({ email, categories, enabled });
-    res.json({ ok: true, subscriber: buildSubscriberForClient(subscriber) });
-  } catch (err) {
-    res.status(400).json({ error: err.message || 'Subscribe failed' });
-  }
-});
-
-app.post('/v1/email/unsubscribe', (req, res) => {
-  noStore(res);
-  try {
-    const token = String(req.body?.token || req.query?.token || '').trim();
-    if (!token) {
-      res.status(400).json({ error: 'token is required' });
-      return;
-    }
-    const removed = unsubscribeByToken(token);
-    res.json({ ok: true, removed });
-  } catch (err) {
-    res.status(400).json({ error: err.message || 'Unsubscribe failed' });
-  }
-});
-
-app.get('/v1/email/unsubscribe', (req, res) => {
-  noStore(res);
-  const token = req.query?.token;
-  if (!token) {
-    if (req.headers.accept?.includes('application/json')) {
-      res.status(400).json({ error: 'token query parameter is required' });
-      return;
-    }
-    res.status(400).type('html').send(unsubscribeHtmlPage(false, 'Missing unsubscribe token.'));
-    return;
-  }
-
-  const removed = unsubscribeByToken(String(token));
-  const wantsJson =
-    req.headers.accept?.includes('application/json') ||
-    req.query.format === 'json';
-
-  if (wantsJson) {
-    res.json({ ok: true, removed });
-    return;
-  }
-
-  res
-    .type('html')
-    .send(
-      unsubscribeHtmlPage(
-        removed,
-        removed
-          ? 'You have been unsubscribed from Unofficial Cursor News email digests.'
-          : 'This unsubscribe link is invalid or has already been used.',
-      ),
-    );
-});
-
-function unsubscribeHtmlPage(success, message) {
-  const title = success ? 'Unsubscribed' : 'Unsubscribe';
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>${title} — Unofficial Cursor News</title>
-  <style>
-    body { font-family: Georgia, serif; background: #f0ebe3; color: #0a0a0f; margin: 0; padding: 48px 16px; }
-    .card { max-width: 480px; margin: 0 auto; background: #fffdf9; border: 1px solid #ddd6c8; border-radius: 8px; padding: 32px; }
-    h1 { font-size: 24px; margin: 0 0 16px; }
-    p { line-height: 1.6; color: #5c5c6a; margin: 0; }
-  </style>
-</head>
-<body>
-  <div class="card">
-    <h1>${title}</h1>
-    <p>${message}</p>
-  </div>
-</body>
-</html>`;
-}
-
-app.get('/v1/email/status', (req, res) => {
-  noStore(res);
-  const token = String(req.query?.token || '').trim();
-  if (!token) {
-    res.status(400).json({ error: 'token query parameter is required' });
-    return;
-  }
-  const subscriber = getSubscriberByToken(token);
-  res.json(buildSubscriberStatusForClient(subscriber));
-});
-
-app.get('/v1/email/subscribers', (_req, res) => {
-  if (process.env.NODE_ENV === 'production') {
-    res.status(404).json({ error: 'Not found' });
-    return;
-  }
-  res.json({
-    subscribers: listSubscribers().map((s) => ({
-      ...s,
-      manageToken: undefined,
-    })),
-  });
 });
 
 app.post('/v1/ingest', requireIngestSecret, async (_req, res) => {

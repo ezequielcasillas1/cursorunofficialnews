@@ -71,7 +71,7 @@ function formatCategoryLabel(category, sourceName) {
   return labels[category] || category || sourceName || 'News';
 }
 
-export function NewsListItem({ item, isOfficial = false }) {
+export function NewsListItem({ item, isOfficial = false, hideSources = false }) {
   const isVideo = item.category === 'video';
   const safeUrl = sanitizeExternalUrl(item.canonicalUrl);
   const thumbnailUrl = isVideo ? getYouTubeThumbnail(safeUrl) : null;
@@ -122,7 +122,9 @@ export function NewsListItem({ item, isOfficial = false }) {
         ) : null}
       </View>
 
-      <Text style={styles.sourceLine}>{item.sourceName}</Text>
+      {!hideSources && item.sourceName ? (
+        <Text style={styles.sourceLine}>{item.sourceName}</Text>
+      ) : null}
 
       {item.excerpt ? (
         <Text style={styles.excerpt} numberOfLines={3}>

@@ -13,13 +13,13 @@ function formatDate(iso) {
   });
 }
 
-export function NewsCard({ item, isOfficial = false, featured = false }) {
+export function NewsCard({ item, isOfficial = false, featured = false, hideSources = false }) {
   const cardClass = featured ? 'news-card news-card-featured' : 'news-card';
   const safeUrl = sanitizeExternalUrl(item?.canonicalUrl);
 
   return (
     <article className={cardClass}>
-      <ArticleMedia item={item} featured={featured} />
+      <ArticleMedia item={item} featured={featured} hideSources={hideSources} />
       <div className="news-card-meta">
         <span className="badge">{formatCategoryLabel(item.category)}</span>
         {isOfficial ? <span className="badge-official">Official</span> : null}
@@ -36,7 +36,7 @@ export function NewsCard({ item, isOfficial = false, featured = false }) {
       </h2>
       {item.excerpt ? <p className="excerpt">{item.excerpt}</p> : null}
       <footer className="news-card-footer">
-        <span>{item.attributionLabel || item.sourceName}</span>
+        {!hideSources ? <span>{item.attributionLabel || item.sourceName}</span> : null}
         {safeUrl ? (
           <a href={safeUrl} target="_blank" rel="noopener noreferrer" className="open-link">
             Read original →

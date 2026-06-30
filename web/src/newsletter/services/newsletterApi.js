@@ -54,3 +54,11 @@ export function fetchNewsletterStatus(token) {
   const params = new URLSearchParams({ token: String(token || '').trim() });
   return fetchJson(`/v1/email/status?${params.toString()}`);
 }
+
+export function verifyNewsletterSubscription(token) {
+  return fetchJson('/v1/email/verify', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token }),
+  });
+}

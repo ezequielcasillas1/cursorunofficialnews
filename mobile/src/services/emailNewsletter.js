@@ -9,6 +9,7 @@ export const DEFAULT_EMAIL_PREFS = {
   email: '',
   categories: DEFAULT_NOTIFICATION_PREFS.categories,
   manageToken: '',
+  pendingVerification: false,
 };
 
 const REQUEST_TIMEOUT_MS = 15000;
@@ -54,6 +55,7 @@ export async function loadEmailPrefs() {
           typeof parsed.manageToken === 'string'
             ? parsed.manageToken
             : DEFAULT_EMAIL_PREFS.manageToken,
+        pendingVerification: Boolean(parsed.pendingVerification),
       };
     }
   } catch {

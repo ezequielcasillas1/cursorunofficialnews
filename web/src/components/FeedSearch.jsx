@@ -1,6 +1,32 @@
-export function FeedSearch({ value, onChange, resultCount, totalCount }) {
+export function FeedSearch({
+  value,
+  onChange,
+  resultCount,
+  totalCount,
+  locked = false,
+  onLockedInteract,
+}) {
   const trimmed = value.trim();
-  const showCount = trimmed.length > 0 && typeof resultCount === 'number';
+  const showCount = !locked && trimmed.length > 0 && typeof resultCount === 'number';
+
+  if (locked) {
+    return (
+      <div className="feed-search feed-search--locked">
+        <label className="feed-search-label" htmlFor="feed-search-locked">
+          Search
+        </label>
+        <button
+          id="feed-search-locked"
+          type="button"
+          className="feed-search-locked-btn"
+          onClick={() => onLockedInteract?.()}
+        >
+          <span aria-hidden="true">🔒</span> Search locked — buy a taco to unlock{' '}
+          <span aria-hidden="true">🌮</span>
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="feed-search">

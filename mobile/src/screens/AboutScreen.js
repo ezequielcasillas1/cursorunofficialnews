@@ -13,12 +13,20 @@ import { DISCLAIMER } from '../config/constants';
 import { DisclaimerBanner } from '../components/DisclaimerBanner';
 import { EditorialDivider } from '../components/EditorialDivider';
 import { SourceOfficialBadge } from '../components/SourceOfficialBadge';
+import {
+  SourceVisibilityControls,
+  TacoUnlockModal,
+  useSourceVisibility,
+} from '../components/SourceVisibilityControls';
+import { TACO_SOURCES_HIDDEN_TEASER } from '../../shared/taco-unlock/config';
 import { colors, radii, spacing, typography } from '../theme/tokens';
 
 export function AboutScreen({ onBack }) {
   const [sources, setSources] = useState([]);
   const [loadingSources, setLoadingSources] = useState(true);
   const [sourcesError, setSourcesError] = useState('');
+  const { sourcesHidden, hideSources, unlockFeatures } = useSourceVisibility();
+  const [unlockVisible, setUnlockVisible] = useState(false);
 
   useEffect(() => {
     fetchSources()
@@ -67,30 +75,50 @@ export function AboutScreen({ onBack }) {
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Sources</Text>
-        {loadingSources ? (
-          <ActivityIndicator color={colors.navy} style={styles.loader} />
-        ) : sourcesError ? (
-          <Text style={styles.error}>{sourcesError}</Text>
-        ) : sources.length === 0 ? (
-          <Text style={styles.body}>No sources registered.</Text>
+        {sourcesHidden ? (
+          <>
+            <Text style={styles.body}>{TACO_SOURCES_HIDDEN_TEASER}</Text>
+            <Pressable
+              onPress={() => setUnlockVisible(true)}
+              style={styles.unlockChip}
+            >
+              <Text style={styles.unlockChipText}>Unlock sources</Text>
+            </Pressable>
+            <TacoUnlockModal
+              visible={unlockVisible}
+              onClose={() => setUnlockVisible(false)}
+              onUnlock={unlockFeatures}
+            />
+          </>
         ) : (
-          sources.map((source) => (
-            <View key={source.id} style={styles.sourceRow}>
-              <View style={styles.sourceHeader}>
-                <Text style={styles.sourceName}>{source.name}</Text>
-                {source.isOfficial ? <SourceOfficialBadge /> : null}
-              </View>
-              <Text style={styles.sourceMeta}>
-                {source.category} · {source.ingestMethod || 'rss'}
-                {source.enabled ? '' : ' · disabled'}
-              </Text>
-              {source.attributionLabel ? (
-                <Text style={styles.sourceMeta}>
-                  Attribution: {source.attributionLabel}
-                </Text>
-              ) : null}
-            </View>
-          ))
+          <>
+            <SourceVisibilityControls sourcesHidden={false} onHide={hideSources} />
+            {loadingSources ? (
+              <ActivityIndicator color={colors.navy} style={styles.loader} />
+            ) : sourcesError ? (
+              <Text style={styles.error}>{sourcesError}</Text>
+            ) : sources.length === 0 ? (
+              <Text style={styles.body}>No sources registered.</Text>
+            ) : (
+              sources.map((source) => (
+                <View key={source.id} style={styles.sourceRow}>
+                  <View style={styles.sourceHeader}>
+                    <Text style={styles.sourceName}>{source.name}</Text>
+                    {source.isOfficial ? <SourceOfficialBadge /> : null}
+                  </View>
+                  <Text style={styles.sourceMeta}>
+                    {source.category} · {source.ingestMethod || 'rss'}
+                    {source.enabled ? '' : ' · disabled'}
+                  </Text>
+                  {source.attributionLabel ? (
+                    <Text style={styles.sourceMeta}>
+                      Attribution: {source.attributionLabel}
+                    </Text>
+                  ) : null}
+                </View>
+              ))
+            )}
+          </>
         )}
       </View>
 
@@ -185,5 +213,19 @@ const styles = StyleSheet.create({
   sourceMeta: {
     ...typography.meta,
     lineHeight: 18,
+  },
+  unlockChip: {
+    alignSelf: 'flex-start',
+    backgroundColor: colors.accentSoft,
+    borderColor: colors.gold,
+    borderRadius: radii.pill,
+    borderWidth: StyleSheet.hairlineWidth,
+    marginTop: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+  },
+  unlockChipText: {
+    ...typography.uiLabel,
+    color: colors.navy,
   },
 });

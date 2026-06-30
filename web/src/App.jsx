@@ -20,6 +20,9 @@ import {
 import { filterNewsItems } from './feed/filterNewsItems.js';
 import { useCookieConsent } from './consent/useCookieConsent.js';
 import { CookieConsent } from './components/CookieConsent.jsx';
+import { SourceVisibilityControls } from './components/sources/SourceVisibilityControls.jsx';
+import { TacoUnlockDialog } from './components/sources/TacoUnlockDialog.jsx';
+import { useTacoUnlock } from './taco-unlock/useTacoUnlock.js';
 import './App.css';
 
 const FILTER_PREFS_KEY = 'cursor_news_filter_prefs';
@@ -44,9 +47,11 @@ function saveFilterPrefs(category, officialOnly) {
 
 export default function App() {
   const { hasConsent, acceptConsent } = useCookieConsent();
+  const { tacoUnlocked, sourcesHidden, hideSources, unlockFeatures } = useTacoUnlock();
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [officialOnly, setOfficialOnly] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchUnlockOpen, setSearchUnlockOpen] = useState(false);
   const [items, setItems] = useState([]);
   const [feedPage, setFeedPage] = useState(1);
   const [feedMeta, setFeedMeta] = useState({ total: 0, totalPages: 1, pageSize: FEED_PAGE_SIZE });
@@ -102,7 +107,7 @@ export default function App() {
     }
   }, []);
 
-  const isSearching = searchQuery.trim().length > 0;
+  const isSearching = tacoUnlocked && searchQuery.trim().length > 0;
 
   useEffect(() => {
     loadNews(selectedCategory, officialOnly, feedPage, isSearching);
@@ -115,8 +120,8 @@ export default function App() {
   }, [feedPage, loading, isSearching]);
 
   const filteredItems = useMemo(
-    () => filterNewsItems(items, searchQuery),
-    [items, searchQuery],
+    () => (tacoUnlocked ? filterNewsItems(items, searchQuery) : items),
+    [items, searchQuery, tacoUnlocked],
   );
 
   async function handleRefresh() {
@@ -146,8 +151,17 @@ export default function App() {
   }
 
   function handleSearchChange(nextQuery) {
+    if (!tacoUnlocked) {
+      setSearchUnlockOpen(true);
+      return;
+    }
     setFeedPage(1);
     setSearchQuery(nextQuery);
+  }
+
+  function handleSearchUnlock() {
+    unlockFeatures();
+    setSearchUnlockOpen(false);
   }
 
   function handlePageChange(nextPage) {
@@ -162,18 +176,34 @@ export default function App() {
       <div className="app-interactive" {...(!hasConsent ? { inert: '' } : {})}>
       <Header onRefresh={handleRefresh} refreshing={refreshing} />
       <div className="app-body">
-        <StatusBar lastIngestAt={status.lastIngestAt} sourceCount={status.sourceCount} />
+        <StatusBar
+          lastIngestAt={status.lastIngestAt}
+          sourceCount={status.sourceCount}
+          sourcesHidden={sourcesHidden}
+        />
         <CategoryFilter
           selectedCategory={selectedCategory}
           officialOnly={officialOnly}
           onCategoryChange={handleCategoryChange}
           onOfficialOnlyChange={handleOfficialOnlyChange}
         />
+        <SourceVisibilityControls
+          sourcesHidden={sourcesHidden}
+          onHide={hideSources}
+          onUnlock={unlockFeatures}
+        />
         <FeedSearch
+          locked={!tacoUnlocked}
+          onLockedInteract={() => setSearchUnlockOpen(true)}
           value={searchQuery}
           onChange={handleSearchChange}
           resultCount={filteredItems.length}
           totalCount={isSearching ? items.length : feedMeta.total}
+        />
+        <TacoUnlockDialog
+          open={searchUnlockOpen}
+          onClose={() => setSearchUnlockOpen(false)}
+          onUnlock={handleSearchUnlock}
         />
         <MonetizationSection />
         <NewsletterSettings />
@@ -187,6 +217,7 @@ export default function App() {
             officialOnly={officialOnly}
             searchQuery={searchQuery}
             showFeaturedLead={feedPage === 1 && !isSearching}
+            hideSources={sourcesHidden}
           />
           {showPagination ? (
             <FeedPagination
@@ -203,7 +234,7 @@ export default function App() {
             </p>
           ) : null}
         </main>
-        <AboutPanel />
+        <AboutPanel sourcesHidden={sourcesHidden} onUnlock={unlockFeatures} />
       </div>
       <Footer />
       </div>
