@@ -1,4 +1,5 @@
 import Parser from 'rss-parser';
+import { filterItemsByFeedPolicy } from '../../../shared/feed/feedPolicy.js';
 import { listSources, getSourceMeta } from '../sources/registry.js';
 import { normalizeFeedEntry, dedupeNewsItems } from '../normalize/news-item.js';
 import { ingestScrapeSources } from './scrape.js';
@@ -75,7 +76,9 @@ export async function ingestAllSources() {
     ingestTwitterApiSources(),
   ]);
 
-  return dedupeNewsItems([...feedItems, ...scrapeItems, ...sitemapItems, ...twitterItems], {
-    getSourceMeta,
-  });
+  const deduped = dedupeNewsItems(
+    [...feedItems, ...scrapeItems, ...sitemapItems, ...twitterItems],
+    { getSourceMeta },
+  );
+  return filterItemsByFeedPolicy(deduped);
 }

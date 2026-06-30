@@ -1,3 +1,13 @@
+### [2026-06-30] - Feed pagination (30 per page)
+**Status:** PENDING USER VERIFY
+**Files:** mobile/shared/feed/feedPagination.js; mobile/server/src/{index,store/memory-cache}.js; mobile/server/test/{feed-pagination,memory-cache}.test.js; web/src/{config/feedCategories,services/newsApi}.js; mobile/src/{api/newsClient,config/constants,screens/FeedScreen}.js
+**Result:** Shared FEED_PAGE_SIZE=30. GET /v1/news returns page, pageSize, total, totalPages, hasMore. Web paginates per tab; mobile fetches page 1 (30 items). 33/33 server tests, 9/9 web tests, web build OK.
+
+### [2026-06-30] - Feed policy + website ingest alignment (2025 cut)
+**Status:** PENDING USER VERIFY
+**Files:** mobile/shared/feed/{feedPolicy,feedCategories}.js; mobile/server/src/{ingest/feeds,store/memory-cache,index}.js; mobile/src/config/constants.js; web/src/{config/feedCategories,App.jsx,components/AboutPanel.jsx}; mobile/server/test/{feed-policy,memory-cache}.test.js
+**Result:** Shared feed policy enforces 2025-01-01 cut at ingest + API store. Tab→category mapping consolidated in shared feedCategories. Web status bar shows cut year; GET /v1/status exposes feedPublishedAfter. 26/26 server tests pass; web build OK.
+
 ### [2026-06-30] - Issue + Discussion category tabs
 **Status:** PENDING USER VERIFY
 **Files:** mobile/server/src/classify/{content-signals,classify-news-item,index}.js, test/classify-news-item.test.js; mobile/shared/notifications/constants.js; mobile/src/{config/constants.js,components/NewsListItem.js,screens/AboutScreen.js}; web/src/{config/feedCategories.js,utils/articleMedia.js}

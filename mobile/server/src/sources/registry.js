@@ -348,6 +348,7 @@ export function getSourceMeta(id) {
   };
 }
 
+/** Public metadata for clients — no ingest URLs or internal scrape config. */
 export function listSourcesForApi() {
   return SOURCES.map((s) => ({
     id: s.id,
@@ -355,13 +356,7 @@ export function listSourcesForApi() {
     category: s.category,
     ingestMethod: s.ingestMethod,
     enabled: s.enabled,
-    priority: s.priority,
     isOfficial: s.isOfficial ?? false,
-    maxExcerptChars: s.maxExcerptChars,
     attributionLabel: s.attributionLabel,
-    feedUrl: s.feedUrl || null,
-    pageUrl: s.pageUrl || null,
-    sitemapUrl: s.sitemapUrl || null,
-    twitterUsername: s.twitterUsername || null,
   }));
 }

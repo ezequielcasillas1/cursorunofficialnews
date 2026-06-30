@@ -126,8 +126,10 @@ export function NewsListItem({ item, isOfficial = false }) {
         ) : null}
       </View>
 
-      {item.sourceName ? (
-        <Text style={styles.sourceLine}>{item.sourceName}</Text>
+      {item.attributionLabel || item.sourceName ? (
+        <Text style={styles.sourceLine}>
+          {item.attributionLabel || item.sourceName}
+        </Text>
       ) : null}
 
       {item.excerpt ? (

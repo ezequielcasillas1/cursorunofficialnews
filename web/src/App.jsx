@@ -51,7 +51,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
-  const [status, setStatus] = useState({ lastIngestAt: null, sourceCount: 0 });
+  const [status, setStatus] = useState({ lastIngestAt: null, sourceCount: 0, feedPublishedAfter: null });
 
   useEffect(() => {
     const prefs = loadFilterPrefs();
@@ -158,7 +158,11 @@ export default function App() {
     <div className="app-shell">
       <Header onRefresh={handleRefresh} refreshing={refreshing} />
       <div className="app-body">
-        <StatusBar lastIngestAt={status.lastIngestAt} sourceCount={status.sourceCount} />
+        <StatusBar
+          lastIngestAt={status.lastIngestAt}
+          sourceCount={status.sourceCount}
+          feedPublishedAfter={status.feedPublishedAfter}
+        />
         <CategoryFilter
           selectedCategory={selectedCategory}
           officialOnly={officialOnly}

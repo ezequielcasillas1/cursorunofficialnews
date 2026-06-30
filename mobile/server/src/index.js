@@ -11,6 +11,11 @@ import {
   optionalRegisterSecret,
   requireIngestSecret,
 } from './middleware/require-api-secret.js';
+import { FEED_PUBLISHED_AFTER_ISO } from '../../shared/feed/feedPolicy.js';
+import {
+  buildFeedPaginationMeta,
+  parseFeedPaginationQuery,
+} from '../../shared/feed/feedPagination.js';
 import { listSourcesForApi } from './sources/registry.js';
 import {
   getLastIngestAt,
@@ -80,6 +85,7 @@ app.get('/v1/status', (_req, res) => {
   const payload = {
     ...getStatus(),
     sourceCount: listSourcesForApi().filter((s) => s.enabled).length,
+    feedPublishedAfter: FEED_PUBLISHED_AFTER_ISO,
   };
   if (process.env.NODE_ENV !== 'production') {
     payload.scrapeConfigured = isScrapeConfigured();
@@ -94,22 +100,7 @@ app.get('/v1/sources', (_req, res) => {
 });
 
 app.get('/v1/news', (req, res) => {
-  const parsedLimit = req.query.limit ? Number(req.query.limit) : 50;
-  const limit =
-    Number.isFinite(parsedLimit) && parsedLimit > 0
-      ? Math.min(Math.floor(parsedLimit), 200)
-      : 50;
-  const parsedPage = req.query.page ? Number(req.query.page) : 1;
-  const page =
-    Number.isFinite(parsedPage) && parsedPage >= 1 ? Math.floor(parsedPage) : 1;
-  const parsedOffset =
-    req.query.offset !== undefined ? Number(req.query.offset) : undefined;
-  const offset =
-    parsedOffset !== undefined &&
-    Number.isFinite(parsedOffset) &&
-    parsedOffset >= 0
-      ? Math.floor(parsedOffset)
-      : (page - 1) * limit;
+  const { limit, page, offset } = parseFeedPaginationQuery(req.query);
   const category = req.query.category ? String(req.query.category) : undefined;
   const official = req.query.official === 'true';
   const { items, total } = getNews({
@@ -118,13 +109,15 @@ app.get('/v1/news', (req, res) => {
     limit,
     offset,
   });
-  const totalPages = total > 0 ? Math.ceil(total / limit) : 1;
   res.json({
     items,
-    total,
-    page,
-    pageSize: limit,
-    totalPages,
+    ...buildFeedPaginationMeta({
+      total,
+      limit,
+      page,
+      offset,
+      itemCount: items.length,
+    }),
     lastIngestAt: getLastIngestAt(),
   });
 });

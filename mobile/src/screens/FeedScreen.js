@@ -30,7 +30,7 @@ import {
 
 } from '../api/newsClient';
 
-import { API_BASE, getCategoryApiParam, getEmptyFeedMessage } from '../config/constants';
+import { API_BASE, FEED_PAGE_SIZE, getCategoryApiParam, getEmptyFeedMessage } from '../config/constants';
 
 import { DisclaimerBanner } from '../components/DisclaimerBanner';
 
@@ -233,7 +233,7 @@ export function FeedScreen({ onOpenAbout, onOpenAlerts }) {
       const newsOptions = {
         category: categoryParam,
         official: officialOnly ? true : undefined,
-        limit: selectedCategory === 'tutorials' ? 100 : 50,
+        limit: FEED_PAGE_SIZE,
       };
 
 

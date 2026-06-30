@@ -1,4 +1,5 @@
 import { applyCategoryClassification } from '../classify/index.js';
+import { filterItemsByFeedPolicy } from '../../../shared/feed/feedPolicy.js';
 import { getSourceById, getSourceMeta } from '../sources/registry.js';
 import { loadJsonFile, saveJsonFile } from './json-persist.js';
 import { sanitizeExternalUrl } from '../../../shared/url/safe-external-url.js';
@@ -26,7 +27,7 @@ function sanitizeNewsItem(item) {
 
 function sanitizeNewsItems(nextItems) {
   if (!Array.isArray(nextItems)) return [];
-  return nextItems.map(sanitizeNewsItem).filter(Boolean);
+  return filterItemsByFeedPolicy(nextItems.map(sanitizeNewsItem).filter(Boolean));
 }
 
 function loadFromDisk() {
@@ -116,7 +117,9 @@ function orderNewsList(list, { categoryList, officialOnly }) {
   return diversifyBySource(list);
 }
 
-export function getNews({ category, categories, official, limit = 50, offset = 0 } = {}) {
+import { FEED_PAGE_SIZE } from '../../../shared/feed/feedPagination.js';
+
+export function getNews({ category, categories, official, limit = FEED_PAGE_SIZE, offset = 0 } = {}) {
   let list = [...items];
   const categoryList = parseCategories({ category, categories });
   if (categoryList.length > 0) {
@@ -131,7 +134,7 @@ export function getNews({ category, categories, official, limit = 50, offset = 0
   const ordered = orderNewsList(list, { categoryList, officialOnly });
   const total = ordered.length;
   const safeOffset = Math.max(0, Math.floor(offset) || 0);
-  const safeLimit = Math.max(1, Math.floor(limit) || 50);
+  const safeLimit = Math.max(1, Math.floor(limit) || FEED_PAGE_SIZE);
   const pageItems = ordered.slice(safeOffset, safeOffset + safeLimit);
 
   return { items: pageItems, total };

@@ -1,4 +1,5 @@
 import { API_BASE } from '../config/constants';
+import { FEED_PAGE_SIZE } from '../../shared/feed/feedPagination.js';
 
 const REQUEST_TIMEOUT_MS = 15000;
 
@@ -31,11 +32,12 @@ async function fetchJson(path, options = {}) {
   }
 }
 
-export function fetchNews({ category, official, limit = 50 } = {}) {
+export function fetchNews({ category, official, limit = FEED_PAGE_SIZE, page } = {}) {
   const params = new URLSearchParams();
   if (category) params.set('category', category);
   if (official) params.set('official', 'true');
   if (limit) params.set('limit', String(limit));
+  if (page && page > 1) params.set('page', String(page));
   const qs = params.toString();
   return fetchJson(`/v1/news${qs ? `?${qs}` : ''}`);
 }

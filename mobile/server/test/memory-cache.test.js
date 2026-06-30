@@ -66,8 +66,9 @@ test('getNews with no category returns items sorted by publishedAt desc', async 
 
     assert.deepEqual(
       result.items.map((item) => item.id),
-      ['changelog-new', 'tutorial-new', 'tutorial-old'],
+      ['changelog-new', 'tutorial-new'],
     );
+    assert.equal(result.total, 2);
   });
 });
 
@@ -147,6 +148,35 @@ test('getNews with category filter still diversifies across sources', async () =
   });
 });
 
+test('getNews excludes pre-2025 items on load', async () => {
+  await withTempDataDir(async () => {
+    const cache = await loadCacheModule();
+
+    cache.replaceItems([
+      {
+        id: 'pre-cut',
+        sourceId: 'cursor-changelog-rss',
+        category: 'changelog',
+        title: 'Pre 2025',
+        publishedAt: '2024-01-01T00:00:00.000Z',
+        canonicalUrl: 'https://cursor.com/changelog/pre',
+      },
+      {
+        id: 'post-cut',
+        sourceId: 'cursor-changelog-rss',
+        category: 'changelog',
+        title: 'Post 2025',
+        publishedAt: '2025-06-01T00:00:00.000Z',
+        canonicalUrl: 'https://cursor.com/changelog/post',
+      },
+    ]);
+
+    const result = cache.getNews({ limit: 10 });
+    assert.deepEqual(result.items.map((item) => item.id), ['post-cut']);
+    assert.equal(result.total, 1);
+  });
+});
+
 test('getNews paginates with offset', async () => {
   await withTempDataDir(async () => {
     const cache = await loadCacheModule();
@@ -168,5 +198,26 @@ test('getNews paginates with offset', async () => {
     assert.equal(page1.total, 5);
     assert.deepEqual(page1.items.map((item) => item.id), ['item-0', 'item-1']);
     assert.deepEqual(page2.items.map((item) => item.id), ['item-2', 'item-3']);
+  });
+});
+
+test('getNews default page size is 30', async () => {
+  await withTempDataDir(async () => {
+    const cache = await loadCacheModule();
+
+    cache.replaceItems(
+      Array.from({ length: 35 }, (_, index) => ({
+        id: `item-${index}`,
+        sourceId: 'cursor-changelog-rss',
+        category: 'changelog',
+        title: `Item ${index}`,
+        publishedAt: `2026-06-${String(28 - (index % 28)).padStart(2, '0')}T00:00:00.000Z`,
+        canonicalUrl: `https://cursor.com/changelog/${index}`,
+      })),
+    );
+
+    const page1 = cache.getNews();
+    assert.equal(page1.items.length, 30);
+    assert.equal(page1.total, 35);
   });
 });

@@ -52,7 +52,9 @@ function ingestHeaders() {
   return { 'X-API-Secret': INGEST_SECRET };
 }
 
-export function fetchNews({ category, official, limit = 50, page, offset } = {}) {
+import { FEED_PAGE_SIZE } from '../../../mobile/shared/feed/feedPagination.js';
+
+export function fetchNews({ category, official, limit = FEED_PAGE_SIZE, page, offset } = {}) {
   const params = new URLSearchParams();
   if (category) params.set('category', category);
   if (official) params.set('official', 'true');
