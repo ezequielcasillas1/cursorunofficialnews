@@ -1,4 +1,5 @@
-import { FEED_CATEGORIES } from '../config/feedCategories.js';
+import { FEED_CATEGORIES, OFFICIAL_ONLY_TOOLTIP } from '../config/feedCategories.js';
+import { Tooltip } from './Tooltip.jsx';
 
 export function CategoryFilter({
   selectedCategory,
@@ -11,27 +12,30 @@ export function CategoryFilter({
       <span className="filter-label">Sections</span>
       <nav className="category-filter" aria-label="Filter by section">
         {FEED_CATEGORIES.map((cat) => (
-          <button
-            key={cat.id}
-            type="button"
-            className={selectedCategory === cat.id ? 'chip chip-active' : 'chip'}
-            onClick={() => onCategoryChange(cat.id)}
-          >
-            {cat.label}
-          </button>
+          <Tooltip key={cat.id} text={cat.tooltip}>
+            <button
+              type="button"
+              className={selectedCategory === cat.id ? 'chip chip-active' : 'chip'}
+              onClick={() => onCategoryChange(cat.id)}
+            >
+              {cat.label}
+            </button>
+          </Tooltip>
         ))}
       </nav>
       <div className="official-filter">
-        <button
-          type="button"
-          className={
-            officialOnly ? 'chip chip-official chip-active' : 'chip chip-official'
-          }
-          aria-pressed={officialOnly}
-          onClick={() => onOfficialOnlyChange(!officialOnly)}
-        >
-          Official only
-        </button>
+        <Tooltip text={OFFICIAL_ONLY_TOOLTIP}>
+          <button
+            type="button"
+            className={
+              officialOnly ? 'chip chip-official chip-active' : 'chip chip-official'
+            }
+            aria-pressed={officialOnly}
+            onClick={() => onOfficialOnlyChange(!officialOnly)}
+          >
+            Official only
+          </button>
+        </Tooltip>
       </div>
     </div>
   );
