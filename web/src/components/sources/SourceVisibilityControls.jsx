@@ -1,13 +1,32 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import {
+  TACO_SOURCES_UNHIDE_NAV_ACTION,
+  TACO_SOURCES_UNHIDE_NAV_HINT,
+} from '../../../mobile/shared/taco-unlock/config.js';
+import { scrollToSourcesSection } from '../../sources/scrollToSourcesSection.js';
 import { TacoUnlockDialog } from './TacoUnlockDialog.jsx';
 
-export function SourceVisibilityControls({ sourcesHidden, onHide, onUnlock }) {
+export function SourceVisibilityControls({
+  sourcesHidden,
+  onHide,
+  onUnlock,
+  showUnhideHint = false,
+}) {
   const [unlockOpen, setUnlockOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+
+  useEffect(() => {
+    if (sourcesHidden) setConfirmOpen(false);
+  }, [sourcesHidden]);
 
   function handleHideConfirm() {
     setConfirmOpen(false);
     onHide?.();
+  }
+
+  function handleUnlock() {
+    onUnlock?.();
+    setUnlockOpen(false);
   }
 
   if (sourcesHidden) {
@@ -25,7 +44,7 @@ export function SourceVisibilityControls({ sourcesHidden, onHide, onUnlock }) {
         <TacoUnlockDialog
           open={unlockOpen}
           onClose={() => setUnlockOpen(false)}
-          onUnlock={onUnlock}
+          onUnlock={handleUnlock}
         />
       </>
     );
@@ -33,6 +52,18 @@ export function SourceVisibilityControls({ sourcesHidden, onHide, onUnlock }) {
 
   return (
     <>
+      {showUnhideHint ? (
+        <div className="sources-unhide-hint">
+          <p className="hint">{TACO_SOURCES_UNHIDE_NAV_HINT}</p>
+          <button
+            type="button"
+            className="btn btn-ghost sources-unhide-link"
+            onClick={scrollToSourcesSection}
+          >
+            {TACO_SOURCES_UNHIDE_NAV_ACTION}
+          </button>
+        </div>
+      ) : null}
       <div className="source-visibility-row">
         <button
           type="button"

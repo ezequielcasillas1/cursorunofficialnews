@@ -12,6 +12,8 @@ import { getMobileBmcPageUrl } from '../monetization/config';
 import { loadSourcesHidden, saveSourcesHidden } from '../services/sourceVisibilityPrefs';
 import { loadTacoUnlocked, saveTacoUnlocked } from '../services/tacoUnlockPrefs';
 import {
+  TACO_SOURCES_UNHIDE_NAV_ACTION_MOBILE,
+  TACO_SOURCES_UNHIDE_NAV_HINT_MOBILE,
   TACO_UNLOCK_BODY,
   TACO_UNLOCK_CONFIRM_LABEL,
 } from '../../shared/taco-unlock/config';
@@ -92,8 +94,19 @@ export function useSourceVisibility() {
 
 export { TacoUnlockModal };
 
-export function SourceVisibilityControls({ sourcesHidden, onHide, onUnlock }) {
+export function SourceVisibilityControls({ sourcesHidden, onHide, onUnlock, onOpenAbout }) {
   const [unlockVisible, setUnlockVisible] = useState(false);
+  const [showNavHint, setShowNavHint] = useState(false);
+
+  useEffect(() => {
+    if (sourcesHidden) setShowNavHint(false);
+  }, [sourcesHidden]);
+
+  function handleUnlock() {
+    onUnlock?.();
+    setUnlockVisible(false);
+    if (onOpenAbout) setShowNavHint(true);
+  }
 
   function confirmHide() {
     Alert.alert(
@@ -120,22 +133,54 @@ export function SourceVisibilityControls({ sourcesHidden, onHide, onUnlock }) {
         <TacoUnlockModal
           visible={unlockVisible}
           onClose={() => setUnlockVisible(false)}
-          onUnlock={onUnlock}
+          onUnlock={handleUnlock}
         />
       </>
     );
   }
 
   return (
-    <View style={styles.row}>
-      <Pressable onPress={confirmHide} style={[styles.chip, styles.chipHide]}>
-        <Text style={styles.chipText}>Hide sources</Text>
-      </Pressable>
-    </View>
+    <>
+      {showNavHint ? (
+        <View style={styles.navHint}>
+          <Text style={styles.navHintText}>{TACO_SOURCES_UNHIDE_NAV_HINT_MOBILE}</Text>
+          <Pressable
+            onPress={() => {
+              onOpenAbout?.({ scrollToSources: true });
+              setShowNavHint(false);
+            }}
+            style={styles.navHintBtn}
+          >
+            <Text style={styles.navHintBtnText}>{TACO_SOURCES_UNHIDE_NAV_ACTION_MOBILE}</Text>
+          </Pressable>
+        </View>
+      ) : null}
+      <View style={styles.row}>
+        <Pressable onPress={confirmHide} style={[styles.chip, styles.chipHide]}>
+          <Text style={styles.chipText}>Hide sources</Text>
+        </Pressable>
+      </View>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
+  navHint: {
+    marginTop: spacing.sm,
+  },
+  navHintText: {
+    ...typography.body,
+    color: colors.inkMuted,
+    marginBottom: spacing.xs,
+  },
+  navHintBtn: {
+    alignSelf: 'flex-start',
+  },
+  navHintBtnText: {
+    ...typography.uiLabel,
+    color: colors.link,
+    fontFamily: fontFamilies.uiSemi,
+  },
   row: {
     flexDirection: 'row',
     marginTop: spacing.sm,

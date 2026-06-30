@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { TACO_SOURCES_HIDDEN_TEASER } from '../../../mobile/shared/taco-unlock/config.js';
+import { SOURCES_SECTION_ID } from '../sources/scrollToSourcesSection.js';
 import { fetchSources } from '../services/newsApi.js';
 import { TacoUnlockDialog } from './sources/TacoUnlockDialog.jsx';
 
@@ -33,7 +34,7 @@ export function AboutPanel({ sourcesHidden, onUnlock }) {
         <li>Unofficial fan project — not affiliated with Anysphere</li>
       </ul>
 
-      <h2>Sources</h2>
+      <h2 id={SOURCES_SECTION_ID}>Sources</h2>
       {sourcesHidden ? (
         <>
           <p className="hint sources-hidden-teaser">{TACO_SOURCES_HIDDEN_TEASER}</p>

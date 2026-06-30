@@ -48,11 +48,12 @@ function saveFilterPrefs(category, officialOnly) {
 export default function App() {
   const { hasConsent, acceptConsent } = useCookieConsent();
   const { tacoUnlocked, sourcesHidden, loaded: tacoPrefsLoaded, hideSources, unlockFeatures } =
-    useTacoUnlock();
+    useTacoUnlock({ enabled: hasConsent });
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [officialOnly, setOfficialOnly] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchUnlockOpen, setSearchUnlockOpen] = useState(false);
+  const [showSourcesNavHint, setShowSourcesNavHint] = useState(false);
   const [items, setItems] = useState([]);
   const [feedPage, setFeedPage] = useState(1);
   const [feedMeta, setFeedMeta] = useState({ total: 0, totalPages: 1, pageSize: FEED_PAGE_SIZE });
@@ -63,6 +64,7 @@ export default function App() {
   const [status, setStatus] = useState({ lastIngestAt: null, sourceCount: 0 });
 
   useEffect(() => {
+    if (!hasConsent) return;
     const prefs = loadFilterPrefs();
     if (prefs?.category) setSelectedCategory(prefs.category);
     if (typeof prefs?.officialOnly === 'boolean') setOfficialOnly(prefs.officialOnly);
@@ -70,11 +72,12 @@ export default function App() {
     fetchSources()
       .then((data) => setSourceMap(buildSourceMap(data.sources || [])))
       .catch(() => {});
-  }, []);
+  }, [hasConsent]);
 
   useEffect(() => {
+    if (!hasConsent) return;
     saveFilterPrefs(selectedCategory, officialOnly);
-  }, [selectedCategory, officialOnly]);
+  }, [selectedCategory, officialOnly, hasConsent]);
 
   const loadNews = useCallback(async (categoryId, official, page, searching) => {
     setError('');
@@ -111,8 +114,9 @@ export default function App() {
   const isSearching = tacoPrefsLoaded && tacoUnlocked && searchQuery.trim().length > 0;
 
   useEffect(() => {
+    if (!hasConsent) return;
     loadNews(selectedCategory, officialOnly, feedPage, isSearching);
-  }, [selectedCategory, officialOnly, feedPage, isSearching, loadNews]);
+  }, [hasConsent, selectedCategory, officialOnly, feedPage, isSearching, loadNews]);
 
   useEffect(() => {
     if (!loading && feedPage > 1 && !isSearching) {
@@ -160,8 +164,17 @@ export default function App() {
     setSearchQuery(nextQuery);
   }
 
-  function handleSearchUnlock() {
+  useEffect(() => {
+    if (sourcesHidden) setShowSourcesNavHint(false);
+  }, [sourcesHidden]);
+
+  function handleUnlockSources() {
     unlockFeatures();
+    setShowSourcesNavHint(true);
+  }
+
+  function handleSearchUnlock() {
+    handleUnlockSources();
     setSearchUnlockOpen(false);
   }
 
@@ -170,17 +183,27 @@ export default function App() {
     setFeedPage(nextPage);
   }
 
+  const sourcesHiddenSafe = !tacoPrefsLoaded || sourcesHidden;
+
   const showPagination = !isSearching && feedMeta.totalPages > 1;
 
+  if (!hasConsent) {
+    return (
+      <div className="app-shell" data-consent="pending">
+        <CookieConsent onAccept={acceptConsent} />
+      </div>
+    );
+  }
+
   return (
-    <div className="app-shell" data-consent={hasConsent ? 'accepted' : 'pending'}>
-      <div className="app-interactive" {...(!hasConsent ? { inert: '' } : {})}>
+    <div className="app-shell" data-consent="accepted">
+      <div className="app-interactive">
       <Header onRefresh={handleRefresh} refreshing={refreshing} />
       <div className="app-body">
         <StatusBar
           lastIngestAt={status.lastIngestAt}
           sourceCount={status.sourceCount}
-          sourcesHidden={tacoPrefsLoaded && sourcesHidden}
+          sourcesHidden={sourcesHiddenSafe}
         />
         <CategoryFilter
           selectedCategory={selectedCategory}
@@ -192,7 +215,8 @@ export default function App() {
           <SourceVisibilityControls
             sourcesHidden={sourcesHidden}
             onHide={hideSources}
-            onUnlock={unlockFeatures}
+            onUnlock={handleUnlockSources}
+            showUnhideHint={showSourcesNavHint}
           />
         ) : null}
         <FeedSearch
@@ -220,7 +244,7 @@ export default function App() {
             officialOnly={officialOnly}
             searchQuery={searchQuery}
             showFeaturedLead={feedPage === 1 && !isSearching}
-            hideSources={tacoPrefsLoaded && sourcesHidden}
+            hideSources={sourcesHiddenSafe}
           />
           {showPagination ? (
             <FeedPagination
@@ -238,13 +262,12 @@ export default function App() {
           ) : null}
         </main>
         <AboutPanel
-          sourcesHidden={tacoPrefsLoaded && sourcesHidden}
+          sourcesHidden={sourcesHiddenSafe}
           onUnlock={unlockFeatures}
         />
       </div>
       <Footer />
       </div>
-      {!hasConsent ? <CookieConsent onAccept={acceptConsent} /> : null}
     </div>
   );
 }

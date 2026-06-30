@@ -9,6 +9,7 @@ import { colors } from './src/theme/tokens';
 
 export default function App() {
   const [screen, setScreen] = useState('feed');
+  const [aboutScrollToSources, setAboutScrollToSources] = useState(false);
   const { loaded: fontsLoaded, error: fontError } = useAppFonts();
 
   useEffect(() => {
@@ -33,6 +34,11 @@ export default function App() {
     };
   }, []);
 
+  function handleOpenAbout({ scrollToSources = false } = {}) {
+    setAboutScrollToSources(scrollToSources);
+    setScreen('about');
+  }
+
   if (!fontsLoaded && !fontError) {
     return (
       <View style={styles.boot}>
@@ -45,12 +51,18 @@ export default function App() {
     <SafeAreaView style={styles.root}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.paper} />
       {screen === 'about' ? (
-        <AboutScreen onBack={() => setScreen('feed')} />
+        <AboutScreen
+          onBack={() => {
+            setAboutScrollToSources(false);
+            setScreen('feed');
+          }}
+          scrollToSources={aboutScrollToSources}
+        />
       ) : screen === 'alerts' ? (
         <NotificationSettingsScreen onBack={() => setScreen('feed')} />
       ) : (
         <FeedScreen
-          onOpenAbout={() => setScreen('about')}
+          onOpenAbout={handleOpenAbout}
           onOpenAlerts={() => setScreen('alerts')}
         />
       )}

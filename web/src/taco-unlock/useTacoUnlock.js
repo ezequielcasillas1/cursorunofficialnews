@@ -3,16 +3,22 @@ import { TACO_GATED_FEATURES } from '../../../mobile/shared/taco-unlock/config.j
 import { loadSourcesHidden, saveSourcesHidden } from '../sources/storage.js';
 import { loadTacoUnlocked, saveTacoUnlocked } from './storage.js';
 
-export function useTacoUnlock() {
+export function useTacoUnlock({ enabled = true } = {}) {
   const [tacoUnlocked, setTacoUnlocked] = useState(false);
   const [sourcesHidden, setSourcesHidden] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
+    if (!enabled) {
+      setTacoUnlocked(false);
+      setSourcesHidden(false);
+      setLoaded(false);
+      return;
+    }
     setTacoUnlocked(loadTacoUnlocked());
     setSourcesHidden(loadSourcesHidden());
     setLoaded(true);
-  }, []);
+  }, [enabled]);
 
   const hideSources = useCallback(() => {
     setSourcesHidden(true);

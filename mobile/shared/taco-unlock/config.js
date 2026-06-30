@@ -14,3 +14,13 @@ export const TACO_UNLOCK_CONFIRM_LABEL = 'I bought a taco — unlock features';
 
 export const TACO_SOURCES_HIDDEN_TEASER =
   'Source names are in witness protection. Buy a taco to peek at the full list and unlock search 🌮';
+
+export const TACO_SOURCES_UNHIDE_NAV_HINT =
+  'Source names are back on each card. The full sources list is at the bottom of the page.';
+
+export const TACO_SOURCES_UNHIDE_NAV_ACTION = 'Go to sources ↓';
+
+export const TACO_SOURCES_UNHIDE_NAV_HINT_MOBILE =
+  'The full sources list is at the bottom of the About page.';
+
+export const TACO_SOURCES_UNHIDE_NAV_ACTION_MOBILE = 'Open About →';

@@ -464,6 +464,7 @@ export function FeedScreen({ onOpenAbout, onOpenAlerts }) {
               sourcesHidden={sourcesHidden}
               onHide={hideSources}
               onUnlock={unlockSources}
+              onOpenAbout={onOpenAbout}
             />
           ) : null}
 
@@ -596,7 +597,7 @@ export function FeedScreen({ onOpenAbout, onOpenAlerts }) {
 
             isOfficial={Boolean(sourceMap[item.sourceId]?.isOfficial)}
 
-            hideSources={sourcesHidden}
+            hideSources={!visibilityLoaded || sourcesHidden}
 
           />
 

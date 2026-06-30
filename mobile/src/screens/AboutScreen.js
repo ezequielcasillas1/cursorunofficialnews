@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -21,7 +21,9 @@ import {
 import { TACO_SOURCES_HIDDEN_TEASER } from '../../shared/taco-unlock/config';
 import { colors, radii, spacing, typography } from '../theme/tokens';
 
-export function AboutScreen({ onBack }) {
+export function AboutScreen({ onBack, scrollToSources = false }) {
+  const scrollRef = useRef(null);
+  const sourcesOffsetY = useRef(0);
   const [sources, setSources] = useState([]);
   const [loadingSources, setLoadingSources] = useState(true);
   const [sourcesError, setSourcesError] = useState('');
@@ -37,8 +39,19 @@ export function AboutScreen({ onBack }) {
       .finally(() => setLoadingSources(false));
   }, []);
 
+  useEffect(() => {
+    if (!scrollToSources || sourcesHidden || loadingSources) return undefined;
+    const timer = setTimeout(() => {
+      scrollRef.current?.scrollTo({
+        y: Math.max(0, sourcesOffsetY.current - spacing.lg),
+        animated: true,
+      });
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [scrollToSources, sourcesHidden, loadingSources]);
+
   return (
-    <ScrollView style={styles.root} contentContainerStyle={styles.container}>
+    <ScrollView ref={scrollRef} style={styles.root} contentContainerStyle={styles.container}>
       <DisclaimerBanner />
       <Pressable onPress={onBack} style={styles.back}>
         <ArrowLeft size={18} color={colors.link} strokeWidth={2} />
@@ -73,7 +86,12 @@ export function AboutScreen({ onBack }) {
         </Text>
       </View>
 
-      <View style={styles.section}>
+      <View
+        style={styles.section}
+        onLayout={(event) => {
+          sourcesOffsetY.current = event.nativeEvent.layout.y;
+        }}
+      >
         <Text style={styles.sectionTitle}>Sources</Text>
         {sourcesHidden ? (
           <>
