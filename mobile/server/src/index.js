@@ -25,6 +25,7 @@ import {
   setLastIngestAt,
 } from './store/memory-cache.js';
 import { registerEmailRoutes } from './notifications/email-routes.js';
+import { registerNewsletterRoutes } from './notifications/newsletter-routes.js';
 import {
   listDevices,
   registerDevice,
@@ -58,6 +59,7 @@ app.post(
 app.use(express.json({ limit: '64kb' }));
 registerMembershipRoutes(app);
 registerEmailRoutes(app);
+registerNewsletterRoutes(app);
 registerLlmRoutes(app);
 
 /** In-process mutex — prevents concurrent ingests from double-notifying. */

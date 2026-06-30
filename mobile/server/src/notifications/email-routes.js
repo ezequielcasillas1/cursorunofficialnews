@@ -7,6 +7,7 @@ import {
   unsubscribeByToken,
   verifySubscriberByToken,
 } from '../store/email-subscribers.js';
+import { sendWelcomeDigest } from '../jobs/send-welcome-digest.js';
 import {
   isSubscriptionVerificationEmailConfigured,
   sendSubscriptionVerificationEmail,
@@ -17,6 +18,12 @@ const SUBSCRIBE_RATE_MS = 30_000;
 
 const VERIFY_PENDING_MESSAGE =
   'If that address is valid, we sent a confirmation link. Check your email to finish subscribing.';
+
+function queueWelcomeDigest(subscriber) {
+  sendWelcomeDigest(subscriber).catch((error) => {
+    console.error(`[email] Welcome digest failed for ${subscriber.email}:`, error.message);
+  });
+}
 
 function checkSubscribeRateLimit(key) {
   const now = Date.now();
@@ -84,14 +91,14 @@ export function registerEmailRoutes(app) {
   app.post('/v1/email/subscribe', async (req, res) => {
     noStore(res);
     try {
-      const { email, categories, enabled } = req.body || {};
+      const { email, categories, categoryLimits, enabled } = req.body || {};
       const rateKey = `${req.ip || 'unknown'}:${String(email || '').toLowerCase()}`;
       if (!checkSubscribeRateLimit(rateKey)) {
         res.status(429).json({ error: 'Too many requests — try again shortly' });
         return;
       }
 
-      const result = subscribeEmail({ email, categories, enabled });
+      const result = subscribeEmail({ email, categories, categoryLimits, enabled });
       if (result.needsVerification) {
         if (!isSubscriptionVerificationEmailConfigured()) {
           res.status(503).json({
@@ -135,6 +142,8 @@ export function registerEmailRoutes(app) {
       return;
     }
 
+    queueWelcomeDigest(subscriber);
+
     res.json({
       ok: true,
       verified: true,
@@ -167,12 +176,17 @@ export function registerEmailRoutes(app) {
         res.status(410).json({ error: 'This confirmation link is invalid or has expired.' });
         return;
       }
+      queueWelcomeDigest(subscriber);
       res.json({
         ok: true,
         verified: true,
         subscriber: buildSubscriberForClient(subscriber),
       });
       return;
+    }
+
+    if (subscriber) {
+      queueWelcomeDigest(subscriber);
     }
 
     res.type('html').send(

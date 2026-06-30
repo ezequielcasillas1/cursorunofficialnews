@@ -34,11 +34,11 @@ async function fetchJson(path, options = {}) {
   }
 }
 
-export function subscribeNewsletter({ email, categories, enabled = true }) {
+export function subscribeNewsletter({ email, categories, categoryLimits, enabled = true }) {
   return fetchJson('/v1/email/subscribe', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, categories, enabled }),
+    body: JSON.stringify({ email, categories, categoryLimits, enabled }),
   });
 }
 

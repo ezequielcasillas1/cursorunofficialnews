@@ -1,5 +1,6 @@
 import {
   NEWSLETTER_CATEGORIES,
+  NEWSLETTER_CATEGORY_LIMIT,
   NEWSLETTER_PANEL_DEFAULT_EXPANDED,
 } from '../../newsletter/config.js';
 import {
@@ -28,6 +29,7 @@ export function NewsletterSettings() {
     errorMessage,
     setEmail,
     toggleCategory,
+    setCategoryLimit,
     setEnabled,
     subscribe,
     unsubscribe,
@@ -98,29 +100,68 @@ export function NewsletterSettings() {
           <h3>Email topics</h3>
           <p className="hint">
             Same digest topic options as mobile: changelog, releases, blog, forum,
-            community, social, videos, and tutorials.
+            community, social, videos, and tutorials. For each topic, choose how
+            many headlines (1–{NEWSLETTER_CATEGORY_LIMIT.max}) to include per digest.
           </p>
         </div>
 
         <div className="newsletter-topic-list">
-          {NEWSLETTER_CATEGORIES.map((category) => (
-            <label key={category.id} className="newsletter-topic-row">
-              <span className="newsletter-topic-check">
-                <input
-                  type="checkbox"
-                  checked={prefs.categories.includes(category.id)}
-                  onChange={() => {
-                    toggleCategory(category.id);
-                  }}
-                  disabled={syncing}
-                />
-              </span>
-              <span className="newsletter-topic-copy">
-                <strong>{category.label}</strong>
-                <small>{category.description}</small>
-              </span>
-            </label>
-          ))}
+          {NEWSLETTER_CATEGORIES.map((category) => {
+            const enabled = prefs.categories.includes(category.id);
+            const limit =
+              prefs.categoryLimits?.[category.id] ?? NEWSLETTER_CATEGORY_LIMIT.default;
+
+            return (
+              <div key={category.id} className="newsletter-topic-row">
+                <label className="newsletter-topic-check" htmlFor={`topic-${category.id}`}>
+                  <input
+                    id={`topic-${category.id}`}
+                    type="checkbox"
+                    checked={enabled}
+                    onChange={() => {
+                      toggleCategory(category.id);
+                    }}
+                    disabled={syncing}
+                  />
+                </label>
+                <div className="newsletter-topic-copy">
+                  <strong>{category.label}</strong>
+                  <small>{category.description}</small>
+                  {enabled ? (
+                    <label
+                      className="newsletter-topic-limit"
+                      htmlFor={`limit-${category.id}`}
+                    >
+                      <span>Headlines per digest</span>
+                      <select
+                        id={`limit-${category.id}`}
+                        value={limit}
+                        onChange={(event) => {
+                          setCategoryLimit(category.id, event.target.value);
+                        }}
+                        disabled={syncing}
+                        aria-label={`${category.label} headlines per digest`}
+                      >
+                        {Array.from(
+                          {
+                            length:
+                              NEWSLETTER_CATEGORY_LIMIT.max -
+                              NEWSLETTER_CATEGORY_LIMIT.min +
+                              1,
+                          },
+                          (_, index) => NEWSLETTER_CATEGORY_LIMIT.min + index,
+                        ).map((count) => (
+                          <option key={count} value={count}>
+                            {count}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  ) : null}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 

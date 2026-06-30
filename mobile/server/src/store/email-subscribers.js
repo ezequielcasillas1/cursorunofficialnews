@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import { normalizeCategoryLimits } from '../../../shared/notifications/category-limits.js';
 import { VALID_CATEGORY_IDS } from '../../../shared/notifications/constants.js';
 import { loadJsonFile, saveJsonFile } from './json-persist.js';
 
@@ -101,7 +102,12 @@ export function isValidEmail(email) {
   return EMAIL_RE.test(normalized);
 }
 
-export function subscribeEmail({ email, categories = [], enabled = true }) {
+export function subscribeEmail({
+  email,
+  categories = [],
+  categoryLimits,
+  enabled = true,
+}) {
   const normalized = normalizeEmail(email);
   if (!isValidEmail(normalized)) {
     throw new Error('A valid email address is required');
@@ -114,12 +120,19 @@ export function subscribeEmail({ email, categories = [], enabled = true }) {
   }
 
   const existing = subscribers.get(normalized);
+  const normalizedLimits = isEnabled
+    ? normalizeCategoryLimits(categoryLimits, normalizedCategories)
+    : normalizeCategoryLimits(
+        categoryLimits ?? existing?.categoryLimits,
+        existing?.categories || normalizedCategories,
+      );
   const now = new Date().toISOString();
 
   if (!isEnabled) {
     const record = {
       email: normalized,
       categories: existing?.categories || normalizedCategories,
+      categoryLimits: normalizedLimits,
       enabled: false,
       verified: isSubscriberVerified(existing),
       manageToken: recordToken(existing) || generateManageToken(),
@@ -138,6 +151,7 @@ export function subscribeEmail({ email, categories = [], enabled = true }) {
       ...existing,
       email: normalized,
       categories: normalizedCategories,
+      categoryLimits: normalizedLimits,
       enabled: true,
       verified: true,
       manageToken: recordToken(existing) || generateManageToken(),
@@ -154,6 +168,7 @@ export function subscribeEmail({ email, categories = [], enabled = true }) {
   const record = {
     email: normalized,
     categories: normalizedCategories,
+    categoryLimits: normalizedLimits,
     enabled: true,
     verified: false,
     verificationToken,
@@ -255,6 +270,10 @@ export function buildSubscriberForClient(subscriber) {
   return {
     email: subscriber.email,
     categories: Array.isArray(subscriber.categories) ? subscriber.categories : [],
+    categoryLimits: normalizeCategoryLimits(
+      subscriber.categoryLimits,
+      subscriber.categories,
+    ),
     enabled: Boolean(subscriber.enabled),
     verified,
     pending: Boolean(subscriber.enabled && !verified),
@@ -285,6 +304,10 @@ export function buildSubscriberStatusForClient(subscriber) {
     subscriber: {
       email: subscriber.email,
       categories: Array.isArray(subscriber.categories) ? subscriber.categories : [],
+      categoryLimits: normalizeCategoryLimits(
+        subscriber.categoryLimits,
+        subscriber.categories,
+      ),
       enabled: Boolean(subscriber.enabled),
       verified,
       pending,

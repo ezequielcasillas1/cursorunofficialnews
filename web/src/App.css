@@ -1173,6 +1173,27 @@
   color: var(--color-ink-muted);
 }
 
+.newsletter-topic-limit {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-top: var(--space-xs);
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  color: var(--color-ink-light);
+}
+
+.newsletter-topic-limit select {
+  min-width: 3rem;
+  padding: 0.2rem 0.4rem;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--color-card-elevated);
+  font-family: var(--font-ui);
+  font-size: 0.8125rem;
+  color: var(--color-ink);
+}
+
 .newsletter-actions {
   display: flex;
   flex-wrap: wrap;

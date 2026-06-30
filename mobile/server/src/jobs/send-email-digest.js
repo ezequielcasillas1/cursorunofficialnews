@@ -1,3 +1,4 @@
+import { applyCategoryLimits } from '../../../shared/notifications/category-limits.js';
 import { assembleEmailDigest } from '../notifications/assemble-email.js';
 import {
   getResendClient,
@@ -9,12 +10,17 @@ import {
   isSubscriberVerified,
   listSubscribers,
 } from '../store/email-subscribers.js';
+import {
+  isN8nNewsletterConfigured,
+  shouldUseServerEmailDigest,
+  triggerN8nNewsletter,
+} from './trigger-n8n-newsletter.js';
 
 function getItemsForSubscriber(subscriber, newItems) {
   if (!subscriber.enabled) return [];
   if (!isSubscriberVerified(subscriber)) return [];
   if (!subscriber.categories?.length) return [];
-  return newItems.filter((item) => subscriber.categories.includes(item.category));
+  return applyCategoryLimits(newItems, subscriber);
 }
 
 /**
@@ -25,10 +31,35 @@ export async function notifyEmailSubscribers(newItems, { ingestAt } = {}) {
   if (process.env.EMAIL_NOTIFICATIONS === 'false') {
     return { skipped: true, reason: 'EMAIL_NOTIFICATIONS=false' };
   }
+  if (!newItems?.length) return { sent: 0, items: 0 };
+
+  const n8nPromise = isN8nNewsletterConfigured()
+    ? triggerN8nNewsletter({ newItems, ingestAt })
+    : Promise.resolve({ skipped: true, reason: 'n8n_not_configured' });
+
+  if (!shouldUseServerEmailDigest()) {
+    const n8nResult = await n8nPromise;
+    return {
+      sent: 0,
+      failed: 0,
+      items: newItems.length,
+      subscribers: listSubscribers().length,
+      n8n: n8nResult,
+      delegatedToN8n: true,
+    };
+  }
+
   if (!isResendConfigured()) {
+    const n8nResult = await n8nPromise;
+    if (n8nResult.triggered) {
+      return {
+        skipped: true,
+        reason: 'RESEND_API_KEY not configured',
+        n8n: n8nResult,
+      };
+    }
     return { skipped: true, reason: 'RESEND_API_KEY not configured' };
   }
-  if (!newItems?.length) return { sent: 0, items: 0 };
 
   const resend = getResendClient();
   const from = getTransactionalFromAddress();
@@ -73,6 +104,8 @@ export async function notifyEmailSubscribers(newItems, { ingestAt } = {}) {
     sent += 1;
   }
 
+  const n8nResult = await n8nPromise;
+
   console.log(
     JSON.stringify({
       event: 'email_digest_sent',
@@ -81,6 +114,7 @@ export async function notifyEmailSubscribers(newItems, { ingestAt } = {}) {
       skipped: false,
       items: newItems.length,
       subscribers: listSubscribers().length,
+      n8nTriggered: Boolean(n8nResult?.triggered),
     }),
   );
 
@@ -90,5 +124,6 @@ export async function notifyEmailSubscribers(newItems, { ingestAt } = {}) {
     items: newItems.length,
     subscribers: listSubscribers().length,
     errors: errors.length ? errors : undefined,
+    n8n: n8nResult,
   };
 }

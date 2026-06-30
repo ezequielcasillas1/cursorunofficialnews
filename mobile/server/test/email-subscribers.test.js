@@ -94,3 +94,26 @@ test('verified subscribers can update topics without another verification email'
     assert.equal(store.isSubscriberVerified(updated.record), true);
   });
 });
+
+test('categoryLimits persist and clamp to 1–3 per enabled category', async (t) => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cain-email-limits-'));
+  t.after(() => {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  });
+
+  await withEnv({ DATA_DIR: tempDir }, async () => {
+    const moduleUrl = `${pathToFileURL(SUBSCRIBER_STORE_PATH).href}?t=${Date.now()}-limits`;
+    const store = await import(moduleUrl);
+
+    const pending = store.subscribeEmail({
+      email: 'reader@example.com',
+      categories: ['changelog', 'blog'],
+      categoryLimits: { changelog: 9, blog: 0 },
+      enabled: true,
+    });
+    store.verifySubscriberByToken(pending.verificationToken);
+
+    const client = store.buildSubscriberForClient(store.getSubscriber('reader@example.com'));
+    assert.deepEqual(client.categoryLimits, { changelog: 3, blog: 1 });
+  });
+});

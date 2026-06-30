@@ -1,6 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_BASE } from '../config/constants';
 import { DEFAULT_NOTIFICATION_PREFS } from '../config/notifications';
+import {
+  DEFAULT_CATEGORY_ITEM_LIMIT,
+  normalizeCategoryLimits,
+} from '../../shared/notifications/category-limits.js';
 
 export const EMAIL_PREFS_KEY = '@cursor_news_email_prefs';
 
@@ -8,6 +12,10 @@ export const DEFAULT_EMAIL_PREFS = {
   enabled: false,
   email: '',
   categories: DEFAULT_NOTIFICATION_PREFS.categories,
+  categoryLimits: normalizeCategoryLimits(
+    {},
+    DEFAULT_NOTIFICATION_PREFS.categories,
+  ),
   manageToken: '',
   pendingVerification: false,
 };
@@ -45,12 +53,14 @@ export async function loadEmailPrefs() {
     const raw = await AsyncStorage.getItem(EMAIL_PREFS_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
+      const categories = Array.isArray(parsed.categories)
+        ? parsed.categories
+        : DEFAULT_EMAIL_PREFS.categories;
       return {
         ...DEFAULT_EMAIL_PREFS,
         ...parsed,
-        categories: Array.isArray(parsed.categories)
-          ? parsed.categories
-          : DEFAULT_EMAIL_PREFS.categories,
+        categories,
+        categoryLimits: normalizeCategoryLimits(parsed.categoryLimits, categories),
         manageToken:
           typeof parsed.manageToken === 'string'
             ? parsed.manageToken
@@ -65,7 +75,11 @@ export async function loadEmailPrefs() {
 }
 
 export async function saveEmailPrefs(prefs) {
-  await AsyncStorage.setItem(EMAIL_PREFS_KEY, JSON.stringify(prefs));
+  const normalized = {
+    ...prefs,
+    categoryLimits: normalizeCategoryLimits(prefs.categoryLimits, prefs.categories),
+  };
+  await AsyncStorage.setItem(EMAIL_PREFS_KEY, JSON.stringify(normalized));
 }
 
 export function isValidEmailFormat(email) {
@@ -74,11 +88,11 @@ export function isValidEmailFormat(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized);
 }
 
-export function subscribeEmail({ email, categories, enabled = true }) {
+export function subscribeEmail({ email, categories, categoryLimits, enabled = true }) {
   return fetchJson('/v1/email/subscribe', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, categories, enabled }),
+    body: JSON.stringify({ email, categories, categoryLimits, enabled }),
   });
 }
 
@@ -95,9 +109,28 @@ export function fetchEmailStatus(token) {
   return fetchJson(`/v1/email/status?${params}`);
 }
 
-export function toggleEmailCategory(categories, categoryId) {
+export function toggleEmailCategory(categories, categoryId, categoryLimits = {}) {
   const set = new Set(categories);
-  if (set.has(categoryId)) set.delete(categoryId);
-  else set.add(categoryId);
-  return [...set];
+  const nextLimits = { ...categoryLimits };
+  if (set.has(categoryId)) {
+    set.delete(categoryId);
+    delete nextLimits[categoryId];
+  } else {
+    set.add(categoryId);
+    nextLimits[categoryId] = nextLimits[categoryId] || DEFAULT_CATEGORY_ITEM_LIMIT;
+  }
+  return {
+    categories: [...set],
+    categoryLimits: normalizeCategoryLimits(nextLimits, [...set]),
+  };
+}
+
+export function setEmailCategoryLimit(categoryLimits, categories, categoryId, value) {
+  if (!categories.includes(categoryId)) {
+    return normalizeCategoryLimits(categoryLimits, categories);
+  }
+  return normalizeCategoryLimits(
+    { ...categoryLimits, [categoryId]: value },
+    categories,
+  );
 }

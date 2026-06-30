@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
   DEFAULT_NEWSLETTER_PREFS,
+  NEWSLETTER_CATEGORY_LIMIT,
   normalizeNewsletterPrefs,
 } from './config.js';
 import {
@@ -25,6 +26,7 @@ function syncablePrefs(prefs) {
   return {
     email: String(prefs.email || '').trim().toLowerCase(),
     categories: Array.isArray(prefs.categories) ? prefs.categories : [],
+    categoryLimits: prefs.categoryLimits || {},
     enabled: Boolean(prefs.enabled),
     manageToken: String(prefs.manageToken || '').trim(),
     pendingVerification: Boolean(prefs.pendingVerification),
@@ -32,12 +34,15 @@ function syncablePrefs(prefs) {
 }
 
 function mergeSubscriber(basePrefs, subscriber, manageToken) {
+  const categories = Array.isArray(subscriber?.categories)
+    ? subscriber.categories
+    : basePrefs.categories;
+
   return normalizeNewsletterPrefs({
     ...basePrefs,
     email: subscriber?.email || basePrefs.email,
-    categories: Array.isArray(subscriber?.categories)
-      ? subscriber.categories
-      : basePrefs.categories,
+    categories,
+    categoryLimits: subscriber?.categoryLimits || basePrefs.categoryLimits,
     enabled:
       typeof subscriber?.enabled === 'boolean'
         ? subscriber.enabled
@@ -73,6 +78,7 @@ export function useNewsletter() {
     const response = await subscribeNewsletter({
       email: clean.email,
       categories: clean.enabled ? clean.categories : [],
+      categoryLimits: clean.enabled ? clean.categoryLimits : {},
       enabled: clean.enabled,
     });
 
@@ -264,12 +270,37 @@ export function useNewsletter() {
   const toggleCategory = useCallback(
     (categoryId) => {
       const set = new Set(prefs.categories);
-      if (set.has(categoryId)) set.delete(categoryId);
-      else set.add(categoryId);
-      const next = {
+      const nextLimits = { ...prefs.categoryLimits };
+      if (set.has(categoryId)) {
+        set.delete(categoryId);
+        delete nextLimits[categoryId];
+      } else {
+        set.add(categoryId);
+        nextLimits[categoryId] = nextLimits[categoryId] || NEWSLETTER_CATEGORY_LIMIT.default;
+      }
+      const next = normalizeNewsletterPrefs({
         ...prefs,
         categories: [...set],
-      };
+        categoryLimits: nextLimits,
+      });
+      persistPrefs(next);
+      setErrorMessage('');
+      setStatusMessage('');
+      return next;
+    },
+    [persistPrefs, prefs],
+  );
+
+  const setCategoryLimit = useCallback(
+    (categoryId, value) => {
+      if (!prefs.categories.includes(categoryId)) return prefs;
+      const next = normalizeNewsletterPrefs({
+        ...prefs,
+        categoryLimits: {
+          ...prefs.categoryLimits,
+          [categoryId]: value,
+        },
+      });
       persistPrefs(next);
       setErrorMessage('');
       setStatusMessage('');
@@ -310,6 +341,7 @@ export function useNewsletter() {
     errorMessage,
     setEmail,
     toggleCategory,
+    setCategoryLimit,
     setEnabled,
     subscribe,
     unsubscribe,

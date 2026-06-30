@@ -19,6 +19,8 @@ import { PUSH_ENABLED, PUSH_REBUILD_HINT } from '../config/push';
 
 import { EditorialDivider } from '../components/EditorialDivider';
 
+import { EmailCategoryLimitRow } from '../components/EmailCategoryLimitRow';
+
 import { NotificationCategoryRow } from '../components/NotificationCategoryRow';
 
 import { NotificationPreviewCard } from '../components/NotificationPreviewCard';
@@ -30,6 +32,7 @@ import {
   unsubscribeEmail,
   isValidEmailFormat,
   toggleEmailCategory,
+  setEmailCategoryLimit,
 } from '../services/emailNewsletter';
 
 import {
@@ -126,6 +129,7 @@ export function NotificationSettingsScreen({ onBack, previewItem }) {
     const response = await subscribeEmail({
       email: prefs.email,
       categories,
+      categoryLimits: prefs.enabled ? prefs.categoryLimits : {},
       enabled: prefs.enabled,
     });
     if (response?.pending) {
@@ -139,6 +143,7 @@ export function NotificationSettingsScreen({ onBack, previewItem }) {
     return {
       ...prefs,
       email: response?.subscriber?.email || prefs.email,
+      categoryLimits: response?.subscriber?.categoryLimits || prefs.categoryLimits,
       manageToken: response?.subscriber?.manageToken || prefs.manageToken || '',
       pendingVerification: false,
     };
@@ -202,8 +207,26 @@ export function NotificationSettingsScreen({ onBack, previewItem }) {
 
   function handleEmailCategoryToggle(categoryId) {
     if (!emailPrefs) return;
-    const categories = toggleEmailCategory(emailPrefs.categories, categoryId);
-    const next = { ...emailPrefs, categories };
+    const { categories, categoryLimits } = toggleEmailCategory(
+      emailPrefs.categories,
+      categoryId,
+      emailPrefs.categoryLimits,
+    );
+    const next = { ...emailPrefs, categories, categoryLimits };
+    persistEmail(next, {
+      syncServer: next.enabled && isValidEmailFormat(next.email),
+    });
+  }
+
+  function handleEmailCategoryLimit(categoryId, value) {
+    if (!emailPrefs) return;
+    const categoryLimits = setEmailCategoryLimit(
+      emailPrefs.categoryLimits,
+      emailPrefs.categories,
+      categoryId,
+      value,
+    );
+    const next = { ...emailPrefs, categoryLimits };
     persistEmail(next, {
       syncServer: next.enabled && isValidEmailFormat(next.email),
     });
@@ -327,14 +350,17 @@ export function NotificationSettingsScreen({ onBack, previewItem }) {
 
       <Text style={[styles.sectionLabel, styles.sectionSpacing]}>Email topics</Text>
       <Text style={styles.emailTopicsHint}>
-        Choose which categories trigger a digest — changelog, blog, releases, and more.
+        Choose which categories trigger a digest. For each topic, pick 1–3 headlines
+        to include per email.
       </Text>
       {NOTIFICATION_CATEGORIES.map((cat) => (
-        <NotificationCategoryRow
+        <EmailCategoryLimitRow
           key={`email-${cat.id}`}
           category={cat}
           enabled={emailPrefs.categories.includes(cat.id)}
+          limit={emailPrefs.categoryLimits?.[cat.id] ?? 1}
           onToggle={handleEmailCategoryToggle}
+          onLimitChange={handleEmailCategoryLimit}
           disabled={emailSyncing}
         />
       ))}
