@@ -171,6 +171,12 @@ This runs `wrangler dev` — a real local Workers runtime with D1 (local SQLite 
 npx wrangler d1 execute cursorunofficialnews --local --file=web/worker/src/db/schema.sql
 ```
 
+If newsletter settings fail with `no column named official_only`, apply the incremental migration:
+
+```powershell
+npx wrangler d1 execute cursorunofficialnews --local --file=web/worker/src/db/migrations/001_email_official_only.sql
+```
+
 **You should see:** `Ready on http://127.0.0.1:8787`
 
 Leave this window open.

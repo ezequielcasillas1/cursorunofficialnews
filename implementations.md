@@ -1,4 +1,8 @@
-### [2026-07-02] - Newsletter Official only UI visibility
+### [2026-07-02] - Newsletter official_only D1 migration fix
+**Status:** PENDING USER VERIFY
+**Files:** web/worker/src/db/migrations/001_email_official_only.sql, web/worker/src/db/schema.sql, docs/RUN-LOCAL.md
+**Result:** Root cause: code wrote `official_only` but local/production D1 created before schema update lacked the column. Applied migration locally; made SQL idempotent (`ADD COLUMN IF NOT EXISTS`); documented remote command in migration header + RUN-LOCAL.
+
 **Status:** PENDING USER VERIFY
 **Files:** web/src/components/newsletter/NewsletterSettings.jsx, web/src/App.css
 **Result:** Moved "Official only" from buried bottom-of-topics row to a gold-bordered "Source filter" card above Email topics, matching feed nav chip + tooltip. Root cause: code existed locally (untracked) but was easy to miss below 8 topic cards; web dev server restart required.

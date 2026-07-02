@@ -1,6 +1,7 @@
 -- D1 schema for the Cursor AI News API (single database, replaces the
 -- fs/JSON stores in mobile/server/src/store/*). Run once via:
 --   npx wrangler d1 execute cursorunofficialnews --file=web/worker/src/db/schema.sql
+-- Existing databases: also apply incremental migrations in db/migrations/ (CREATE TABLE IF NOT EXISTS does not add new columns).
 
 CREATE TABLE IF NOT EXISTS news_items (
   id TEXT PRIMARY KEY,
