@@ -132,5 +132,5 @@ If `pd init connect` returns **Unauthorized**, use dashboard-created REST API OA
 
 ## Related
 
-- [BMC go-live](BMC-GO-LIVE.md) — membership webhooks (Fly.io; separate from Pipedream)
+- [Stripe go-live](STRIPE-GO-LIVE.md) — membership webhooks (separate from Pipedream)
 - [AGENT-CONTEXT.md](AGENT-CONTEXT.md) — product phase plan (Phase 4+)

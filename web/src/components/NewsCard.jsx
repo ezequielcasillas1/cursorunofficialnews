@@ -19,6 +19,7 @@ export function NewsCard({ item, isOfficial = false, featured = false }) {
 
   return (
     <article className={cardClass}>
+      {featured ? <p className="news-card-kicker">Top Story</p> : null}
       <ArticleMedia item={item} featured={featured} />
       <div className="news-card-meta">
         <span className="badge">{formatCategoryLabel(item.category)}</span>

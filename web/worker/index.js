@@ -1,58 +1,26 @@
-/**
- * Cloudflare Worker: proxy /api/* → Fly.io API, serve Vite static assets otherwise.
- * Lets the web app use API_BASE=/api in dev (Vite proxy) and production (this worker).
- */
-const DEFAULT_API_ORIGIN = 'https://cursorunofficialnews.fly.dev';
+import { createApp } from './src/app.js';
+import { bootstrapIngestIfEmpty, runIngestWithLock } from './src/ingest/run-ingest.js';
 
-function proxyApiRequest(request, apiOrigin) {
-  const url = new URL(request.url);
-  const apiPath = url.pathname.replace(/^\/api(?=\/|$)/, '') || '/';
-  const target = new URL(`${apiPath}${url.search}`, apiOrigin);
-
-  const headers = new Headers(request.headers);
-  headers.delete('host');
-
-  const init = {
-    method: request.method,
-    headers,
-    redirect: 'follow',
-  };
-
-  if (request.method !== 'GET' && request.method !== 'HEAD') {
-    init.body = request.body;
-  }
-
-  return fetch(new Request(target, init));
-}
+const apiApp = createApp();
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
+    // Unprefixed convenience alias for uptime monitors / Cloudflare health
+    // checks (the full API also answers at /api/health).
+    if (url.pathname === '/health') {
+      return Response.json({ ok: true });
+    }
+
     if (url.pathname === '/api' || url.pathname.startsWith('/api/')) {
-      const apiOrigin = env.API_ORIGIN?.trim() || DEFAULT_API_ORIGIN;
-      try {
-        const response = await proxyApiRequest(request, apiOrigin);
-        // Surface upstream failures instead of falling through to SPA HTML.
-        if (response.status >= 502) {
-          return new Response(
-            JSON.stringify({
-              error: 'API temporarily unavailable',
-              status: response.status,
-            }),
-            {
-              status: response.status,
-              headers: { 'Content-Type': 'application/json; charset=utf-8' },
-            },
-          );
-        }
-        return response;
-      } catch {
-        return new Response(JSON.stringify({ error: 'API unreachable' }), {
-          status: 502,
-          headers: { 'Content-Type': 'application/json; charset=utf-8' },
-        });
-      }
+      const response = await apiApp.fetch(request, env, ctx);
+      // Best-effort cache seed on a cold D1 database — cheap no-op (a single
+      // COUNT query) once news_items has rows. There is no server "boot"
+      // event in Workers, so this replaces the old bootstrapIngestIfEmpty()
+      // call in the Express app.listen() callback.
+      ctx.waitUntil(bootstrapIngestIfEmpty(env.DB, env).catch(() => {}));
+      return response;
     }
 
     // Serve ads.txt as plain text (never SPA fallback) for AdSense crawlers.
@@ -69,5 +37,24 @@ export default {
     }
 
     return env.ASSETS.fetch(request);
+  },
+
+  /** Cron Trigger — replaces node-cron's 30-min INGEST_CRON_SCHEDULE. */
+  async scheduled(controller, env, ctx) {
+    ctx.waitUntil(
+      runIngestWithLock(env.DB, env)
+        .then((result) => {
+          console.log(
+            JSON.stringify({
+              event: 'ingest_cron',
+              cron: controller.cron,
+              ...result,
+            }),
+          );
+        })
+        .catch((err) => {
+          console.error('[cron]', err.message || err);
+        }),
+    );
   },
 };

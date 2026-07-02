@@ -1,4 +1,9 @@
-﻿### [June 30, 2026] - Discussion tab classification + scrape pagination support
+﻿### [July 1, 2026] - n8n newsletter E2E (Cloud + news-api)
+**Status:** SUCCESS
+**Files:** env/server/.env, mobile/server/n8n/cursor-ai-news-newsletter.json, mobile/server/src/notifications/newsletter-routes.js
+**Result:** Full n8n chain green (Fetch → Generate HTML → Resend); digest delivered to ezequielcasillas1@gmail.com. Fixed fly.dev 404 → news-api URL; CURSOR_API_KEY required server restart (env not hot-reloaded).
+
+### [June 30, 2026] - Discussion tab classification + scrape pagination support
 **Status:** SUCCESS
 **Files:** mobile/server/src/classify/classify-news-item.js, content-signals.js, url-rules.js, ingest/scrape.js, test/classify-news-item.test.js
 **Result:** Discussion items increased from ~2 to ~23 after relaxing classification threshold and broadening signals; optional multi-page scrape support added.

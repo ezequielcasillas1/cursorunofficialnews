@@ -1,17 +1,13 @@
-import { BMAC_URL } from '../config.js';
+function scrollToMembershipSection(event) {
+  event.preventDefault();
+  document.getElementById('membership-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
 
 export function SupporterSlot({ variant = 'block' }) {
-  if (!BMAC_URL) return null;
-
   if (variant === 'inline') {
     return (
-      <a
-        href={BMAC_URL}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="btn btn-ghost"
-      >
-        Buy me a taco 🌮
+      <a href="#membership-section" onClick={scrollToMembershipSection} className="btn btn-ghost">
+        Become a member 💛
       </a>
     );
   }
@@ -20,15 +16,10 @@ export function SupporterSlot({ variant = 'block' }) {
     <aside className="monetization-slot supporter-slot" aria-label="Support the project">
       <p className="monetization-slot-label">Support</p>
       <p className="supporter-message">
-        Enjoying the feed? Help keep this unofficial project running.
+        Enjoying the feed? Become a member to unlock ad-free browsing and the email newsletter.
       </p>
-      <a
-        href={BMAC_URL}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="btn-supporter"
-      >
-        Buy me a taco 🌮
+      <a href="#membership-section" onClick={scrollToMembershipSection} className="btn-supporter">
+        Become a member 💛
       </a>
     </aside>
   );

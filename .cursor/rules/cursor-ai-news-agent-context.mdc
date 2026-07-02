@@ -13,6 +13,8 @@ Before any work:
 2. Read **`docs/CURSOR-AI-NEWS-PHASE-PLAN.md`** — one phase at a time; check status boxes.
 3. Follow **`unofficial-cursor-news-feed-service.mdc`** for phase detail.
 
-Quick run: `mobile/server/` → `npm run dev` (`:8787`) · `mobile/` → `npx expo start --dev-client` · physical Android → `adb reverse tcp:8787 tcp:8787` or `EXPO_PUBLIC_API_BASE`.
+Quick run: repo root → `npm run dev:api` (`wrangler dev`, `:8787`) + `npm run dev:web` (`:5173`) · `mobile/` → `npx expo start --dev-client` · physical Android → `adb reverse tcp:8787 tcp:8787` or `EXPO_PUBLIC_API_BASE`.
+
+API + website are one Cloudflare Worker (`web/worker/`) — Fly.io is retired. No `mobile/server/` anymore.
 
 Ask user **"Ezequiel, is the implementation successful?"** before SUCCESS logs or commit.

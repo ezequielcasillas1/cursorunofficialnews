@@ -1,4 +1,4 @@
-const TOKEN_KEY = 'cain_adfree_token';
+const TOKEN_KEY = 'cain_membership_token';
 
 function consumeUrlToken(paramName) {
   try {
@@ -16,7 +16,7 @@ function consumeUrlToken(paramName) {
   }
 }
 
-export function getStoredAdFreeToken() {
+export function getStoredMembershipToken() {
   try {
     return localStorage.getItem(TOKEN_KEY)?.trim() || '';
   } catch {
@@ -24,7 +24,7 @@ export function getStoredAdFreeToken() {
   }
 }
 
-export function setStoredAdFreeToken(token) {
+export function setStoredMembershipToken(token) {
   try {
     if (token) {
       localStorage.setItem(TOKEN_KEY, token);
@@ -36,20 +36,25 @@ export function setStoredAdFreeToken(token) {
   }
 }
 
-export function clearStoredAdFreeToken() {
-  setStoredAdFreeToken('');
+export function clearStoredMembershipToken() {
+  setStoredMembershipToken('');
 }
 
-/** Read ?adfree_token= from URL (e.g. post-subscribe redirect) and persist it. */
-export function consumeAdFreeTokenFromUrl() {
-  const token = consumeUrlToken('adfree_token');
+/** Read ?membership_token= from URL (e.g. magic-link activation) and persist it. */
+export function consumeMembershipTokenFromUrl() {
+  const token = consumeUrlToken('membership_token');
   if (token) {
-    setStoredAdFreeToken(token);
+    setStoredMembershipToken(token);
   }
   return token;
 }
 
-/** Read ?adfree_claim_token= from URL and return it for one-time verification. */
+/** Read ?membership_claim_token= from URL and return it for one-time verification. */
 export function consumeMembershipClaimTokenFromUrl() {
-  return consumeUrlToken('adfree_claim_token');
+  return consumeUrlToken('membership_claim_token');
+}
+
+/** Read ?membership_session_id= from URL (Stripe Checkout success redirect). */
+export function consumeMembershipSessionIdFromUrl() {
+  return consumeUrlToken('membership_session_id');
 }

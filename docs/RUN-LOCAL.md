@@ -2,7 +2,7 @@
 
 Plain step-by-step guide to see **both** the API feed and the mobile newsletter UI working on your machine.
 
-> **Important:** The API moved from the old `api/` folder to **`mobile/server/`**. The empty `api/` folder at the repo root can be ignored (or deleted).
+> **Important:** The API is no longer a separate Express server in `mobile/server/` — it's part of the same Cloudflare Worker as the website, in **`web/worker/`**. Run it locally with `wrangler dev` (`npm run dev:api`). Fly.io is retired.
 
 ---
 
@@ -38,7 +38,7 @@ npm run install:all
 Or manually:
 
 ```powershell
-cd C:\Dev\CursorAINews\mobile\server
+cd C:\Dev\CursorAINews
 npm install
 
 cd C:\Dev\CursorAINews\mobile
@@ -119,16 +119,16 @@ cd C:\Dev\CursorAINews\mobile
 npx expo start --dev-client --reset-cache
 ```
 
-### A6. Server API env (`mobile/server/.env`)
+### A6. Server API env (`env/server/.env`)
 
 One-time before local hardening or **before deploy**. Secrets stay on your machine — never commit `.env`.
 
 ```powershell
-cd C:\Dev\CursorAINews\mobile\server
-Copy-Item .env.example .env
+cd C:\Dev\CursorAINews
+Copy-Item env\server.example.env env\server\.env
 ```
 
-If `.env` already exists, **merge missing keys only** from `.env.example` — do not overwrite your `RESEND_API_KEY`, `INGEST_SECRET`, or other secrets.
+If `.env` already exists, **merge missing keys only** from `env/server.example.env` — do not overwrite your `RESEND_API_KEY`, `INGEST_SECRET`, or other secrets.
 
 Generate a strong ingest secret (PowerShell):
 
@@ -136,22 +136,22 @@ Generate a strong ingest secret (PowerShell):
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
-Set `INGEST_SECRET=` in `.env` to that value. Local dev defaults (already in `.env.example`):
+Set `INGEST_SECRET=` in `env/server/.env` to that value. Local dev defaults (already in `env/server.example.env`):
 
 | Variable | Local default | Notes |
 |----------|---------------|--------|
-| `PORT` | `8787` | API listen port |
+| `PORT` | `8787` | Local `wrangler dev` port |
 | `PUSH_NOTIFICATIONS` | `true` | Set `false` to disable Expo push |
 | `EMAIL_NOTIFICATIONS` | `true` | Set `false` to disable email digests |
 | `RESEND_API_KEY` | *(empty)* | Omit or leave empty to skip email sends gracefully |
 | `RESEND_FROM_EMAIL` | `onboarding@resend.dev` | **Sandbox only** — verify your domain in [Resend](https://resend.com/domains) and use your verified address in production |
-| `PUBLIC_API_BASE` | `http://127.0.0.1:8787` | Production: your public HTTPS API URL (unsubscribe links) |
-| `INGEST_SECRET` | *(generate)* | Required when `NODE_ENV=production` |
+| `PUBLIC_API_BASE` | `http://127.0.0.1:8787/api` | Production: `https://cursorunofficial.news/api` (unsubscribe links) |
+| `INGEST_SECRET` | *(generate)* | Required in production (checked against `ENVIRONMENT=production`) |
 | `REGISTER_SECRET` | *(empty)* | Optional; protects device register endpoints |
-| `INGEST_CRON_ENABLED` | `false` | Keep off locally unless you want automatic ingests |
-| `INGEST_CRON_SCHEDULE` | `*/30 * * * *` | Used only when cron is enabled |
 
-Restart the API after changing `.env`.
+In production these become `wrangler secret put` values, not `.env` — see [CLOUDFLARE-DEPLOY.md](CLOUDFLARE-DEPLOY.md). Scheduled ingest is a Cloudflare Cron Trigger (`wrangler.jsonc` → `triggers.crons`), not `INGEST_CRON_ENABLED`.
+
+Restart `wrangler dev` after changing `.env`.
 
 ---
 
@@ -159,21 +159,23 @@ Restart the API after changing `.env`.
 
 ```powershell
 cd C:\Dev\CursorAINews
+$env:NODE_OPTIONS="--use-system-ca"   # needed behind corporate TLS/Zscaler
 npm run dev:api
 ```
 
-Or:
+This runs `wrangler dev` — a real local Workers runtime with D1 (local SQLite emulation) and a real Workers AI binding (remote, needs `wrangler login` once).
+
+**First time only** — seed local D1 with the schema:
 
 ```powershell
-cd C:\Dev\CursorAINews\mobile\server
-npm run dev
+npx wrangler d1 execute cursorunofficialnews --local --file=web/worker/src/db/schema.sql
 ```
 
-**You should see:** `Unofficial Cursor News API listening on http://127.0.0.1:8787`
+**You should see:** `Ready on http://127.0.0.1:8787`
 
 Leave this window open.
 
-**Production env (when deploying `mobile/server/`):** see **Pre-deploy checklist** below. Persistent state lives in `mobile/server/data/*.json` (gitignored).
+**Production deploy:** see [CLOUDFLARE-DEPLOY.md](CLOUDFLARE-DEPLOY.md). All data lives in Cloudflare D1, not local JSON files.
 
 **Quick check (optional, new PowerShell tab):**
 
@@ -231,7 +233,7 @@ Leave this window open.
 ### If the feed is empty
 
 - Pull to refresh once (triggers ingest on the server).
-- Or in a browser/Postman: `POST http://127.0.0.1:8787/v1/ingest` then refresh the app.
+- Or in a browser/Postman: `POST http://127.0.0.1:8787/api/v1/ingest` then refresh the app.
 
 ### On the API (browser or curl)
 
@@ -247,16 +249,18 @@ Open these URLs on your PC (while Terminal 1 is running):
 | URL | What it shows |
 |-----|----------------|
 | http://127.0.0.1:8787/health | `{ "ok": true }` |
-| http://127.0.0.1:8787/v1/status | Item count, last ingest time |
-| http://127.0.0.1:8787/v1/news?limit=3 | First 3 news items as JSON |
-| http://127.0.0.1:8787/v1/sources | Registered feed sources |
+| http://127.0.0.1:8787/api/v1/status | Item count, last ingest time |
+| http://127.0.0.1:8787/api/v1/news?limit=3 | First 3 news items as JSON |
+| http://127.0.0.1:8787/api/v1/sources | Registered feed sources |
 
 PowerShell equivalents:
 
 ```powershell
-Invoke-RestMethod http://127.0.0.1:8787/v1/status
-Invoke-RestMethod "http://127.0.0.1:8787/v1/news?limit=3"
+Invoke-RestMethod http://127.0.0.1:8787/api/v1/status
+Invoke-RestMethod "http://127.0.0.1:8787/api/v1/news?limit=3"
 ```
+
+Note: the mobile app calls `${API_BASE}/v1/...` directly against a bare host (no `/api` prefix) in its own config, while the web frontend and the URLs above go through the Worker's `/api` mount. Both reach the same Hono app.
 
 ---
 
@@ -291,113 +295,70 @@ Open **http://127.0.0.1:5173** in your browser.
 | Setting | Default | Notes |
 |---------|---------|--------|
 | Vite dev server | `:5173` | `web/vite.config.js` |
-| API proxy | `/api` → `http://127.0.0.1:8787` | Same backend as mobile |
-| Direct API URL | `VITE_API_BASE=http://127.0.0.1:8787` | Optional in `web/.env` |
+| API proxy | `/api` → `http://127.0.0.1:8787` | Same Worker as mobile — no path rewrite (Worker expects `/api/*` itself) |
+| Direct API URL | `VITE_API_BASE=http://127.0.0.1:8787/api` | Optional in `web/.env` |
 
-If `mobile/server/.env` sets **`INGEST_SECRET`**, copy `web/.env.example` → `web/.env` and set the same value as **`VITE_INGEST_SECRET`** so Refresh works.
+If `env/server/.env` sets **`INGEST_SECRET`**, copy `web/.env.example` → `web/.env` and set the same value as **`VITE_INGEST_SECRET`** so Refresh works.
 
 ---
 
 ## Troubleshooting
 
 | **Web shows “Request failed” / empty feed** | API running? Check http://127.0.0.1:8787/health. Start web with `npm run dev:web` after API. |
-| **Web Refresh → Unauthorized** | Set `VITE_INGEST_SECRET` in `web/.env` to match `INGEST_SECRET` in `mobile/server/.env`. |
-| **Connection refused / can’t reach API** | Terminal 1 running? Try `/health` in browser. On physical phone, run `adb reverse tcp:8787 tcp:8787` again. |
-| **Wrong API URL on error screen** | Phone shows `http://127.0.0.1:8787` — that only works with `adb reverse`. Without USB, set `EXPO_PUBLIC_API_BASE` in `mobile/.env` to your PC LAN IP. |
-| **Empty feed after refresh** | Run ingest: `Invoke-RestMethod -Method POST http://127.0.0.1:8787/v1/ingest` (add `-Headers @{ 'X-API-Secret' = $env:INGEST_SECRET }` if `INGEST_SECRET` is set). Or: `cd mobile/server; node scripts/trigger-ingest.js` |
-| **Port 8787 already in use** | Another API instance is running — use it, or find and stop the process (`netstat -ano \| findstr 8787`). |
+| **Web Refresh → Unauthorized** | Set `VITE_INGEST_SECRET` in `web/.env` to match `INGEST_SECRET` in `env/server/.env`. |
+| **Connection refused / can’t reach API** | Terminal 1 (`wrangler dev`) running? Try `/health` in browser. On physical phone, run `adb reverse tcp:8787 tcp:8787` again. |
+| **Wrong API URL on error screen** | Phone shows `http://127.0.0.1:8787/api` — that only works with `adb reverse`. Without USB, set `EXPO_PUBLIC_API_BASE` in `mobile/.env` to `http://<PC LAN IP>:8787/api`. |
+| **Empty feed after refresh** | Run ingest: `Invoke-RestMethod -Method POST http://127.0.0.1:8787/api/v1/ingest` (add `-Headers @{ 'X-API-Secret' = $env:INGEST_SECRET }` if `INGEST_SECRET` is set). |
+| **Port 8787 already in use** | Another `wrangler dev` instance is running — use it, or find and stop the process (`netstat -ano \| findstr 8787`). |
 | **Expo Go instead of dev client** | This project needs the custom dev client. Run `npx expo run:android` from `mobile/` once. |
 | **Missing fonts / SVG icons / ExpoFontLoader / ExpoLinearGradient errors** | Native deps changed without rebuilding. Follow **Step A5** (uninstall app → `prebuild --clean` → `npm run android` → `--reset-cache`). |
 | **`[@RNC/AsyncStorage]: NativeModule: AsyncStorage is null`** | Same as above — `@react-native-async-storage/async-storage` is native; the installed APK was built before it was linked. Uninstall app, then **Step A5**. |
-| **Ingest fails (TLS / corporate network)** | API already uses `node --use-system-ca` for Zscaler. If RSS still fails, check network/VPN. |
-| **Still using old `api/` folder** | **Don’t.** Use `mobile/server/` only. Root `npm run dev:api` points there. |
+| **Ingest fails (TLS / corporate network)** | Run `wrangler dev` with `$env:NODE_OPTIONS="--use-system-ca"` for Zscaler. If it still hangs locally, it's a `workerd`-in-sandbox quirk, not the ingest code — production Cloudflare has no such issue. |
 | **`npm run android` → `spawn EINVAL` (Node 24, Windows)** | Fixed in `scripts/run-android.js` (Windows runs `npx` via `cmd.exe`). Pull latest, then retry `npm run android`. |
 | **Metro crash: ENOENT watch `node_modules/.../android/build/...`** | Fixed in `metro.config.js` (blockList excludes `node_modules/**/android` and `ios` build trees). Restart with `npx expo start --dev-client --reset-cache`. |
 | **Prebuild stopped after git prompt** | Answer **`y`**, or set `$env:EXPO_NO_GIT_STATUS=1` before `npx expo prebuild --clean`. |
 
 ---
 
-## Project layout (after api → mobile/server merge)
+## Project layout (Cloudflare Worker replaces Fly.io)
 
 ```
 C:\Dev\CursorAINews\
 ├── mobile\              ← Expo app (newsletter UI)
-│   ├── server\          ← API server (port 8787) ← USE THIS
 │   └── src\             ← screens, components, API client
-├── web\                 ← browser preview (Vite :5173, proxies to API)
-├── docs\                ← plans and this guide
-└── api\                 ← empty legacy folder — ignore
+├── web\                 ← website (Vite :5173 dev) + worker\ (Cloudflare Worker: API + D1 + AI + cron)
+│   └── worker\          ← API + website Worker ← USE THIS (Fly.io is retired)
+├── env\                 ← local .env files (gitignored) + committed .example.env templates
+└── docs\                ← plans and this guide
 ```
 
 **Root shortcuts:**
 
 ```powershell
-npm run install:all   # install deps (api + mobile + web)
-npm run dev:api       # start API
+npm run install:all   # install deps (root + mobile + web)
+npm run dev:api        # start API (wrangler dev, :8787)
 npm run dev:mobile    # start Expo
-npm run dev:web       # start web preview (:5173)
+npm run dev:web       # start web preview (:5173, proxies /api → :8787)
 ```
 
 ---
 
-## Pre-deploy checklist (production)
+## Deploying to production
 
-Complete **before** deploying `mobile/server/` to a host (VPS, Railway, Render, Fly.io, etc.).
-
-**Fly.io:** see **[docs/FLY-DEPLOY.md](FLY-DEPLOY.md)** for volume, secrets, and `fly deploy` from this repo.
-
-### 1. Environment file
-
-1. Copy `mobile/server/.env.example` → `mobile/server/.env` on the server (not in git).
-2. Set **`NODE_ENV=production`** in your host’s env (platform UI or process manager).
-3. Set **`INGEST_SECRET`** to a long random string (same generator as Step A6).
-4. Set **`PUBLIC_API_BASE`** to your public HTTPS URL (e.g. `https://api.example.com`) — used in email unsubscribe links.
-5. Optional: **`REGISTER_SECRET`** if you want to lock down `POST /v1/devices/register`.
-6. **`RESEND_API_KEY`** — from Resend dashboard if email digests are enabled.
-7. **`RESEND_FROM_EMAIL`** — must use an address on a **domain you verified in Resend** (the example `onboarding@resend.dev` is sandbox-only; we cannot verify your domain for you).
-8. Leave **`INGEST_CRON_ENABLED=false`** locally; choose a cron strategy below for production.
-
-`.env` and `mobile/server/.env` are gitignored — never commit secrets.
-
-### 2. Scheduled ingest (pick one)
-
-| Option | When to use | How |
-|--------|-------------|-----|
-| **In-process cron** | Single long-running Node process | `INGEST_CRON_ENABLED=true`, `INGEST_CRON_SCHEDULE=*/30 * * * *` — server runs ingest on schedule (same as `POST /v1/ingest`). |
-| **External cron + script** | Platform cron, systemd timer, or separate worker | Keep `INGEST_CRON_ENABLED=false`. Schedule `mobile/server/scripts/trigger-ingest.js` (or `.ps1` / `.sh`) every 30 minutes. Script reads `.env` and sends `X-API-Secret`. |
-
-**Windows (Task Scheduler or manual):**
+There's no separate API host to prep anymore — deploying is one command from repo root once secrets are set (see [CLOUDFLARE-DEPLOY.md](CLOUDFLARE-DEPLOY.md) for the full one-time setup: D1 database, schema, secrets):
 
 ```powershell
-cd C:\Dev\CursorAINews\mobile\server
-.\scripts\trigger-ingest.ps1
+npm run deploy:web
 ```
 
-**Linux/macOS crontab example:**
-
-```bash
-*/30 * * * * cd /path/to/mobile/server && ./scripts/trigger-ingest.sh >> /var/log/cursor-news-ingest.log 2>&1
-```
-
-**Node directly (any OS):**
+Smoke test after deploy:
 
 ```powershell
-cd C:\Dev\CursorAINews\mobile\server
-node scripts/trigger-ingest.js
+Invoke-RestMethod https://cursorunofficial.news/health
+Invoke-RestMethod https://cursorunofficial.news/api/v1/status
 ```
 
-### 3. Smoke test after deploy
-
-```powershell
-Invoke-RestMethod https://YOUR_API/health
-# With secret set:
-Invoke-RestMethod -Method POST https://YOUR_API/v1/ingest -Headers @{ 'X-API-Secret' = 'YOUR_INGEST_SECRET' }
-Invoke-RestMethod https://YOUR_API/v1/status
-```
-
-### 4. Data persistence
-
-Ensure `mobile/server/data/` is writable and backed up (`known-items.json`, device tokens, email subscribers). Files are gitignored.
+Data lives in Cloudflare D1 (`news_items`, `email_subscribers`, `device_tokens`, `memberships`, etc.) — no server filesystem to back up.
 
 ---
 
@@ -412,7 +373,7 @@ Before testing push alerts:
    ```
 2. **Enable push in env** — set `EXPO_PUBLIC_ENABLE_PUSH=true` in `mobile/.env`, then **restart Metro** (`npx expo start --dev-client`). Env-only changes do not require `npm run android` if the dev client already includes `expo-notifications`.
 3. **Use a physical device** — push tokens and delivery don’t work reliably on emulators.
-4. **Keep both terminals running** — API (`mobile/server`) must be up for ingest + device registration (`POST /v1/devices/register`).
+4. **Keep both terminals running** — API (`wrangler dev`) must be up for ingest + device registration (`POST /api/v1/devices/register`).
 5. **Test flow:** subscribe to a category in Notification Settings → trigger new items via ingest → confirm one alert (no duplicate spam).
 
 See `docs/CURSOR-AI-NEWS-PHASE-PLAN.md` Phase 5 for full scope.

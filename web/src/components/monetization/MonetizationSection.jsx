@@ -1,61 +1,54 @@
-import { isMonetizationConfigured, getBmcMembershipUrl, getBmcPageUrl } from '../../monetization/config.js';
-import { useMembership } from '../../monetization/useMembership.js';
 import { AdSenseSlot } from './AdSenseSlot.jsx';
-import { BuyMeTacoPanel, SupporterBadge } from './BuyMeTacoPanel.jsx';
+import { MembershipPanel, SupporterBadge } from './MembershipPanel.jsx';
 
 function PausedMembershipNotice({ email }) {
-  const manageUrl = getBmcMembershipUrl() || getBmcPageUrl() || 'https://www.buymeacoffee.com';
-
   return (
     <section className="taco-panel taco-panel--muted">
       <p className="taco-supporter-msg">
         <span aria-hidden="true">⏸️</span> Membership paused
-        {email ? ` for ${email}` : ''}. Ads are shown until you resume on Buy Me a Coffee.
+        {email ? ` for ${email}` : ''}. Ads are shown and the newsletter is locked until billing resumes.
       </p>
-      <a className="taco-claim-toggle" href={manageUrl} target="_blank" rel="noopener noreferrer">
-        Manage membership
-      </a>
     </section>
   );
 }
 
-export function MonetizationSection() {
+export function MonetizationSection({ membership }) {
   const {
     adFree,
     checking,
+    checkingOut,
     claiming,
     claimError,
     claimNotice,
-    supporterEmail,
+    memberEmail,
     membershipStatus,
+    startCheckout,
     claimAdFree,
-    clearAdFree,
-  } = useMembership();
-
-  if (!isMonetizationConfigured()) return null;
+    clearMembership,
+  } = membership;
 
   if (checking) {
     return (
-      <section className="monetization-section" aria-busy="true">
-        <p className="hint">Checking supporter status…</p>
+      <section id="membership-section" className="monetization-section" aria-busy="true">
+        <p className="hint">Checking membership status…</p>
       </section>
     );
   }
 
   if (adFree) {
     return (
-      <section className="monetization-section">
-        <SupporterBadge email={supporterEmail} onClear={clearAdFree} />
+      <section id="membership-section" className="monetization-section">
+        <SupporterBadge email={memberEmail} onClear={clearMembership} />
       </section>
     );
   }
 
   return (
-    <section className="monetization-section">
-      {membershipStatus === 'paused' ? (
-        <PausedMembershipNotice email={supporterEmail} />
-      ) : null}
-      <BuyMeTacoPanel
+    <section id="membership-section" className="monetization-section">
+      {membershipStatus === 'paused' ? <PausedMembershipNotice email={memberEmail} /> : null}
+      <MembershipPanel
+        onCheckout={startCheckout}
+        checkingOut={checkingOut}
         onClaim={claimAdFree}
         claiming={claiming}
         claimError={claimError}

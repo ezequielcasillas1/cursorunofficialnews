@@ -1,55 +1,32 @@
-# Deploy Web to Cloudflare Workers (Static Assets + API Proxy)
+# Deploy to Cloudflare Workers (Website + Full API — Fly.io Retired)
 
-Host the **Vite + React web preview** (`web/`) on Cloudflare Workers with static assets. The **API runs on Fly.io** (always-on cloud, cron ingest, JSON persistence) — the Worker **proxies `/api/*`** to Fly so the site works without your local machine.
+**Everything runs in one Cloudflare Worker**: the built Vite/React website, the full REST API (ingest, news feed, email digests, push notifications, Stripe membership, newsletter AI), D1 for storage, Workers AI for summarization, and a Cron Trigger for scheduled ingest. There is no separate API host anymore.
 
 | Layer | Host | URL |
 |---|---|---|
-| Web (static + `/api` proxy) | Cloudflare Workers | `https://cursorunofficial.news` (or `www`) |
-| API (Express, ingest, cron) | Fly.io | `https://cursorunofficialnews.fly.dev` |
-
-**Why the JSON error happens:** If `/api/v1/news` is not proxied, Cloudflare serves `index.html` (SPA fallback). The browser tries to parse HTML as JSON → `Unexpected token '<', "<!doctype "...`. Fix: deploy the Worker with `web/worker/index.js` (proxies `/api`) **and** ensure Fly.io API is healthy.
+| Website + `/api/*` | Cloudflare Workers | `https://cursorunofficial.news` (or `www`) |
+| Data | Cloudflare D1 (`cursorunofficialnews`) | bound as `env.DB` |
+| AI summarization | Workers AI | bound as `env.AI` |
+| Scheduled ingest | Cron Trigger | `*/30 * * * *` |
 
 **Repo:** `github.com/ezequielcasillas1/cursorunofficialnews` (private; default branch `main`)
-
-Confirm locally:
-
-```powershell
-git remote -v
-# origin  https://github.com/ezequielcasillas1/cursorunofficialnews.git (fetch)
-```
 
 ## Architecture
 
 ```
 Browser → cursorunofficial.news (Cloudflare Worker)
-            ├─ /api/*  → proxy → cursorunofficialnews.fly.dev (Fly.io Express API)
+            ├─ /api/*  → Hono app (web/worker/src/app.js) → D1 + Workers AI + external fetch APIs
+            ├─ scheduled() → same ingest pipeline, every 30 min
             └─ /*      → web/dist static assets (SPA)
 ```
 
-| Component | Runs on | Why not Cloudflare Workers alone? |
-|---|---|---|
-| Web UI | Workers static assets | Vite build output; SPA fallback |
-| `/api` proxy | Worker script (`web/worker/index.js`) | Same-origin `/api` — no CORS, no build-time env required |
-| Feed API + ingest | Fly.io (`mobile/server/`) | Express, `node-cron`, `fs` JSON store, RSS fetch — Node-only |
-
-Scheduled ingest: Fly.io in-process cron (`INGEST_CRON_ENABLED=true`) or external cron hitting `POST /v1/ingest`. See [FLY-DEPLOY.md](FLY-DEPLOY.md).
-
----
-
-## Prerequisites (do these first)
-
-1. **Fly API is deployed and healthy** — see [FLY-DEPLOY.md](FLY-DEPLOY.md).
-
-   ```powershell
-   Invoke-RestMethod https://cursorunofficialnews.fly.dev/health
-   Invoke-RestMethod https://cursorunofficialnews.fly.dev/v1/news?limit=3
-   ```
-
-2. **Domain nameservers point to Cloudflare** — you already connected NS for `cursorunofficial.news`. Wait until Cloudflare shows the zone as **Active** (can take up to 24h; often minutes).
-
-3. **Push this repo to GitHub** — Cloudflare Workers connects to the GitHub repo for automatic builds on push.
-
-4. **Resend domain verification (separate)** — Email digests use Resend + Fly secrets, not Cloudflare. If you plan to send from `@cursorunofficial.news`, verify the domain in the [Resend dashboard](https://resend.com/domains) and add the DNS records Resend provides (can live alongside Workers DNS in Cloudflare). This does **not** block the web deploy.
+| Component | Runs on |
+|---|---|
+| Web UI | Workers static assets (`web/dist`) |
+| API routes | Hono app, `web/worker/src/` — mounted at `/api` |
+| Storage | D1 (`news_items`, `known_items`, `device_tokens`, `email_subscribers`, `memberships`, `membership_claim_requests`, `ingest_state`; `bmc_members` retired) |
+| AI summarization | Workers AI (`@cf/meta/llama-3.1-8b-instruct` by default) |
+| Newsletter HTML | Cursor Composer API (`api.cursor.com`) — unchanged, already `fetch`-based |
 
 ---
 
@@ -57,13 +34,16 @@ Scheduled ingest: Fly.io in-process cron (`INGEST_CRON_ENABLED=true`) or externa
 
 | File | Purpose |
 |---|---|
-| `wrangler.jsonc` | Worker name, `main` script, `API_ORIGIN` var, static assets path |
-| `web/worker/index.js` | Proxies `/api/*` → Fly.io; serves static assets otherwise |
+| `wrangler.jsonc` | Worker name, `main`, D1/AI bindings, cron trigger, static assets path |
+| `web/worker/index.js` | Entry — routes `/api/*` to the Hono app, else serves static assets; `scheduled()` runs ingest |
+| `web/worker/src/app.js` | Hono app assembly (CORS, security headers, route registration) |
+| `web/worker/src/db/schema.sql` | D1 schema — apply via `wrangler d1 execute` |
+| `web/worker/src/store/*` | D1-backed data access (replaces the old fs/JSON stores) |
+| `web/worker/src/ingest/*` | RSS/Atom, scrape, sitemap, Twitter ingest (fetch-based, unchanged from the old server) |
 | `web/public/_headers` | Minimal security headers on static assets |
 | `web/.node-version` | Node 20 for Cloudflare build (Vite 7 requires Node 20+) |
-| `web/.env.example` | Documents `VITE_API_BASE` (optional; default `/api` uses proxy) |
 
-Vite outputs to **`web/dist/`**, not repo-root `dist/`. Wrangler reads `assets.directory` from `wrangler.jsonc`.
+Vite outputs to **`web/dist/`**. Wrangler reads `assets.directory` from `wrangler.jsonc`.
 
 Root `package.json` scripts:
 
@@ -72,219 +52,158 @@ Root `package.json` scripts:
 | `npm run build` | Installs `web/` deps and runs `vite build` → `web/dist/` |
 | `npm run deploy:web` | Build + `wrangler deploy` |
 | `npm run preview:web` | Build + `wrangler dev` (local Workers preview) |
+| `npm run dev:api` | `wrangler dev` — local API + D1 (SQLite emulation) + real Workers AI |
 
 ---
 
-## Wrangler config (committed at repo root)
+## One-time setup for a fresh clone
 
-```jsonc
-{
-  "name": "cursorunofficialnews",
-  "main": "./web/worker/index.js",
-  "compatibility_date": "2025-06-27",
-  "vars": {
-    "API_ORIGIN": "https://cursorunofficialnews.fly.dev"
-  },
-  "assets": {
-    "directory": "./web/dist",
-    "binding": "ASSETS",
-    "not_found_handling": "single-page-application"
-  }
-}
+### 1. Create the D1 database
+
+```powershell
+npx wrangler d1 create cursorunofficialnews
 ```
 
-Custom domains (`cursorunofficial.news`, `www`) are attached in the dashboard — **not** in `wrangler.jsonc` (CI deploy fails on duplicate `domains/records`).
+Copy the returned `database_id` into `wrangler.jsonc` → `d1_databases[0].database_id`.
 
-**Do not** set `"directory": "dist"` — Vite builds to `web/dist/`.
+### 2. Apply the schema
 
-To point at a different API host, change `vars.API_ORIGIN` or set it in the Cloudflare dashboard under **Settings → Variables**.
+```powershell
+npx wrangler d1 execute cursorunofficialnews --remote --file=web/worker/src/db/schema.sql
+```
 
----
+(Drop `--remote` to also seed local dev's SQLite emulation.)
 
-## Cloudflare Workers — dashboard setup
+### 3. Set secrets
 
-### 1. Create / verify the Worker project
+Never commit these — set via `wrangler secret put`:
 
-1. Log in to [Cloudflare Dashboard](https://dash.cloudflare.com).
-2. Go to **Workers & Pages** → **Create** → **Workers** → **Connect to Git** (or open existing project **`cursorunofficialnews`**).
-3. Authorize GitHub if prompted; select repo **`ezequielcasillas1/cursorunofficialnews`**.
+```powershell
+npx wrangler secret put INGEST_SECRET
+npx wrangler secret put REGISTER_SECRET
+npx wrangler secret put RESEND_API_KEY
+npx wrangler secret put CURSOR_API_KEY
+npx wrangler secret put N8N_NEWSLETTER_WEBHOOK_URL_TEST
+npx wrangler secret put N8N_NEWSLETTER_WEBHOOK_URL_PROD
+# Optional legacy override (wins over target-specific URLs):
+# npx wrangler secret put N8N_NEWSLETTER_WEBHOOK_URL
+npx wrangler secret put N8N_NEWSLETTER_WEBHOOK_SECRET
+npx wrangler secret put STRIPE_SECRET_KEY
+npx wrangler secret put STRIPE_WEBHOOK_SECRET
+npx wrangler secret put STRIPE_PRICE_ID_1
+npx wrangler secret put STRIPE_PRICE_ID_2
+npx wrangler secret put STRIPE_PRICE_ID_3
+npx wrangler secret put STRIPE_PRICE_ID_4
+npx wrangler secret put STRIPE_PRICE_ID_5
+npx wrangler secret put TWITTER_BEARER_TOKEN
+npx wrangler secret put SCRAPE_API_URL
+npx wrangler secret put SCRAPE_API_KEY
+```
 
-### 2. Build & deploy settings
+Only `INGEST_SECRET` is required in production (guards `POST /api/v1/ingest`); the rest are optional and gracefully skip their feature when unset (see `web/worker/src/*` `isXConfigured()` checks).
 
-Under **Settings → Builds & deployments** (Workers Git integration):
+Non-secret config lives in `wrangler.jsonc` → `vars` (`ENVIRONMENT`, `PUBLIC_API_BASE`, `PUBLIC_WEB_BASE`, `RESEND_FROM_EMAIL`, `EMAIL_NOTIFICATIONS`, `PUSH_NOTIFICATIONS`, `N8N_NEWSLETTER_MODE`, `N8N_NEWSLETTER_TARGET`).
 
-| Setting | Value | Notes |
-|---|---|---|
-| **Production branch** | `main` | Or your default branch |
-| **Framework preset** | Static site / None | Auto-detect may guess wrong output dir |
-| **Root directory** | *(repo root — leave blank)* | Build runs from repo root |
-| **Build command** | `npm run build` | Delegates to `web/` via root `package.json` |
-| **Deploy command** | `npx wrangler deploy` | Uses `wrangler.jsonc` at repo root |
-| **Build output directory** | `web/dist` | **Not** `dist` — Vite writes under `web/` |
+Optional production secret for owner newsletter access without paid membership:
 
-If the dashboard only shows **Output directory** (no separate deploy command), set it to **`web/dist`**. Wrangler still resolves assets from `wrangler.jsonc` → `./web/dist` at deploy time.
-
-### 3. Environment variables (build-time)
-
-**`VITE_API_BASE` is optional.** Default `/api` is proxied by the Worker to Fly.io.
-
-Only set build env vars if you need an override:
-
-| Variable | Value | Required? |
-|---|---|---|
-| `VITE_API_BASE` | `/api` (default) or `https://cursorunofficialnews.fly.dev` | No — omit for Worker proxy |
-| `VITE_ADSENSE_CLIENT_ID` | `ca-pub-5184491334740169` | Optional — enables ad script at build; site verification also uses static script in `web/index.html` |
-| `VITE_ADSENSE_SLOT_ID` | Numeric slot from AdSense → Display ad unit | **Required for in-app ad slots** — without it, only Auto ads (if enabled in AdSense dashboard) can appear |
-| `VITE_BMC_USERNAME` | Your BMC page slug (e.g. `casiezeq`) | Optional — enables membership CTA; **also enable Memberships in BMC** or `/membership` 404s; see [BMC-GO-LIVE.md](BMC-GO-LIVE.md) |
-| `NODE_VERSION` | `20` | Only if build fails on Node 18 |
-
-Worker runtime var (not Vite):
-
-| Variable | Value | Where |
-|---|---|---|
-| `API_ORIGIN` | `https://cursorunofficialnews.fly.dev` | `wrangler.jsonc` `vars` or dashboard **Variables** |
-
-Do **not** set `VITE_INGEST_SECRET` in Cloudflare unless you intentionally expose ingest from the public web UI (not recommended for production).
+```powershell
+npx wrangler secret put NEWSLETTER_FREE_EMAILS
+# e.g. you@example.com (comma-separated)
+```
 
 ### 4. Deploy
 
-- Save settings → Cloudflare runs build then `wrangler deploy`.
-- Watch **Deployments** for logs; a successful deploy gets a `*.workers.dev` URL.
+```powershell
+cd C:\Dev\CursorAINews
+npx wrangler login   # one-time, opens browser
+npm run deploy:web
+```
+
+Wrangler bundles `web/worker/index.js` (esbuild resolves all imports across `web/worker/src/`), builds the D1/AI/assets/cron bindings from `wrangler.jsonc`, and deploys.
 
 ### 5. Custom domain
 
-1. **Workers & Pages** → **`cursorunofficialnews`** → **Settings → Domains & Routes** → **Add Custom Domain**.
-2. Add **`cursorunofficial.news`** (apex).
-3. Cloudflare creates the DNS records automatically because the zone is on Cloudflare.
-4. Optional: add **`www.cursorunofficial.news`** and set a redirect (apex → www or www → apex) under **Rules → Redirect Rules** if you want a single canonical host.
-
-SSL/TLS is automatic (Cloudflare Universal SSL).
-
-### 6. Verify the live site
-
-1. Open `https://cursorunofficial.news` (or your `*.workers.dev` URL before DNS is wired).
-2. Confirm the news feed loads (not “Unexpected token '<'” or “Request timed out”).
-3. DevTools → **Network** → confirm requests go to **`/api/v1/news`** (same origin) or your `VITE_API_BASE` override.
-4. Optional smoke test from PowerShell:
-
-   ```powershell
-   Invoke-RestMethod "https://cursorunofficialnews.fly.dev/v1/news?limit=1"
-   ```
+**Workers & Pages** → **`cursorunofficialnews`** → **Settings → Domains & Routes** → **Add Custom Domain** → `cursorunofficial.news` (+ optional `www`). SSL is automatic. Do **not** duplicate domains in `wrangler.jsonc` — CI deploy fails on `domains/records` API conflicts.
 
 ---
 
-## Local production-like preview
+## CI/CD — Cloudflare Workers Builds (Git auto-deploy)
 
-From repo root (Workers preview):
+Pushing to `main` on GitHub (`ezequielcasillas1/cursorunofficialnews`) **automatically builds and deploys** — no manual step required.
+
+| Item | Value |
+|---|---|
+| Provider connection | GitHub App, repo `cursorunofficialnews` (already authorized) |
+| Trigger — production | `main` branch → `npm run build` → `npx wrangler deploy` |
+| Trigger — other branches | `*` (excl. `main`) → `npm run build` → `npx wrangler versions upload` (preview build only) |
+| Root directory | `/` (repo root) |
+| Node version | Picked up from `web/.node-version` (20) |
+
+**Check build status:** Dashboard → **Workers & Pages** → `cursorunofficialnews` → **Deployments**. Or via API (script tag `9e868a201fff40b496fc8770ec4db012`):
+
+```
+GET /accounts/{account_id}/builds/workers/{script_tag}/triggers   # trigger config
+GET /accounts/{account_id}/builds/workers/{script_tag}/builds     # build history
+GET /accounts/{account_id}/builds/builds/{build_uuid}/logs        # logs for one build
+```
+
+`npm run deploy:web` (manual `wrangler deploy`) still works and is the fallback if a build fails or for out-of-band deploys.
+
+**Disable/pause auto-deploy:** `DELETE /accounts/{account_id}/builds/triggers/{trigger_uuid}` (production trigger UUID `5bd5b75e-f61b-4047-96cb-6427966a51c8`), or toggle it off in the dashboard under the Worker's **Settings → Build**.
+
+---
+
+## Local development
 
 ```powershell
 cd C:\Dev\CursorAINews
-$env:VITE_API_BASE="https://cursorunofficialnews.fly.dev"
-npm run preview:web
+
+# Terminal 1 — API (local D1 emulation + real Workers AI; needs --use-system-ca behind corporate TLS/Zscaler)
+$env:NODE_OPTIONS="--use-system-ca"
+npm run dev:api
+
+# Terminal 2 — Web (Vite, HMR, proxies /api → :8787)
+npm run dev:web
 ```
 
-Or Vite-only preview from `web/`:
+First time only, seed local D1:
 
 ```powershell
-cd C:\Dev\CursorAINews\web
-$env:VITE_API_BASE="https://cursorunofficialnews.fly.dev"
-npm run build
-npm run preview
+npx wrangler d1 execute cursorunofficialnews --local --file=web/worker/src/db/schema.sql
 ```
 
-Validate config without uploading:
+Trigger the scheduled ingest manually in local dev:
 
 ```powershell
-cd C:\Dev\CursorAINews
-npm run build
-npx wrangler deploy --dry-run
+curl "http://127.0.0.1:8787/cdn-cgi/handler/scheduled"
+```
+
+Validate config without deploying:
+
+```powershell
+npx wrangler deploy --dry-run --outdir=.wrangler-dryrun
 ```
 
 ---
 
 ## Troubleshooting
 
-### `Unexpected token '<', "<!doctype "... is not valid JSON`
-
-**Root cause:** The browser requested JSON from `/api/v1/news`, but got HTML (`index.html`) because:
-
-1. Worker proxy is missing (old deploy without `web/worker/index.js`), **or**
-2. Fly.io API is down / cold-starting (`min_machines_running = 0`), **or**
-3. Wrong path — request hit static assets instead of `/api`.
-
-**Fix:**
-
-1. Redeploy with current `wrangler.jsonc` (includes `main: ./web/worker/index.js`).
-2. Verify Fly: `Invoke-RestMethod https://cursorunofficialnews.fly.dev/health`
-3. Test proxy on live site: open `https://cursorunofficial.news/api/v1/news?limit=1` — should return JSON, not HTML.
-
-### `assets.directory` does not exist (`/opt/buildhome/repo/dist`)
-
-**Root cause:** Wrangler (or dashboard auto-setup) pointed at repo-root `dist/`, but Vite builds to `web/dist/`.
-
-**Fix:**
-
-1. Commit `wrangler.jsonc` with `"directory": "./web/dist"`.
-2. In Cloudflare dashboard, set **Build output directory** → **`web/dist`** (not `dist`).
-3. Redeploy.
-
-### `PROJECT CANNOT BE FOUND` (most common first)
-
-1. **GitHub app cannot see the repo (private repo)** — This repo is **private**. During Cloudflare → **Connect to Git**, the GitHub **Cloudflare Workers & Pages** app must include `ezequielcasillas1/cursorunofficialnews` under **Repository access**.
-   - GitHub → **Settings** → **Integrations** → **Applications** → **Cloudflare Workers and Pages** → **Configure**
-   - Set **Repository access** → **Only select repositories** → add **`cursorunofficialnews`**
-   - Or use **All repositories** temporarily, then retry **Workers & Pages** → **Create** → **Connect to Git**
-
-2. **Worker project not created yet** — Create it: **Workers & Pages** → **Create** → **Workers** → **Connect to Git** → pick **`ezequielcasillas1/cursorunofficialnews`**.
-
-3. **Wrong Cloudflare account** — Domain zone `cursorunofficial.news` and the Worker must live under the **same** Cloudflare account.
-
-4. **Repo already linked on another Cloudflare account** — One GitHub repo can only back one Workers/Pages project per account in some setups. Delete the old project on the other account, or use **Direct Upload** / a different repo.
-
-5. **Stale GitHub authorization** — Uninstall **Cloudflare Workers and Pages** from GitHub (Applications page), then reconnect from the Cloudflare **Connect to Git** flow.
-
-6. **Fly.io API not deployed** — Does **not** cause "PROJECT CANNOT BE FOUND", but the site will fail after deploy. `https://cursorunofficialnews.fly.dev/health` must respond before you rely on the live feed. See [FLY-DEPLOY.md](FLY-DEPLOY.md).
-
 | Symptom | Likely cause | Fix |
 |---|---|---|
-| `assets.directory` / `dist` not found | Output dir `dist` at repo root; Vite uses `web/dist` | Set `wrangler.jsonc` → `./web/dist`; dashboard **Build output directory** → `web/dist` |
-| `Missing script: "build"` | Wrong root directory in dashboard | Leave **Root directory** blank (repo root); **Build command** → `npm run build` |
+| `assets.directory` / `dist` not found | Output dir `dist` at repo root; Vite uses `web/dist` | `wrangler.jsonc` → `./web/dist` |
+| `Missing script: "build"` | Wrong root directory in dashboard | Leave **Root directory** blank; **Build command** → `npm run build` |
 | Build fails on Node | Default Node 18 | Set `NODE_VERSION=20` or rely on `web/.node-version` |
-| Feed timeout / empty | API down or cold start on Fly | Check Fly health; first request may wake machine (~5–10s) |
-| JSON parse / `<!doctype` error | `/api` not proxied; HTML SPA fallback | Deploy Worker with `web/worker/index.js`; test `/api/v1/news` |
-| Wrong `VITE_API_BASE` | Direct Fly URL misconfigured | Omit `VITE_API_BASE` to use `/api` proxy, or set correct Fly URL |
-| `Some triggers failed to deploy` / `domains/records` | Custom domains duplicated in `wrangler.jsonc` | Remove `routes` from `wrangler.jsonc`; manage domains in dashboard only |
+| `/api/v1/news` returns empty `items` | Cold D1 — no ingest has run yet | Hit any `/api/*` route (triggers a background bootstrap ingest) or wait for the next Cron Trigger (≤30 min) |
+| `POST /api/v1/ingest` 401 | Missing/incorrect `X-API-Secret` | Must match the `INGEST_SECRET` Worker secret |
+| Ingest hangs locally in `wrangler dev` | `workerd`'s own TLS stack under corporate proxy/Zscaler interception — not a code bug | Verified fine in production (Cloudflare's real network); if it blocks local testing, test the ingest functions directly with plain `node --use-system-ca` instead |
+| `Some triggers failed to deploy` / `domains/records` | Custom domains duplicated in `wrangler.jsonc` | Remove `routes`/domains from `wrangler.jsonc`; manage domains in dashboard only |
 | 404 on refresh / deep link | Missing SPA fallback | `not_found_handling: "single-page-application"` in `wrangler.jsonc` |
-| `_redirects` infinite loop (100324) | `/* /index.html 200` conflicts with wrangler SPA handling | Remove `web/public/_redirects`; rely on `not_found_handling` only |
-| CORS errors | Unlikely — API uses open CORS | Check browser console; confirm API URL is HTTPS |
-| Domain not resolving | NS propagation or wrong zone | Cloudflare zone **Active**; check **DNS** records for Worker custom domain |
-| Email not sending | Resend, not Cloudflare | Verify domain in Resend; set Fly secrets per [FLY-DEPLOY.md](FLY-DEPLOY.md) |
-
----
-
-## Alternative: Cloudflare Pages
-
-You can also deploy via **Pages** with **Root directory** → `web`, **Build command** → `npm run build`, **Build output directory** → `dist` (relative to `web/`). The current repo setup targets **Workers Static Assets** + `wrangler.jsonc` at repo root.
-
----
-
-## Deploy API first (Fly.io)
-
-The web site depends on a cloud API. One-time setup:
-
-```powershell
-cd C:\Dev\CursorAINews
-fly auth login
-fly deploy
-fly secrets set INGEST_SECRET="..." NODE_ENV="production" INGEST_CRON_ENABLED="true" PUBLIC_API_BASE="https://cursorunofficialnews.fly.dev"
-```
-
-Full details: [FLY-DEPLOY.md](FLY-DEPLOY.md).
+| Workers AI errors in local dev | AI binding always proxies to Cloudflare, needs auth | `npx wrangler login` first, or accept remote-mode usage charges are minimal for `/api/v1/llm/status` (no inference call) |
 
 ---
 
 ## Related docs
 
-- [FLY-DEPLOY.md](FLY-DEPLOY.md) — API on Fly.io (must be up first)
-- [RUN-LOCAL.md](RUN-LOCAL.md) — local dev (Vite proxy to `:8787`)
+- [RUN-LOCAL.md](RUN-LOCAL.md) — local dev (Vite proxy to `wrangler dev`)
 - [AGENT-CONTEXT.md](AGENT-CONTEXT.md) — agent cold start
+- [STRIPE-GO-LIVE.md](STRIPE-GO-LIVE.md) — Stripe membership go-live checklist

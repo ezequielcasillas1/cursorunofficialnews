@@ -1,6 +1,6 @@
 .env
 .env.local
 .env.*
-!.env.example
+!*.example.env
 *-oauth-credentials.txt
 *-credentials.txt

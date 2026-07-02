@@ -34,11 +34,23 @@ async function fetchJson(path, options = {}) {
   }
 }
 
-export function subscribeNewsletter({ email, categories, categoryLimits, enabled = true }) {
+export function subscribeNewsletter({
+  categories,
+  categoryLimits,
+  enabled = true,
+  resendVerification = false,
+  membershipToken,
+}) {
   return fetchJson('/v1/email/subscribe', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, categories, categoryLimits, enabled }),
+    body: JSON.stringify({
+      categories,
+      categoryLimits,
+      enabled,
+      resendVerification: Boolean(resendVerification),
+      membershipToken,
+    }),
   });
 }
 

@@ -2,7 +2,11 @@ node_modules/
 .wrangler/
 .env
 .env.local
-mobile/server/.env
+.dev.vars
+# Central env — commit templates only
+env/*/.env
+env/*.local.env
+!env/*.example.env
 dist/
 build/
 .expo/
@@ -20,8 +24,8 @@ mobile/.gradle-trust/
 *.log
 .DS_Store
 
-# Server JSON persistence (device tokens, subscribers, known IDs)
-mobile/server/data/*.json
+# Local wrangler build output (dry-run testing)
+.wrangler-dryrun/
 
 .recovery/
 .recovery2/

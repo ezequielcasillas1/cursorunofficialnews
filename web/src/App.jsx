@@ -10,6 +10,7 @@ import { FeedPagination } from './components/FeedPagination.jsx';
 import { NewsFeed } from './components/NewsFeed.jsx';
 import { getCategoryApiParam, FEED_PAGE_SIZE, FEED_SEARCH_FETCH_LIMIT } from './config/feedCategories.js';
 import { INGEST_SECRET } from './config.js';
+import { useMembership } from './monetization/useMembership.js';
 import {
   buildSourceMap,
   fetchNews,
@@ -52,6 +53,7 @@ export default function App() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
   const [status, setStatus] = useState({ lastIngestAt: null, sourceCount: 0, feedPublishedAfter: null });
+  const membership = useMembership();
 
   useEffect(() => {
     const prefs = loadFilterPrefs();
@@ -175,8 +177,8 @@ export default function App() {
           resultCount={filteredItems.length}
           totalCount={isSearching ? items.length : feedMeta.total}
         />
-        <MonetizationSection />
-        <NewsletterSettings />
+        <MonetizationSection membership={membership} />
+        <NewsletterSettings membership={membership} />
         <main className="app-main">
           <NewsFeed
             items={filteredItems}

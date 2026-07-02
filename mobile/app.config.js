@@ -1,3 +1,7 @@
+import { loadProjectEnv } from '../env/load-env.js';
+
+loadProjectEnv('mobile');
+
 export default {
   expo: {
     name: 'Unofficial Cursor News',

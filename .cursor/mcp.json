@@ -1,7 +1,19 @@
 {
   "mcpServers": {
+    "codescene": {
+      "command": "cs-mcp",
+      "env": {
+        "CS_ACCESS_TOKEN": "${env:CS_ACCESS_TOKEN}"
+      }
+    },
     "pipedream": {
       "url": "https://mcp.pipedream.net/v2"
+    },
+    "cloudflare-api": {
+      "url": "https://mcp.cloudflare.com/mcp"
+    },
+    "cloudflare-docs": {
+      "url": "https://docs.mcp.cloudflare.com/mcp"
     }
   }
 }

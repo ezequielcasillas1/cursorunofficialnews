@@ -3,9 +3,7 @@ import {
   NEWSLETTER_CATEGORY_LIMIT,
   NEWSLETTER_PANEL_DEFAULT_EXPANDED,
 } from '../../newsletter/config.js';
-import {
-  useNewsletter,
-} from '../../newsletter/useNewsletter.js';
+import { useNewsletter } from '../../newsletter/useNewsletter.js';
 import { CollapsiblePanel } from '../ui/CollapsiblePanel.jsx';
 
 function digestStateLabel(prefs) {
@@ -20,20 +18,60 @@ function collapsedSummary(prefs) {
   return digestStateLabel(prefs);
 }
 
-export function NewsletterSettings() {
+function scrollToMembershipSection(event) {
+  event.preventDefault();
+  document.getElementById('membership-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function MembershipRequiredNotice() {
+  return (
+    <CollapsiblePanel
+      id="newsletter-settings"
+      className="newsletter-panel"
+      eyebrow="Email digest · Members only"
+      title="Newsletter options"
+      subtitle="Become a member to unlock the email newsletter."
+      summary="Members only"
+      defaultExpanded={NEWSLETTER_PANEL_DEFAULT_EXPANDED}
+    >
+      <p className="hint">
+        The email newsletter is a membership benefit alongside ad-free browsing. Join for $1–$5/mo to
+        unlock it.
+      </p>
+      <a className="btn" href="#membership-section" onClick={scrollToMembershipSection}>
+        Become a member
+      </a>
+    </CollapsiblePanel>
+  );
+}
+
+export function NewsletterSettings({ membership }) {
+  const { newsletterUnlocked, checking: membershipChecking, memberEmail } = membership || {};
+
   const {
     prefs,
     loading,
     syncing,
     statusMessage,
     errorMessage,
-    setEmail,
     toggleCategory,
     setCategoryLimit,
     setEnabled,
     subscribe,
     unsubscribe,
-  } = useNewsletter();
+  } = useNewsletter(membership);
+
+  if (membershipChecking) {
+    return (
+      <section className="monetization-section" aria-busy="true">
+        <p className="hint">Checking membership status…</p>
+      </section>
+    );
+  }
+
+  if (!newsletterUnlocked) {
+    return <MembershipRequiredNotice />;
+  }
 
   return (
     <CollapsiblePanel
@@ -41,7 +79,7 @@ export function NewsletterSettings() {
       className="newsletter-panel"
       eyebrow="Email digest · Beta"
       title="Newsletter options"
-      subtitle="Choose topics, manage your subscription, and save your preferences in this browser."
+      subtitle="Choose topics and manage your member email digest."
       summary={loading ? 'Loading newsletter settings…' : collapsedSummary(prefs)}
       defaultExpanded={NEWSLETTER_PANEL_DEFAULT_EXPANDED}
       loading={loading}
@@ -63,18 +101,10 @@ export function NewsletterSettings() {
       ) : null}
 
       <div className="newsletter-grid">
-        <label className="newsletter-field" htmlFor="newsletter-email">
+        <div className="newsletter-field">
           <span className="newsletter-field-label">Email address</span>
-          <input
-            id="newsletter-email"
-            type="email"
-            autoComplete="email"
-            placeholder="you@example.com"
-            value={prefs.email}
-            onChange={(event) => setEmail(event.target.value)}
-            disabled={syncing}
-          />
-        </label>
+          <p className="hint">{memberEmail || prefs.email} — your membership email</p>
+        </div>
 
         <label className="newsletter-toggle">
           <span className="newsletter-field-label">Enable email digest</span>

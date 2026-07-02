@@ -7,6 +7,7 @@ import {
 } from '../../shared/notifications/category-limits.js';
 
 export const EMAIL_PREFS_KEY = '@cursor_news_email_prefs';
+export const MEMBERSHIP_TOKEN_KEY = '@cursor_news_membership_token';
 
 export const DEFAULT_EMAIL_PREFS = {
   enabled: false,
@@ -82,17 +83,52 @@ export async function saveEmailPrefs(prefs) {
   await AsyncStorage.setItem(EMAIL_PREFS_KEY, JSON.stringify(normalized));
 }
 
+/**
+ * The shared `/v1/email/subscribe` backend now requires an active membership
+ * token (see web/worker/src/notifications/email-routes.js). Mobile has no
+ * native Stripe Checkout, so members paste the token they get after joining
+ * on the website — stored locally, never validated client-side.
+ */
+export async function loadMembershipToken() {
+  try {
+    return (await AsyncStorage.getItem(MEMBERSHIP_TOKEN_KEY))?.trim() || '';
+  } catch {
+    return '';
+  }
+}
+
+export async function saveMembershipToken(token) {
+  const trimmed = String(token || '').trim();
+  if (trimmed) {
+    await AsyncStorage.setItem(MEMBERSHIP_TOKEN_KEY, trimmed);
+  } else {
+    await AsyncStorage.removeItem(MEMBERSHIP_TOKEN_KEY);
+  }
+}
+
 export function isValidEmailFormat(email) {
   const normalized = String(email || '').trim().toLowerCase();
   if (!normalized || normalized.length > 254) return false;
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized);
 }
 
-export function subscribeEmail({ email, categories, categoryLimits, enabled = true }) {
+export function subscribeEmail({
+  categories,
+  categoryLimits,
+  enabled = true,
+  resendVerification = false,
+  membershipToken,
+}) {
   return fetchJson('/v1/email/subscribe', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, categories, categoryLimits, enabled }),
+    body: JSON.stringify({
+      categories,
+      categoryLimits,
+      enabled,
+      resendVerification: Boolean(resendVerification),
+      membershipToken,
+    }),
   });
 }
 

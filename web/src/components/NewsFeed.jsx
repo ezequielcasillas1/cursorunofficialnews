@@ -19,8 +19,8 @@ function errorHint(message) {
 
   return (
     <>
-      Start the API: <code>npm run dev:api</code> from repo root, or{' '}
-      <code>cd mobile/server &amp;&amp; npm run dev</code>
+      Start the API: <code>npm run dev:api</code> from repo root (runs{' '}
+      <code>wrangler dev</code>)
     </>
   );
 }

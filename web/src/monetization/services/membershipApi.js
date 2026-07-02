@@ -37,6 +37,21 @@ async function fetchJson(path, options = {}) {
   }
 }
 
+/** Creates a Stripe Checkout Session for the given monthly tier; caller redirects to `url`. */
+export function startMembershipCheckout(amount, email) {
+  return fetchJson('/v1/membership/checkout', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ amount, email: email || undefined }),
+  });
+}
+
+/** Confirms a completed Stripe Checkout Session (post-redirect) and returns the membership token. */
+export function confirmMembershipCheckout(sessionId) {
+  const params = new URLSearchParams({ session_id: sessionId });
+  return fetchJson(`/v1/membership/checkout/confirm?${params.toString()}`);
+}
+
 export function claimMembership(email) {
   return fetchJson('/v1/membership/claim', {
     method: 'POST',

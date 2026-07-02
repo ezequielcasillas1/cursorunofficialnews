@@ -14,9 +14,9 @@ This workspace **is** the Cursor AI News project. Do not redirect work to PasteC
 | What | Path |
 |---|---|
 | Project root | `C:\Dev\CursorAINews` |
-| App (Expo + API) | `C:\Dev\CursorAINews\mobile` |
-| API server | `C:\Dev\CursorAINews\mobile\server` |
-| Web preview (optional) | `C:\Dev\CursorAINews\web` |
+| App (Expo) | `C:\Dev\CursorAINews\mobile` |
+| API + website (Cloudflare Worker; Fly.io retired) | `C:\Dev\CursorAINews\web\worker` |
+| Web frontend | `C:\Dev\CursorAINews\web` |
 | Docs | `C:\Dev\CursorAINews\docs` |
 
 ## Trigger phrases (apply this rule)
@@ -39,10 +39,11 @@ This workspace **is** the Cursor AI News project. Do not redirect work to PasteC
 
 | Wrong (PasteCraft) | Right (this repo) |
 |---|---|
-| `C:\Dev\PasteCraft\` for news feed code | `mobile/`, `mobile/server/`, `web/` |
-| PasteCraft `extension/` | `mobile/server/src/`, `mobile/src/` |
+| `C:\Dev\PasteCraft\` for news feed code | `mobile/`, `web/worker/`, `web/` |
+| PasteCraft `extension/` | `web/worker/src/`, `mobile/src/` |
 | PasteCraft merchant features | ingest, API routes, mobile feed |
 | PasteCraft `request.md` / merchant docs | `docs/` |
+| Fly.io / `mobile/server/` (retired) | `web/worker/` (Cloudflare Worker: API + D1 + Workers AI + cron) |
 
 ## Product identity
 

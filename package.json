@@ -3,17 +3,20 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "install:all": "npm install --prefix mobile/server && npm install --prefix mobile && npm install --prefix web",
+    "install:all": "npm install && npm install --prefix mobile && npm install --prefix web",
     "build": "npm install --prefix web && npm run build --prefix web",
     "deploy:web": "npm run build && wrangler deploy",
-    "deploy:api": "fly deploy",
     "preview:web": "npm run build && wrangler dev",
-    "dev:api": "npm run dev --prefix mobile/server",
+    "dev:api": "wrangler dev --env-file env/server.example.env --env-file env/server/.env --var ENVIRONMENT:development --var PUBLIC_WEB_BASE:http://127.0.0.1:5173",
     "dev:mobile": "npm run start --prefix mobile",
     "dev:web": "npm run dev --prefix web"
   },
   "dependencies": {
-    "expo": "^56.0.12"
+    "expo": "^56.0.12",
+    "hono": "^4.6.0",
+    "resend": "^6.16.0",
+    "rss-parser": "^3.13.0",
+    "stripe": "^22.3.0"
   },
   "devDependencies": {
     "wrangler": "^4.24.0"

@@ -1,3 +1,7 @@
+const { loadProjectEnv } = require('../env/load-env.cjs');
+
+loadProjectEnv('mobile');
+
 const { getDefaultConfig } = require('expo/metro-config');
 const exclusionList = require('metro-config/src/defaults/exclusionList');
 

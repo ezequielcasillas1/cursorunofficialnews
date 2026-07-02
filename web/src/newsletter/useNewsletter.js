@@ -16,15 +16,11 @@ import {
   verifyNewsletterSubscription,
 } from './services/newsletterApi.js';
 
-export function isValidNewsletterEmail(email) {
-  const normalized = String(email || '').trim().toLowerCase();
-  if (!normalized || normalized.length > 254) return false;
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized);
-}
+export const MEMBERSHIP_REQUIRED_MESSAGE =
+  'An active membership is required to unlock the email newsletter.';
 
 function syncablePrefs(prefs) {
   return {
-    email: String(prefs.email || '').trim().toLowerCase(),
     categories: Array.isArray(prefs.categories) ? prefs.categories : [],
     categoryLimits: prefs.categoryLimits || {},
     enabled: Boolean(prefs.enabled),
@@ -52,7 +48,15 @@ function mergeSubscriber(basePrefs, subscriber, manageToken) {
   });
 }
 
-export function useNewsletter() {
+/**
+ * @param {{ newsletterUnlocked?: boolean, memberEmail?: string, membershipToken?: string }} membership
+ *   Entitlement from `useMembership()` — the newsletter is membership-gated (see
+ *   `web/worker/src/notifications/email-routes.js`), so every subscribe/resubscribe
+ *   call must carry `membershipToken`; the server re-derives the email server-side.
+ */
+export function useNewsletter(membership = {}) {
+  const { newsletterUnlocked = false, memberEmail = '', membershipToken = '' } = membership;
+
   const [prefs, setPrefs] = useState({ ...DEFAULT_NEWSLETTER_PREFS });
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
@@ -66,37 +70,50 @@ export function useNewsletter() {
     return normalized;
   }, []);
 
-  const syncToServer = useCallback(async (nextPrefs) => {
-    const clean = syncablePrefs(nextPrefs);
-    if (!isValidNewsletterEmail(clean.email)) {
-      throw new Error('Enter a valid email address.');
+  // Newsletter email always mirrors the verified membership email — the server
+  // ignores any other value, so keep the display in sync once membership loads.
+  useEffect(() => {
+    if (newsletterUnlocked && memberEmail && prefs.email !== memberEmail) {
+      persistPrefs({ ...prefs, email: memberEmail });
     }
-    if (clean.enabled && clean.categories.length === 0) {
-      throw new Error('Select at least one topic for the email digest.');
-    }
+  }, [newsletterUnlocked, memberEmail, prefs, persistPrefs]);
 
-    const response = await subscribeNewsletter({
-      email: clean.email,
-      categories: clean.enabled ? clean.categories : [],
-      categoryLimits: clean.enabled ? clean.categoryLimits : {},
-      enabled: clean.enabled,
-    });
+  const syncToServer = useCallback(
+    async (nextPrefs) => {
+      if (!newsletterUnlocked) {
+        throw new Error(MEMBERSHIP_REQUIRED_MESSAGE);
+      }
 
-    if (response?.pending) {
-      return normalizeNewsletterPrefs({
-        ...nextPrefs,
-        enabled: false,
-        pendingVerification: true,
-        manageToken: '',
+      const clean = syncablePrefs(nextPrefs);
+      if (clean.enabled && clean.categories.length === 0) {
+        throw new Error('Select at least one topic for the email digest.');
+      }
+
+      const response = await subscribeNewsletter({
+        categories: clean.enabled ? clean.categories : [],
+        categoryLimits: clean.enabled ? clean.categoryLimits : {},
+        enabled: clean.enabled,
+        resendVerification: clean.pendingVerification,
+        membershipToken,
       });
-    }
 
-    return mergeSubscriber(
-      nextPrefs,
-      response?.subscriber,
-      response?.subscriber?.manageToken || clean.manageToken,
-    );
-  }, []);
+      if (response?.pending) {
+        return normalizeNewsletterPrefs({
+          ...nextPrefs,
+          enabled: false,
+          pendingVerification: true,
+          manageToken: '',
+        });
+      }
+
+      return mergeSubscriber(
+        nextPrefs,
+        response?.subscriber,
+        response?.subscriber?.manageToken || clean.manageToken,
+      );
+    },
+    [newsletterUnlocked, membershipToken],
+  );
 
   const verifyFromUrlToken = useCallback(
     async (verifyToken, basePrefs) => {
@@ -253,20 +270,6 @@ export function useNewsletter() {
     [persistPrefs, syncToServer],
   );
 
-  const setEmail = useCallback(
-    (email) => {
-      const next = persistPrefs({
-        ...prefs,
-        email,
-        pendingVerification: false,
-      });
-      setErrorMessage('');
-      setStatusMessage('');
-      return next;
-    },
-    [persistPrefs, prefs],
-  );
-
   const toggleCategory = useCallback(
     (categoryId) => {
       const set = new Set(prefs.categories);
@@ -311,21 +314,14 @@ export function useNewsletter() {
 
   const setEnabled = useCallback(
     async (enabled) => {
-      const next = {
-        ...prefs,
-        enabled,
-      };
-      const shouldSync = isValidNewsletterEmail(next.email);
-      return runSync(next, { syncServer: shouldSync });
+      const next = { ...prefs, enabled };
+      return runSync(next, { syncServer: newsletterUnlocked });
     },
-    [prefs, runSync],
+    [prefs, runSync, newsletterUnlocked],
   );
 
   const subscribe = useCallback(async () => {
-    const next = {
-      ...prefs,
-      enabled: true,
-    };
+    const next = { ...prefs, enabled: true };
     return runSync(next, { syncServer: true });
   }, [prefs, runSync]);
 
@@ -339,7 +335,6 @@ export function useNewsletter() {
     syncing,
     statusMessage,
     errorMessage,
-    setEmail,
     toggleCategory,
     setCategoryLimit,
     setEnabled,

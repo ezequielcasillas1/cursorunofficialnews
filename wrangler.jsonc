@@ -2,16 +2,41 @@
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "cursorunofficialnews",
   "main": "./web/worker/index.js",
-  "compatibility_date": "2025-06-27",
+  "compatibility_date": "2026-07-02",
+  "compatibility_flags": ["nodejs_compat"],
   "vars": {
-    "API_ORIGIN": "https://cursorunofficialnews.fly.dev"
+    "ENVIRONMENT": "production",
+    "PUBLIC_API_BASE": "https://cursorunofficial.news/api",
+    "PUBLIC_WEB_BASE": "https://cursorunofficial.news",
+    "RESEND_FROM_EMAIL": "Unofficial Cursor News <onboarding@resend.dev>",
+    "EMAIL_NOTIFICATIONS": "true",
+    "PUSH_NOTIFICATIONS": "true",
+    "N8N_NEWSLETTER_MODE": "parallel",
+    "N8N_NEWSLETTER_TARGET": "prod"
   },
   "assets": {
     "directory": "./web/dist",
     "binding": "ASSETS",
     "not_found_handling": "single-page-application"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "cursorunofficialnews",
+      "database_id": "ee7d7ffc-def5-4bc5-851b-d51a21610fec"
+    }
+  ],
+  "ai": {
+    "binding": "AI"
+  },
+  "triggers": {
+    "crons": ["*/30 * * * *"]
   }
   // Custom domains (cursorunofficial.news, www) are attached in the Cloudflare
   // dashboard under Workers → cursorunofficialnews → Domains & Routes.
   // Do NOT duplicate them here — CI deploy fails on domains/records API conflicts.
+  //
+  // Fly.io is retired — this Worker is now the entire API + website.
+  // Secrets (INGEST_SECRET, RESEND_API_KEY, etc.) are set via `wrangler secret put`,
+  // not in this file. See docs/CLOUDFLARE-DEPLOY.md.
 }

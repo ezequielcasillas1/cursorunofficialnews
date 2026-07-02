@@ -18,9 +18,10 @@ export function Header({ onRefresh, refreshing }) {
   return (
     <header className="masthead">
       <div className="masthead-inner">
-        <div className="masthead-follow">
-          <p className="masthead-follow-label">Follow Me</p>
+        <div className="masthead-utility">
+          <p className="masthead-eyebrow">{today}</p>
           <nav className="masthead-social" aria-label="Follow on social media">
+            <span className="masthead-social-label">Follow</span>
             {SOCIAL_LINKS.map((link, index) => (
               <span key={link.label} className="masthead-social-item">
                 {index > 0 ? <span className="masthead-social-sep" aria-hidden="true">·</span> : null}
@@ -31,9 +32,11 @@ export function Header({ onRefresh, refreshing }) {
             ))}
           </nav>
         </div>
-        <p className="masthead-eyebrow">{today}</p>
         <h1>{APP_NAME}</h1>
-        <hr className="masthead-rule" />
+        <div className="masthead-rule-group" aria-hidden="true">
+          <span className="masthead-rule masthead-rule-thick" />
+          <span className="masthead-rule masthead-rule-thin" />
+        </div>
         <p className="masthead-sub">Your morning briefing on Cursor — changelog, releases, and community</p>
         <div className="masthead-actions">
           <ThemeToggle />

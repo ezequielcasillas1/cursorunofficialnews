@@ -1,6 +1,8 @@
 # LM Studio — Local LLM (8B–13B)
 
-OpenAI-compatible API for local models via [LM Studio](https://lmstudio.ai/). Used by the news API for optional summarization and dev chat endpoints.
+> **Production note:** the deployed API (`web/worker/`) now uses **Cloudflare Workers AI** for `/api/v1/llm/summarize` and `/chat` (`web/worker/src/llm/workers-ai-client.js`) — Workers cannot reach `http://127.0.0.1:1234`. This doc still applies if you want to experiment with a local model outside the deployed Worker (e.g. a standalone script), but it is no longer wired into the production routes.
+
+OpenAI-compatible API for local models via [LM Studio](https://lmstudio.ai/). Historically used by the news API for optional summarization and dev chat endpoints.
 
 ---
 

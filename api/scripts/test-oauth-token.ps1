@@ -1,12 +1,13 @@
 # Test Pipedream REST API OAuth token exchange.
-# Reads api/.env.local — never commit that file.
+# Reads env/api/.env — never commit that file.
 # Usage: cd C:\Dev\CursorAINews\api; .\scripts\test-oauth-token.ps1
 
 $ErrorActionPreference = 'Stop'
-$envFile = Join-Path (Join-Path $PSScriptRoot '..') '.env.local'
+$repoRoot = Join-Path (Join-Path $PSScriptRoot '..') '..'
+$envFile = Join-Path (Join-Path $repoRoot 'env\api') '.env'
 
 if (-not (Test-Path $envFile)) {
-  Write-Error "Missing api/.env.local - copy api/.env.example and set PIPEDREAM_CLIENT_ID + PIPEDREAM_CLIENT_SECRET"
+  Write-Error "Missing env/api/.env - copy env/api.example.env to env/api/.env and set PIPEDREAM_CLIENT_ID + PIPEDREAM_CLIENT_SECRET"
 }
 
 Get-Content $envFile | ForEach-Object {
@@ -20,7 +21,7 @@ Get-Content $envFile | ForEach-Object {
 }
 
 if (-not $env:PIPEDREAM_CLIENT_ID -or -not $env:PIPEDREAM_CLIENT_SECRET) {
-  Write-Error "PIPEDREAM_CLIENT_ID and PIPEDREAM_CLIENT_SECRET must be set in api/.env.local"
+  Write-Error "PIPEDREAM_CLIENT_ID and PIPEDREAM_CLIENT_SECRET must be set in env/api/.env"
 }
 
 $body = @{

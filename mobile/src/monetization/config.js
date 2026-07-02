@@ -1,13 +1,13 @@
-import { BMC_USERNAME_DEFAULT, getBmcPageUrl } from '../../shared/monetization/bmc-config.js';
+import { getMembershipWebUrl } from '../../shared/monetization/membership-config.js';
 
-const BMC_USERNAME =
-  process.env.EXPO_PUBLIC_BMC_USERNAME?.trim() ||
-  BMC_USERNAME_DEFAULT;
+const WEB_BASE_URL =
+  process.env.EXPO_PUBLIC_WEB_BASE_URL?.trim() || 'https://cursorunofficial.news';
 
-export function getMobileBmcPageUrl() {
-  return getBmcPageUrl(BMC_USERNAME);
+/** Website membership panel — mobile has no native Stripe Checkout UI; it deep-links out. */
+export function getMobileMembershipUrl() {
+  return getMembershipWebUrl(WEB_BASE_URL);
 }
 
-export function isMobileBmcConfigured() {
-  return Boolean(BMC_USERNAME);
+export function isMobileMembershipConfigured() {
+  return Boolean(WEB_BASE_URL);
 }

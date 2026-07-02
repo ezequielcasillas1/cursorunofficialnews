@@ -24,15 +24,18 @@ function resolveDefaultApiBase() {
   const configured = Constants.expoConfig?.extra?.apiBase;
   if (configured) return trimTrailingSlash(configured);
 
+  // The API is served under /api by the Cloudflare Worker (web/worker/) in
+  // both local `wrangler dev` and production — Fly.io's bare /v1/* host is
+  // retired, so local defaults must include the /api prefix too.
   if (Platform.OS === 'android') {
     // 10.0.2.2 reaches the host only on the Android emulator.
-    if (isAndroidEmulator()) return 'http://10.0.2.2:8787';
+    if (isAndroidEmulator()) return 'http://10.0.2.2:8787/api';
     // Physical device: localhost works with `adb reverse tcp:8787 tcp:8787`.
-    // Otherwise set EXPO_PUBLIC_API_BASE to your PC LAN IP (see mobile/.env.example).
-    return 'http://127.0.0.1:8787';
+    // Otherwise set EXPO_PUBLIC_API_BASE to your PC LAN IP (see env/mobile.example.env).
+    return 'http://127.0.0.1:8787/api';
   }
 
-  return 'http://127.0.0.1:8787';
+  return 'http://127.0.0.1:8787/api';
 }
 
 export const API_BASE = resolveDefaultApiBase();

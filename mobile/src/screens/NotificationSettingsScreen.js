@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 
 import {
   ActivityIndicator,
+  Linking,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -33,7 +34,11 @@ import {
   isValidEmailFormat,
   toggleEmailCategory,
   setEmailCategoryLimit,
+  loadMembershipToken,
+  saveMembershipToken,
 } from '../services/emailNewsletter';
+
+import { getMobileMembershipUrl } from '../monetization/config';
 
 import {
   loadNotificationPrefs,
@@ -57,13 +62,31 @@ export function NotificationSettingsScreen({ onBack, previewItem }) {
   const [emailError, setEmailError] = useState('');
   const [syncing, setSyncing] = useState(false);
   const [emailSyncing, setEmailSyncing] = useState(false);
+  const [membershipToken, setMembershipToken] = useState('');
+  const [membershipTokenDraft, setMembershipTokenDraft] = useState('');
 
   useEffect(() => {
-    Promise.all([loadNotificationPrefs(), loadEmailPrefs()]).then(([push, email]) => {
-      setPrefs(push);
-      setEmailPrefs(email);
-    });
+    Promise.all([loadNotificationPrefs(), loadEmailPrefs(), loadMembershipToken()]).then(
+      ([push, email, token]) => {
+        setPrefs(push);
+        setEmailPrefs(email);
+        setMembershipToken(token);
+        setMembershipTokenDraft(token);
+      },
+    );
   }, []);
+
+  function handleOpenMembershipPage() {
+    Linking.openURL(getMobileMembershipUrl()).catch(() => {});
+  }
+
+  async function handleSaveMembershipToken() {
+    const trimmed = membershipTokenDraft.trim();
+    await saveMembershipToken(trimmed);
+    setMembershipToken(trimmed);
+    setEmailStatus(trimmed ? 'Membership token saved on this device.' : 'Membership token cleared.');
+    setEmailError('');
+  }
 
   async function persist(nextPrefs) {
     setPrefs(nextPrefs);
@@ -119,6 +142,11 @@ export function NotificationSettingsScreen({ onBack, previewItem }) {
   }
 
   async function syncEmailToServer(prefs) {
+    if (!membershipToken) {
+      throw new Error(
+        'An active membership is required to unlock the email newsletter. Join on the website, then paste your membership token below.',
+      );
+    }
     if (!isValidEmailFormat(prefs.email)) {
       throw new Error('Enter a valid email address.');
     }
@@ -127,10 +155,11 @@ export function NotificationSettingsScreen({ onBack, previewItem }) {
       throw new Error('Select at least one topic for email digest.');
     }
     const response = await subscribeEmail({
-      email: prefs.email,
       categories,
       categoryLimits: prefs.enabled ? prefs.categoryLimits : {},
       enabled: prefs.enabled,
+      resendVerification: prefs.pendingVerification,
+      membershipToken,
     });
     if (response?.pending) {
       return {
@@ -334,6 +363,35 @@ export function NotificationSettingsScreen({ onBack, previewItem }) {
         Opt in to a newsletter-style email when new headlines match your topics.
         One digest per update cycle — not one email per item.
       </Text>
+
+      <View style={styles.membershipCard}>
+        <Text style={styles.masterLabel}>Membership required</Text>
+        <Text style={styles.membershipHint}>
+          The email newsletter is a $1–$5/mo membership benefit (same membership that removes ads on
+          the website). Join or manage your membership on the website, then paste your membership
+          token below to unlock the newsletter on this device.
+        </Text>
+        <Pressable onPress={handleOpenMembershipPage} style={styles.previewButton}>
+          <Text style={styles.previewButtonText}>Open membership page</Text>
+        </Pressable>
+        <TextInput
+          style={styles.emailInput}
+          value={membershipTokenDraft}
+          onChangeText={setMembershipTokenDraft}
+          placeholder="Paste membership token"
+          placeholderTextColor={colors.inkLight}
+          autoCapitalize="none"
+          autoCorrect={false}
+        />
+        <Pressable onPress={handleSaveMembershipToken} style={styles.emailButtonOutline}>
+          <Text style={styles.emailButtonOutlineText}>
+            {membershipToken ? 'Update token' : 'Save token'}
+          </Text>
+        </Pressable>
+        {membershipToken ? (
+          <Text style={styles.membershipStatusText}>Membership token saved on this device.</Text>
+        ) : null}
+      </View>
 
       <Text style={[styles.sectionLabel, styles.emailFieldLabel]}>Email address</Text>
       <TextInput
@@ -556,6 +614,24 @@ const styles = StyleSheet.create({
   emailDivider: {
     marginTop: spacing.xl,
     marginBottom: spacing.lg,
+  },
+  membershipCard: {
+    backgroundColor: colors.cardElevated,
+    borderColor: colors.borderStrong,
+    borderRadius: radii.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    gap: spacing.sm,
+    marginBottom: spacing.lg,
+    padding: spacing.lg,
+  },
+  membershipHint: {
+    ...typography.bodySmall,
+    color: colors.inkSoft,
+    lineHeight: 20,
+  },
+  membershipStatusText: {
+    ...typography.bodySmall,
+    color: colors.success,
   },
   emailHeader: {
     alignItems: 'center',

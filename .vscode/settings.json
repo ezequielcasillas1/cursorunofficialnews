@@ -1,0 +1,6 @@
+{
+  "files.associations": {
+    "*.example.env": "dotenv",
+    "**/env/**/.env": "dotenv"
+  }
+}

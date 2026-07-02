@@ -14,9 +14,6 @@ export const APP_NAME = 'Unofficial Cursor News';
 export const DISCLAIMER =
   'Not affiliated with, endorsed by, or sponsored by Anysphere, Inc. "Cursor" is a trademark of its respective owner.';
 
-/** Buy Me a Coffee / supporter link — set VITE_BMAC_URL to enable */
-export const BMAC_URL = import.meta.env.VITE_BMAC_URL || '';
-
 /** Google AdSense — prefer VITE_ADSENSE_CLIENT_ID / VITE_ADSENSE_SLOT_ID (see monetization/config.js) */
 export {
   ADSENSE_CLIENT_ID as ADSENSE_CLIENT,

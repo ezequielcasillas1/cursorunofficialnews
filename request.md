@@ -18,3 +18,15 @@ Feature requests (numbered). Concise bullets only.
 - `issue` for bug/broken/uninstall posts; `discussion` for opinion/roundup pieces
 - Detected via score-based heuristics; layered after base classification
 - Added Issues + Discussion tabs to mobile + web feed filters
+
+## 4. Stripe membership replaces Buy Me a Coffee — DONE (pending Stripe object creation)
+- $1–$5/mo Stripe Checkout subscription; one entitlement unlocks ad-free + email newsletter
+- Newsletter subscribe/resubscribe now membership-gated (`membershipToken` required)
+- See `docs/STRIPE-GO-LIVE.md` for required secrets + manual Stripe dashboard steps
+
+## 5. New Yorker-inspired web redesign + WaPo-style fonts
+- Refresh `web/` visual language inspired by newyorker.com editorial layout (masthead, rules, typographic hierarchy)
+- Keep existing dark/light theme system (`web/src/theme/`); retune tokens for the new look, both modes
+- Swap Google Fonts (free, CDN) to a primary/secondary pairing matching Washington Post's serif+Franklin-style sans
+- Phased rollout: tokens/fonts → masthead/header → article cards/typography → responsive polish
+- Preserve vertical-slice/component structure; no PasteCraft patterns
