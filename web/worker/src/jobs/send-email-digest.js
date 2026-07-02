@@ -9,7 +9,7 @@ import {
   isSubscriberVerified,
   listSubscribers,
 } from '../store/email-subscribers.js';
-import { applyCategoryLimits } from '../shared/notifications/category-limits.js';
+import { buildSubscriberDigestSections } from '../shared/notifications/subscriber-digest.js';
 import {
   isN8nNewsletterConfigured,
   shouldUseServerEmailDigest,
@@ -20,7 +20,7 @@ function getItemsForSubscriber(subscriber, newItems) {
   if (!subscriber.enabled) return [];
   if (!isSubscriberVerified(subscriber)) return [];
   if (!subscriber.categories?.length) return [];
-  return applyCategoryLimits(newItems, subscriber);
+  return buildSubscriberDigestSections(newItems, subscriber);
 }
 
 /**
@@ -71,11 +71,11 @@ export async function notifyEmailSubscribers(db, newItems, { ingestAt } = {}, en
   const errors = [];
 
   for (const subscriber of subscribers) {
-    const items = getItemsForSubscriber(subscriber, newItems);
-    if (items.length === 0) continue;
+    const sections = getItemsForSubscriber(subscriber, newItems);
+    if (sections.length === 0) continue;
 
     const unsubscribeUrl = getUnsubscribeUrl(subscriber, env);
-    const { subject, html, text } = assembleEmailDigest(items, { unsubscribeUrl });
+    const { subject, html, text } = assembleEmailDigest({ sections }, { unsubscribeUrl });
     const idempotencyKey = `digest/${cycleKey}/${subscriber.email}`;
 
     const headers = {};

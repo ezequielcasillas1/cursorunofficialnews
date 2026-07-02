@@ -1,6 +1,6 @@
-import { applyCategoryLimits } from '../shared/notifications/category-limits.js';
+import { buildSubscriberDigestSections } from '../shared/notifications/subscriber-digest.js';
 import { assembleEmailDigest } from '../notifications/assemble-email.js';
-import { getNews } from '../store/news-store.js';
+import { fetchRecentItemsForSubscriber } from '../notifications/newsletter-digest.js';
 import {
   getResendClient,
   getTransactionalFromAddress,
@@ -11,19 +11,9 @@ import {
   isSubscriberVerified,
 } from '../store/email-subscribers.js';
 
-const WELCOME_RECENT_LIMIT = 10;
-const WELCOME_LOOKBACK_MS = 14 * 24 * 60 * 60 * 1000;
-
-async function getRecentItemsForSubscriber(db, subscriber) {
-  const { items } = await getNews(db, { limit: 50, offset: 0 });
-  const cutoff = Date.now() - WELCOME_LOOKBACK_MS;
-
-  const recent = items.filter((item) => {
-    const publishedAt = item.publishedAt ? Date.parse(item.publishedAt) : 0;
-    return !publishedAt || publishedAt >= cutoff;
-  });
-
-  return applyCategoryLimits(recent, subscriber).slice(0, WELCOME_RECENT_LIMIT);
+async function getRecentSectionsForSubscriber(db, subscriber) {
+  const recent = await fetchRecentItemsForSubscriber(db, subscriber);
+  return buildSubscriberDigestSections(recent, subscriber);
 }
 
 /**
@@ -41,18 +31,19 @@ export async function sendWelcomeDigest(db, subscriber, env) {
     return { skipped: true, reason: 'subscriber_not_verified' };
   }
 
-  const items = await getRecentItemsForSubscriber(db, subscriber);
-  if (items.length === 0) {
+  const sections = await getRecentSectionsForSubscriber(db, subscriber);
+  if (sections.length === 0) {
     return { skipped: true, reason: 'no_recent_items' };
   }
 
   const resend = getResendClient(env);
   const from = getTransactionalFromAddress(env);
   const unsubscribeUrl = getUnsubscribeUrl(subscriber, env);
-  const { subject, html, text } = assembleEmailDigest(items, { unsubscribeUrl });
+  const itemCount = sections.reduce((sum, section) => sum + section.items.length, 0);
+  const { subject, html, text } = assembleEmailDigest({ sections }, { unsubscribeUrl });
   const welcomeSubject = subject.startsWith('Unofficial Cursor News')
     ? `Welcome · ${subject}`
-    : `Welcome · Unofficial Cursor News · ${items.length} recent headline${items.length === 1 ? '' : 's'}`;
+    : `Welcome · Unofficial Cursor News · ${itemCount} recent headline${itemCount === 1 ? '' : 's'}`;
 
   const headers = {};
   if (unsubscribeUrl) {
@@ -80,9 +71,10 @@ export async function sendWelcomeDigest(db, subscriber, env) {
     JSON.stringify({
       event: 'welcome_digest_sent',
       email: subscriber.email,
-      items: items.length,
+      items: itemCount,
+      sections: sections.length,
     }),
   );
 
-  return { sent: true, items: items.length };
+  return { sent: true, items: itemCount, sections: sections.length };
 }

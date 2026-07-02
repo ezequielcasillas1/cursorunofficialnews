@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS email_subscribers (
   email TEXT PRIMARY KEY,
   categories_json TEXT NOT NULL DEFAULT '[]',
   category_limits_json TEXT NOT NULL DEFAULT '{}',
+  official_only INTEGER NOT NULL DEFAULT 0,
   enabled INTEGER NOT NULL DEFAULT 1,
   verified INTEGER NOT NULL DEFAULT 0,
   verification_token TEXT,

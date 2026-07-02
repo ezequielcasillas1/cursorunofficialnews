@@ -17,6 +17,7 @@ export const DEFAULT_EMAIL_PREFS = {
     {},
     DEFAULT_NOTIFICATION_PREFS.categories,
   ),
+  officialOnly: DEFAULT_NOTIFICATION_PREFS.officialOnly,
   manageToken: '',
   pendingVerification: false,
 };
@@ -62,6 +63,7 @@ export async function loadEmailPrefs() {
         ...parsed,
         categories,
         categoryLimits: normalizeCategoryLimits(parsed.categoryLimits, categories),
+        officialOnly: Boolean(parsed.officialOnly),
         manageToken:
           typeof parsed.manageToken === 'string'
             ? parsed.manageToken
@@ -115,6 +117,7 @@ export function isValidEmailFormat(email) {
 export function subscribeEmail({
   categories,
   categoryLimits,
+  officialOnly = false,
   enabled = true,
   resendVerification = false,
   membershipToken,
@@ -125,6 +128,7 @@ export function subscribeEmail({
     body: JSON.stringify({
       categories,
       categoryLimits,
+      officialOnly: Boolean(officialOnly),
       enabled,
       resendVerification: Boolean(resendVerification),
       membershipToken,

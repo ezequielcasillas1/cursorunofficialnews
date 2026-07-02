@@ -23,6 +23,7 @@ function syncablePrefs(prefs) {
   return {
     categories: Array.isArray(prefs.categories) ? prefs.categories : [],
     categoryLimits: prefs.categoryLimits || {},
+    officialOnly: Boolean(prefs.officialOnly),
     enabled: Boolean(prefs.enabled),
     manageToken: String(prefs.manageToken || '').trim(),
     pendingVerification: Boolean(prefs.pendingVerification),
@@ -39,6 +40,10 @@ function mergeSubscriber(basePrefs, subscriber, manageToken) {
     email: subscriber?.email || basePrefs.email,
     categories,
     categoryLimits: subscriber?.categoryLimits || basePrefs.categoryLimits,
+    officialOnly:
+      typeof subscriber?.officialOnly === 'boolean'
+        ? subscriber.officialOnly
+        : basePrefs.officialOnly,
     enabled:
       typeof subscriber?.enabled === 'boolean'
         ? subscriber.enabled
@@ -92,6 +97,7 @@ export function useNewsletter(membership = {}) {
       const response = await subscribeNewsletter({
         categories: clean.enabled ? clean.categories : [],
         categoryLimits: clean.enabled ? clean.categoryLimits : {},
+        officialOnly: clean.officialOnly,
         enabled: clean.enabled,
         resendVerification: clean.pendingVerification,
         membershipToken,
@@ -312,6 +318,20 @@ export function useNewsletter(membership = {}) {
     [persistPrefs, prefs],
   );
 
+  const setOfficialOnly = useCallback(
+    (officialOnly) => {
+      const next = normalizeNewsletterPrefs({
+        ...prefs,
+        officialOnly: Boolean(officialOnly),
+      });
+      persistPrefs(next);
+      setErrorMessage('');
+      setStatusMessage('');
+      return next;
+    },
+    [persistPrefs, prefs],
+  );
+
   const setEnabled = useCallback(
     async (enabled) => {
       const next = { ...prefs, enabled };
@@ -337,6 +357,7 @@ export function useNewsletter(membership = {}) {
     errorMessage,
     toggleCategory,
     setCategoryLimit,
+    setOfficialOnly,
     setEnabled,
     subscribe,
     unsubscribe,

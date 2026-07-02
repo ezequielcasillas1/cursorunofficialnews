@@ -38,6 +38,7 @@ export function normalizeNewsletterPrefs(prefs) {
     ...prefs,
     categories,
     categoryLimits: normalizeCategoryLimits(prefs?.categoryLimits, categories),
+    officialOnly: Boolean(prefs?.officialOnly),
     manageToken:
       typeof prefs?.manageToken === 'string'
         ? prefs.manageToken

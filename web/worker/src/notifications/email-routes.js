@@ -107,7 +107,7 @@ export function registerEmailRoutes(app) {
     const db = c.env.DB;
     try {
       const body = await c.req.json().catch(() => ({}));
-      const { categories, categoryLimits, enabled, resendVerification, membershipToken } = body || {};
+      const { categories, categoryLimits, officialOnly, enabled, resendVerification, membershipToken } = body || {};
 
       const entitlement = await requireNewsletterEntitlement(db, membershipToken, c.env);
       if (!entitlement) {
@@ -134,7 +134,7 @@ export function registerEmailRoutes(app) {
 
       const result = await subscribeEmail(
         db,
-        { email: normalizedEmail, categories, categoryLimits, enabled },
+        { email: normalizedEmail, categories, categoryLimits, officialOnly, enabled },
         c.env,
       );
       if (!result.needsVerification) {
@@ -271,7 +271,7 @@ export function registerEmailRoutes(app) {
         return c.json({ error: 'This unsubscribe link is invalid or has already been used.' }, 410);
       }
 
-      const { categories, categoryLimits, resendVerification, membershipToken } = body || {};
+      const { categories, categoryLimits, officialOnly, resendVerification, membershipToken } = body || {};
 
       const entitlement = await requireNewsletterEntitlement(db, membershipToken, c.env);
       if (!entitlement || entitlement.email !== existing.email) {
@@ -293,7 +293,7 @@ export function registerEmailRoutes(app) {
         );
       }
 
-      const result = await resubscribeByToken(db, token, { categories, categoryLimits }, c.env);
+      const result = await resubscribeByToken(db, token, { categories, categoryLimits, officialOnly }, c.env);
 
       if (!result.needsVerification) {
         return c.json({ ok: true, subscriber: buildSubscriberForClient(result.record) });

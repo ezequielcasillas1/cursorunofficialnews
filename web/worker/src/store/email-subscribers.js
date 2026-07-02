@@ -52,6 +52,7 @@ function rowToSubscriber(row) {
     email: row.email,
     categories: JSON.parse(row.categories_json || '[]'),
     categoryLimits: JSON.parse(row.category_limits_json || '{}'),
+    officialOnly: Boolean(row.official_only),
     enabled: Boolean(row.enabled),
     verified: Boolean(row.verified),
     verificationToken: row.verification_token || undefined,
@@ -71,11 +72,12 @@ async function upsertSubscriber(db, record) {
   await db
     .prepare(
       `INSERT INTO email_subscribers
-         (email, categories_json, category_limits_json, enabled, verified, verification_token, verification_expires_at, manage_token, subscribed_at, verified_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         (email, categories_json, category_limits_json, official_only, enabled, verified, verification_token, verification_expires_at, manage_token, subscribed_at, verified_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT(email) DO UPDATE SET
          categories_json = excluded.categories_json,
          category_limits_json = excluded.category_limits_json,
+         official_only = excluded.official_only,
          enabled = excluded.enabled,
          verified = excluded.verified,
          verification_token = excluded.verification_token,
@@ -89,6 +91,7 @@ async function upsertSubscriber(db, record) {
       record.email,
       JSON.stringify(record.categories || []),
       JSON.stringify(record.categoryLimits || {}),
+      record.officialOnly ? 1 : 0,
       record.enabled ? 1 : 0,
       record.verified ? 1 : 0,
       record.verificationToken || null,
@@ -121,7 +124,7 @@ export function isValidEmail(email) {
 
 export async function subscribeEmail(
   db,
-  { email, categories = [], categoryLimits, enabled = true },
+  { email, categories = [], categoryLimits, officialOnly, enabled = true },
   env,
 ) {
   const normalized = normalizeEmail(email);
@@ -136,6 +139,8 @@ export async function subscribeEmail(
   }
 
   const existing = rowToSubscriber(await getSubscriberRow(db, normalized));
+  const normalizedOfficialOnly =
+    officialOnly === undefined ? Boolean(existing?.officialOnly) : Boolean(officialOnly);
   const normalizedLimits = isEnabled
     ? normalizeCategoryLimits(categoryLimits, normalizedCategories)
     : normalizeCategoryLimits(
@@ -149,6 +154,7 @@ export async function subscribeEmail(
       email: normalized,
       categories: existing?.categories || normalizedCategories,
       categoryLimits: normalizedLimits,
+      officialOnly: normalizedOfficialOnly,
       enabled: false,
       verified: isSubscriberVerified(existing),
       manageToken: recordToken(existing) || generateManageToken(),
@@ -166,6 +172,7 @@ export async function subscribeEmail(
       email: normalized,
       categories: normalizedCategories,
       categoryLimits: normalizedLimits,
+      officialOnly: normalizedOfficialOnly,
       enabled: true,
       verified: true,
       manageToken: recordToken(existing) || generateManageToken(),
@@ -184,6 +191,7 @@ export async function subscribeEmail(
       email: normalized,
       categories: normalizedCategories,
       categoryLimits: normalizedLimits,
+      officialOnly: normalizedOfficialOnly,
       enabled: true,
       verified: false,
       manageToken: recordToken(existing) || generateManageToken(),
@@ -205,6 +213,7 @@ export async function subscribeEmail(
     email: normalized,
     categories: normalizedCategories,
     categoryLimits: normalizedLimits,
+    officialOnly: normalizedOfficialOnly,
     enabled: true,
     verified: false,
     verificationToken,
@@ -270,7 +279,7 @@ export async function unsubscribeByToken(db, token) {
   return true;
 }
 
-export async function resubscribeByToken(db, token, { categories, categoryLimits } = {}, env) {
+export async function resubscribeByToken(db, token, { categories, categoryLimits, officialOnly } = {}, env) {
   const subscriber = await getSubscriberByToken(db, token);
   if (!subscriber) {
     throw new Error('This unsubscribe link is invalid or has already been used.');
@@ -281,6 +290,7 @@ export async function resubscribeByToken(db, token, { categories, categoryLimits
       email: subscriber.email,
       categories,
       categoryLimits,
+      officialOnly: officialOnly ?? subscriber.officialOnly,
       enabled: true,
     },
     env,
@@ -332,6 +342,7 @@ export function buildSubscriberForClient(subscriber) {
       subscriber.categoryLimits,
       subscriber.categories,
     ),
+    officialOnly: Boolean(subscriber.officialOnly),
     enabled: Boolean(subscriber.enabled),
     verified,
     pending: Boolean(subscriber.enabled && !verified),
@@ -366,6 +377,7 @@ export function buildSubscriberStatusForClient(subscriber) {
         subscriber.categoryLimits,
         subscriber.categories,
       ),
+      officialOnly: Boolean(subscriber.officialOnly),
       enabled: Boolean(subscriber.enabled),
       verified,
       pending,

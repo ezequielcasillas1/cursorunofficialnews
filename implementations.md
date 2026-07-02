@@ -1,3 +1,32 @@
+### [2026-07-02] - Newsletter Official only UI visibility
+**Status:** PENDING USER VERIFY
+**Files:** web/src/components/newsletter/NewsletterSettings.jsx, web/src/App.css
+**Result:** Moved "Official only" from buried bottom-of-topics row to a gold-bordered "Source filter" card above Email topics, matching feed nav chip + tooltip. Root cause: code existed locally (untracked) but was easy to miss below 8 topic cards; web dev server restart required.
+
+### [2026-07-02] - Newsletter Official only option
+**Status:** PENDING USER VERIFY
+**Files:** mobile/src/config/notifications.js; mobile/src/{services/emailNewsletter.js,screens/NotificationSettingsScreen.js}; web/src/{newsletter/config.js,newsletter/useNewsletter.js,newsletter/services/newsletterApi.js,components/newsletter/NewsletterSettings.jsx}; web/worker/src/{db/schema.sql,db/migrations/001_email_official_only.sql,store/email-subscribers.js,notifications/email-routes.js,shared/notifications/subscriber-digest.js}; digest jobs/assemble paths
+**Result:** Added "Official only" newsletter toggle (same label/tooltip as feed nav). Stored as `officialOnly` on subscribers; digest builder filters to `isOfficial` sources when enabled.
+
+### [2026-07-02] - Newsletter email editorial theme
+**Status:** PENDING USER VERIFY
+**Files:** web/worker/src/notifications/{assemble-email.js,assemble-email.test.js,newsletter-prompt.js}
+**Result:** Digest HTML now mirrors site dark editorial design: Bodoni Moda masthead, Libre Caslon tagline, Libre Franklin labels, gold (#d4b87a) accents, double masthead rules, charcoal card (#121218). Shows gold "Official only" badge + intro copy when subscriber filters official sources. 4/4 assemble-email tests pass.
+
+### [2026-07-02] - n8n newsletter grouped digest
+**Status:** PENDING USER VERIFY
+**Files:** mobile/shared/notifications/category-limits.js; web/worker/src/notifications/{assemble-email.js,newsletter-digest.js,newsletter-export.js,newsletter-routes.js,newsletter-prompt.js}; web/worker/src/jobs/{trigger-n8n-newsletter.js,send-email-digest.js,send-welcome-digest.js}
+**Result:** Digest builder groups by enabled topics, caps 1–3 headlines per category, renders N-1 editorial dividers. New API: `POST /v1/newsletter/build-digest` (+ `/test` alias) for n8n preview/send.
+
+**Local test (after `dev:api`, verified subscriber in D1):**
+```powershell
+curl.exe -s -X POST "http://127.0.0.1:8787/api/v1/newsletter/test" ^
+  -H "Content-Type: application/json" ^
+  -H "X-API-Secret: YOUR_INGEST_SECRET" ^
+  -d "{\"email\":\"72afterda@gmail.com\"}"
+```
+Add `"send":true` to deliver via Resend. n8n webhook payload now includes `buildDigestUrl` + `testDigestUrl`.
+
 ### [2026-07-02] - n8n webhook + membership bypass
 **Status:** PENDING USER VERIFY
 **Files:** web/worker/src/{lib/membership-email-lists.js,lib/membership-entitlement.js,jobs/trigger-n8n-newsletter.js,store/memberships.js,notifications/email-routes.js,monetization/membership-routes.js}; web/src/monetization/{config.js,useMembership.js}; env/{server.example.env,web.example.env,README.md}; wrangler.jsonc; docs/CLOUDFLARE-DEPLOY.md
@@ -52,3 +81,9 @@ Prod: `npx wrangler secret put N8N_NEWSLETTER_WEBHOOK_URL` with live `/webhook/`
 **Status:** SUCCESS
 **Files:** fly.toml, web/vite.config.js
 **Result:** Config fix in 6b8bb76 (internal_port=8787). User confirmed manual Fly redeploy restored /api.
+
+### [2026-07-02] - Root npm run dev (api + web)
+**Status:** PENDING USER VERIFY
+**Files:** package.json, package-lock.json
+**Result:** Added \dev\ script via concurrently (-n api,web) running dev:api and dev:web in parallel. devDependency concurrently ^9.1.2 installed.
+

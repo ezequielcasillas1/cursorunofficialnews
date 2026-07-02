@@ -37,6 +37,7 @@ async function fetchJson(path, options = {}) {
 export function subscribeNewsletter({
   categories,
   categoryLimits,
+  officialOnly = false,
   enabled = true,
   resendVerification = false,
   membershipToken,
@@ -47,6 +48,7 @@ export function subscribeNewsletter({
     body: JSON.stringify({
       categories,
       categoryLimits,
+      officialOnly: Boolean(officialOnly),
       enabled,
       resendVerification: Boolean(resendVerification),
       membershipToken,

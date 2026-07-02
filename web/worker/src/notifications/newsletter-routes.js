@@ -8,12 +8,89 @@ import {
   isCursorApiConfigured,
 } from '../llm/cursor-api-client.js';
 import { getNews } from '../store/news-store.js';
-import { buildNewsletterExport } from './newsletter-export.js';
+import {
+  buildSubscriberForClient,
+  getSubscriber,
+  isSubscriberVerified,
+  normalizeEmail,
+} from '../store/email-subscribers.js';
+import {
+  getResendClient,
+  getTransactionalFromAddress,
+  isResendConfigured,
+} from './resend-client.js';
+import { buildNewsletterExport, buildSubscriberDigest } from './newsletter-export.js';
 
 function parseRecentLimit(value) {
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) return 20;
   return Math.min(50, Math.max(1, Math.floor(parsed)));
+}
+
+async function handleBuildDigest(c, body = {}) {
+  const db = c.env.DB;
+  const email = normalizeEmail(body?.email || c.req.query('email'));
+  if (!email) {
+    return c.json({ error: 'email is required' }, 400);
+  }
+
+  const subscriber = await getSubscriber(db, email);
+  if (!subscriber?.enabled || !isSubscriberVerified(subscriber)) {
+    return c.json({ error: 'Verified subscriber not found for that email' }, 404);
+  }
+
+  const newItems = Array.isArray(body?.newItems) ? body.newItems : [];
+  const preferNewItems = body?.preferNewItems !== false;
+  const digest = await buildSubscriberDigest(
+    db,
+    subscriber,
+    { newItems, preferNewItems },
+    c.env,
+  );
+
+  if (!digest.itemCount) {
+    return c.json({
+      ok: true,
+      empty: true,
+      email,
+      subscriber: buildSubscriberForClient(subscriber),
+      sections: [],
+      dividerCount: 0,
+    });
+  }
+
+  let sendResult;
+  if (body?.send === true) {
+    if (!isResendConfigured(c.env)) {
+      return c.json({ error: 'RESEND_API_KEY not configured' }, 503);
+    }
+    const resend = getResendClient(c.env);
+    const from = getTransactionalFromAddress(c.env);
+    const { error } = await resend.emails.send({
+      from,
+      to: [email],
+      subject: digest.subject,
+      html: digest.html,
+      text: digest.text,
+    });
+    if (error) {
+      return c.json({ error: error.message || 'Test send failed' }, 502);
+    }
+    sendResult = { sent: true };
+  }
+
+  return c.json({
+    ok: true,
+    email,
+    subscriber: buildSubscriberForClient(subscriber),
+    sections: digest.sections,
+    itemCount: digest.itemCount,
+    dividerCount: digest.dividerCount,
+    subject: digest.subject,
+    html: digest.html,
+    text: digest.text,
+    send: sendResult || { sent: false },
+  });
 }
 
 export function registerNewsletterRoutes(app) {
@@ -79,6 +156,24 @@ export function registerNewsletterRoutes(app) {
     const limit = parseRecentLimit(c.req.query('limit'));
     const category = c.req.query('category') ? String(c.req.query('category')) : undefined;
     return c.json(await getNews(db, { category, limit, offset: 0 }));
+  });
+
+  app.get('/v1/newsletter/build-digest', requireIngestSecret, async (c) => {
+    c.header('Cache-Control', 'no-store');
+    return handleBuildDigest(c, { email: c.req.query('email'), send: c.req.query('send') === 'true' });
+  });
+
+  app.post('/v1/newsletter/build-digest', requireIngestSecret, async (c) => {
+    c.header('Cache-Control', 'no-store');
+    const body = await c.req.json().catch(() => ({}));
+    return handleBuildDigest(c, body);
+  });
+
+  /** Alias for n8n manual test runs (same handler as build-digest). */
+  app.post('/v1/newsletter/test', requireIngestSecret, async (c) => {
+    c.header('Cache-Control', 'no-store');
+    const body = await c.req.json().catch(() => ({}));
+    return handleBuildDigest(c, body);
   });
 
   app.post('/v1/newsletter/generate-html', requireIngestSecret, async (c) => {

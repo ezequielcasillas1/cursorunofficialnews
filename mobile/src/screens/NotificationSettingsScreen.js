@@ -14,7 +14,7 @@ import {
 
 import { ArrowLeft, Mail, Send } from 'lucide-react-native';
 
-import { NOTIFICATION_CATEGORIES } from '../config/notifications';
+import { NOTIFICATION_CATEGORIES, NEWSLETTER_OFFICIAL_ONLY } from '../config/notifications';
 
 import { PUSH_ENABLED, PUSH_REBUILD_HINT } from '../config/push';
 
@@ -157,6 +157,7 @@ export function NotificationSettingsScreen({ onBack, previewItem }) {
     const response = await subscribeEmail({
       categories,
       categoryLimits: prefs.enabled ? prefs.categoryLimits : {},
+      officialOnly: prefs.officialOnly,
       enabled: prefs.enabled,
       resendVerification: prefs.pendingVerification,
       membershipToken,
@@ -173,6 +174,10 @@ export function NotificationSettingsScreen({ onBack, previewItem }) {
       ...prefs,
       email: response?.subscriber?.email || prefs.email,
       categoryLimits: response?.subscriber?.categoryLimits || prefs.categoryLimits,
+      officialOnly:
+        typeof response?.subscriber?.officialOnly === 'boolean'
+          ? response.subscriber.officialOnly
+          : prefs.officialOnly,
       manageToken: response?.subscriber?.manageToken || prefs.manageToken || '',
       pendingVerification: false,
     };
@@ -259,6 +264,12 @@ export function NotificationSettingsScreen({ onBack, previewItem }) {
     persistEmail(next, {
       syncServer: next.enabled && isValidEmailFormat(next.email),
     });
+  }
+
+  function handleEmailOfficialOnlyToggle(officialOnly) {
+    if (!emailPrefs) return;
+    const next = { ...emailPrefs, officialOnly };
+    persistEmail(next);
   }
 
   function handleEmailChange(text) {
@@ -422,6 +433,20 @@ export function NotificationSettingsScreen({ onBack, previewItem }) {
           disabled={emailSyncing}
         />
       ))}
+
+      <View style={styles.officialOnlyRow}>
+        <View style={styles.officialOnlyCopy}>
+          <Text style={styles.masterLabel}>{NEWSLETTER_OFFICIAL_ONLY.label}</Text>
+          <Text style={styles.emailTopicsHint}>{NEWSLETTER_OFFICIAL_ONLY.description}</Text>
+        </View>
+        <Switch
+          value={Boolean(emailPrefs.officialOnly)}
+          onValueChange={handleEmailOfficialOnlyToggle}
+          disabled={emailSyncing}
+          trackColor={{ false: colors.border, true: colors.navySoft }}
+          thumbColor={emailPrefs.officialOnly ? colors.gold : colors.accentSoft}
+        />
+      </View>
 
       <View style={styles.masterRow}>
         <View style={styles.masterText}>
@@ -657,6 +682,16 @@ const styles = StyleSheet.create({
     ...typography.bodySmall,
     color: colors.inkSoft,
     marginBottom: spacing.md,
+    maxWidth: 520,
+  },
+  officialOnlyRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.md,
+    marginBottom: spacing.lg,
+  },
+  officialOnlyCopy: {
+    flex: 1,
     maxWidth: 520,
   },
   emailInput: {

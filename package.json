@@ -9,7 +9,8 @@
     "preview:web": "npm run build && wrangler dev",
     "dev:api": "wrangler dev --env-file env/server.example.env --env-file env/server/.env --var ENVIRONMENT:development --var PUBLIC_WEB_BASE:http://127.0.0.1:5173",
     "dev:mobile": "npm run start --prefix mobile",
-    "dev:web": "npm run dev --prefix web"
+    "dev:web": "npm run dev --prefix web",
+    "dev": "concurrently -n api,web -c blue,green \"npm run dev:api\" \"npm run dev:web\""
   },
   "dependencies": {
     "expo": "^56.0.12",
@@ -19,6 +20,7 @@
     "stripe": "^22.3.0"
   },
   "devDependencies": {
-    "wrangler": "^4.24.0"
+    "wrangler": "^4.24.0",
+    "concurrently": "^9.1.2"
   }
 }

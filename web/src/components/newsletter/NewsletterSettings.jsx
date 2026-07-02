@@ -1,10 +1,13 @@
+import { OFFICIAL_ONLY_TOOLTIP } from '../../config/feedCategories.js';
 import {
   NEWSLETTER_CATEGORIES,
   NEWSLETTER_CATEGORY_LIMIT,
   NEWSLETTER_PANEL_DEFAULT_EXPANDED,
 } from '../../newsletter/config.js';
+import { NEWSLETTER_OFFICIAL_ONLY } from '../../../../mobile/src/config/notifications.js';
 import { useNewsletter } from '../../newsletter/useNewsletter.js';
 import { CollapsiblePanel } from '../ui/CollapsiblePanel.jsx';
+import { Tooltip } from '../Tooltip.jsx';
 
 function digestStateLabel(prefs) {
   if (prefs.pendingVerification) return 'Pending — check your email';
@@ -56,6 +59,7 @@ export function NewsletterSettings({ membership }) {
     errorMessage,
     toggleCategory,
     setCategoryLimit,
+    setOfficialOnly,
     setEnabled,
     subscribe,
     unsubscribe,
@@ -125,13 +129,50 @@ export function NewsletterSettings({ membership }) {
         </label>
       </div>
 
+      <div className="newsletter-official-filter">
+        <div className="newsletter-official-filter-copy">
+          <h3>Source filter</h3>
+          <p className="hint">
+            Same &ldquo;Official only&rdquo; filter as the feed nav — limits your digest to
+            verified Cursor sources (changelog, blog, releases, forum, and official channels).
+          </p>
+        </div>
+        <Tooltip text={OFFICIAL_ONLY_TOOLTIP}>
+          <label className="newsletter-official-toggle" htmlFor="topic-official-only">
+            <input
+              id="topic-official-only"
+              type="checkbox"
+              checked={prefs.officialOnly}
+              onChange={(event) => {
+                setOfficialOnly(event.target.checked);
+              }}
+              disabled={syncing}
+            />
+            <span className="newsletter-official-toggle-stack">
+              <span
+                className={
+                  prefs.officialOnly
+                    ? 'chip chip-official chip-active newsletter-official-chip'
+                    : 'chip chip-official newsletter-official-chip'
+                }
+              >
+                {NEWSLETTER_OFFICIAL_ONLY.label}
+              </span>
+              <span className="newsletter-official-status">
+                {prefs.officialOnly ? 'Enabled' : 'Disabled'}
+              </span>
+            </span>
+          </label>
+        </Tooltip>
+      </div>
+
       <div className="newsletter-topics">
         <div className="newsletter-topics-header">
           <h3>Email topics</h3>
           <p className="hint">
             Same digest topic options as mobile: changelog, releases, blog, forum,
-            community, social, videos, and tutorials. For each topic, choose how
-            many headlines (1–{NEWSLETTER_CATEGORY_LIMIT.max}) to include per digest.
+            community, social, videos, and tutorials. For each topic, choose how many
+            headlines (1–{NEWSLETTER_CATEGORY_LIMIT.max}) to include per digest.
           </p>
         </div>
 
