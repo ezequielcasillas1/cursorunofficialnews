@@ -51,6 +51,16 @@ function parseCategories({ category, categories } = {}) {
     .filter(Boolean);
 }
 
+function parseSourceIds({ sources, sourceIds } = {}) {
+  const raw = sources ?? sourceIds;
+  if (!raw) return [];
+  if (Array.isArray(raw)) return raw.filter(Boolean);
+  return String(raw)
+    .split(',')
+    .map((id) => id.trim())
+    .filter(Boolean);
+}
+
 function sortByDateDesc(list) {
   return [...list].sort((a, b) => {
     const ta = a.publishedAt ? Date.parse(a.publishedAt) : 0;
@@ -115,9 +125,10 @@ function orderNewsList(list, { categoryList, officialOnly }) {
 
 export async function getNews(
   db,
-  { category, categories, official, limit = FEED_PAGE_SIZE, offset = 0 } = {},
+  { category, categories, official, sources, sourceIds, limit = FEED_PAGE_SIZE, offset = 0 } = {},
 ) {
   const categoryList = parseCategories({ category, categories });
+  const sourceIdList = parseSourceIds({ sources, sourceIds });
 
   let query = 'SELECT * FROM news_items';
   const params = [];
@@ -133,6 +144,11 @@ export async function getNews(
   const officialOnly = official === true || official === 'true';
   if (officialOnly) {
     list = list.filter((item) => getSourceMeta(item.sourceId)?.isOfficial);
+  }
+
+  if (sourceIdList.length > 0) {
+    const allowed = new Set(sourceIdList);
+    list = list.filter((item) => allowed.has(item.sourceId));
   }
 
   const ordered = orderNewsList(list, { categoryList, officialOnly });

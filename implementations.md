@@ -1,4 +1,18 @@
-### [2026-07-02] - Newsletter official_only D1 migration fix
+### [2026-07-02] - Per-category feed filters (web)
+**Status:** PENDING USER VERIFY
+**Files:** mobile/shared/feed/categoryFilterPrefs.js, mobile/shared/feed/feedCategories.js, web/src/{App.jsx,App.css,components/CategoryFilter.jsx,components/CategoryFilterPanel.jsx,components/NewsFeed.jsx,feed/filterPrefsStorage.js,feed/categoryFilterPrefs.test.js,services/newsApi.js}, web/worker/src/{store/news-store.js,routes/core-routes.js}
+**Result:** Replaced standalone Official only chip with per-tab Section filters panel (official toggle + source chips). Prefs stored in localStorage per category; API accepts `sources` query param. Legacy officialOnly prefs migrate automatically.
+
+### [2026-07-02] - Brand header SVG icons
+**Status:** PENDING USER VERIFY
+**Files:** web/public/brand/logo-icon.svg, web/public/brand/logo-icon-light.svg, web/src/components/Header.jsx
+**Result:** Hand-crafted hex icons (navy/gold/cream dark; light interior + dark N for light theme). Served at `/brand/*.svg` via Vite public. Header `onError` hides broken img.
+
+### [2026-07-02] - Web header icon + text lockup
+**Status:** PENDING USER VERIFY
+**Files:** web/src/components/Header.jsx, web/src/App.css, web/public/brand/README.md
+**Result:** Horizontal masthead lockup: 52px hex icon left, existing h1/rules/tagline right. Theme swaps `logo-icon.svg` / optional `logo-icon-light.svg`. Markup wired; drop SVGs into `web/public/brand/`.
+
 **Status:** PENDING USER VERIFY
 **Files:** web/worker/src/db/migrations/001_email_official_only.sql, web/worker/src/db/schema.sql, docs/RUN-LOCAL.md
 **Result:** Root cause: code wrote `official_only` but local/production D1 created before schema update lacked the column. Applied migration locally; made SQL idempotent (`ADD COLUMN IF NOT EXISTS`); documented remote command in migration header + RUN-LOCAL.

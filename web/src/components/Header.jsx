@@ -32,12 +32,40 @@ export function Header({ onRefresh, refreshing }) {
             ))}
           </nav>
         </div>
-        <h1>{APP_NAME}</h1>
-        <div className="masthead-rule-group" aria-hidden="true">
-          <span className="masthead-rule masthead-rule-thick" />
-          <span className="masthead-rule masthead-rule-thin" />
+        <div className="masthead-brand">
+          <img
+            className="masthead-logo masthead-logo-default"
+            src="/brand/logo-icon.svg"
+            alt=""
+            width={52}
+            height={52}
+            decoding="async"
+            onError={(event) => {
+              event.currentTarget.hidden = true;
+            }}
+          />
+          <img
+            className="masthead-logo masthead-logo-light"
+            src="/brand/logo-icon-light.svg"
+            alt=""
+            width={52}
+            height={52}
+            decoding="async"
+            onError={(event) => {
+              event.currentTarget.hidden = true;
+            }}
+          />
+          <div className="masthead-brand-text">
+            <h1>{APP_NAME}</h1>
+            <div className="masthead-rule-group" aria-hidden="true">
+              <span className="masthead-rule masthead-rule-thick" />
+              <span className="masthead-rule masthead-rule-thin" />
+            </div>
+            <p className="masthead-sub">
+              Your morning briefing on Cursor — changelog, releases, and community
+            </p>
+          </div>
         </div>
-        <p className="masthead-sub">Your morning briefing on Cursor — changelog, releases, and community</p>
         <div className="masthead-actions">
           <ThemeToggle />
           <button type="button" className="btn" onClick={onRefresh} disabled={refreshing}>

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-hidden="true">
+  <title>Unofficial Cursor News</title>
+  <!-- Navy hex shell -->
+  <polygon points="50,5 92.5,29.5 92.5,70.5 50,95 7.5,70.5 7.5,29.5" fill="#1a2a3e"/>
+  <!-- Dark interior -->
+  <polygon points="50,9.5 88.5,31.5 88.5,68.5 50,90.5 11.5,68.5 11.5,31.5" fill="#0a0a0f"/>
+  <!-- Gold masthead bar -->
+  <rect x="18" y="17" width="64" height="5.5" fill="#d4b87a"/>
+  <!-- Column divider -->
+  <line x1="57.5" y1="27" x2="57.5" y2="83" stroke="#f0ebe3" stroke-width="1.25" stroke-linecap="round"/>
+  <!-- Editorial rule lines -->
+  <rect x="19" y="31" width="32" height="2.4" rx="0.4" fill="#f0ebe3"/>
+  <rect x="19" y="38.5" width="32" height="2.4" rx="0.4" fill="#f0ebe3"/>
+  <rect x="19" y="46" width="32" height="2.4" rx="0.4" fill="#f0ebe3"/>
+  <!-- Curly braces -->
+  <text x="35" y="73.5" font-family="'Libre Franklin', 'Courier New', monospace" font-size="15" font-weight="600" fill="#d4b87a" text-anchor="middle">{  }</text>
+  <!-- Bold N -->
+  <text x="74" y="74" font-family="'Bodoni Moda', Georgia, 'Times New Roman', serif" font-size="36" font-weight="700" fill="#f0ebe3" text-anchor="middle">N</text>
+</svg>

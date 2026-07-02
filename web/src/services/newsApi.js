@@ -54,10 +54,18 @@ function ingestHeaders() {
 
 import { FEED_PAGE_SIZE } from '../../../mobile/shared/feed/feedPagination.js';
 
-export function fetchNews({ category, official, limit = FEED_PAGE_SIZE, page, offset } = {}) {
+export function fetchNews({
+  category,
+  official,
+  sources,
+  limit = FEED_PAGE_SIZE,
+  page,
+  offset,
+} = {}) {
   const params = new URLSearchParams();
   if (category) params.set('category', category);
   if (official) params.set('official', 'true');
+  if (sources?.length) params.set('sources', sources.join(','));
   if (limit) params.set('limit', String(limit));
   if (page) params.set('page', String(page));
   if (offset !== undefined) params.set('offset', String(offset));

@@ -31,7 +31,7 @@ export function NewsFeed({
   error,
   sourceMap,
   selectedCategory = 'all',
-  officialOnly = false,
+  categoryFilter = {},
   searchQuery = '',
   showFeaturedLead = true,
 }) {
@@ -52,7 +52,7 @@ export function NewsFeed({
     const trimmedSearch = searchQuery.trim();
     const emptyMessage = trimmedSearch
       ? `No items match "${trimmedSearch}". Try different keywords or clear the search.`
-      : getEmptyFeedMessage(selectedCategory, officialOnly);
+      : getEmptyFeedMessage(selectedCategory, categoryFilter);
     return (
       <p className="status-msg">
         {import.meta.env.PROD

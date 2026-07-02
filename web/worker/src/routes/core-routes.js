@@ -45,7 +45,8 @@ export function registerCoreRoutes(app) {
     const { limit, page, offset } = parseFeedPaginationQuery(c.req.query());
     const category = c.req.query('category') ? String(c.req.query('category')) : undefined;
     const official = c.req.query('official') === 'true';
-    const { items, total } = await getNews(db, { category, official, limit, offset });
+    const sources = c.req.query('sources') ? String(c.req.query('sources')) : undefined;
+    const { items, total } = await getNews(db, { category, official, sources, limit, offset });
     return c.json({
       items,
       ...buildFeedPaginationMeta({ total, limit, page, offset, itemCount: items.length }),

@@ -1,11 +1,13 @@
-import { FEED_CATEGORIES, OFFICIAL_ONLY_TOOLTIP } from '../config/feedCategories.js';
+import { FEED_CATEGORIES } from '../config/feedCategories.js';
 import { Tooltip } from './Tooltip.jsx';
+import { CategoryFilterPanel } from './CategoryFilterPanel.jsx';
 
 export function CategoryFilter({
   selectedCategory,
-  officialOnly,
+  categoryFilter,
+  sources,
   onCategoryChange,
-  onOfficialOnlyChange,
+  onCategoryFilterChange,
 }) {
   return (
     <div className="filter-section">
@@ -23,20 +25,12 @@ export function CategoryFilter({
           </Tooltip>
         ))}
       </nav>
-      <div className="official-filter">
-        <Tooltip text={OFFICIAL_ONLY_TOOLTIP}>
-          <button
-            type="button"
-            className={
-              officialOnly ? 'chip chip-official chip-active' : 'chip chip-official'
-            }
-            aria-pressed={officialOnly}
-            onClick={() => onOfficialOnlyChange(!officialOnly)}
-          >
-            Official only
-          </button>
-        </Tooltip>
-      </div>
+      <CategoryFilterPanel
+        selectedCategory={selectedCategory}
+        categoryFilter={categoryFilter}
+        sources={sources}
+        onCategoryFilterChange={onCategoryFilterChange}
+      />
     </div>
   );
 }

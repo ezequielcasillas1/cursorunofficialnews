@@ -45,7 +45,7 @@ export function getCategoryApiParam(categoryId) {
   return cat.apiCategories.join(',');
 }
 
-export function getEmptyFeedMessage(categoryId, officialOnly) {
+export function getEmptyFeedMessage(categoryId, filter = {}) {
   const messages = {
     all: 'No items yet. Refresh the feed to run ingest.',
     updates: 'No changelog or release items found.',
@@ -59,8 +59,14 @@ export function getEmptyFeedMessage(categoryId, officialOnly) {
     tutorials: 'No tutorials found yet. Try Refresh.',
   };
   let message = messages[categoryId] || messages.all;
+  const officialOnly =
+    typeof filter === 'boolean' ? filter : Boolean(filter?.officialOnly);
+  const sourceIds = Array.isArray(filter?.sourceIds) ? filter.sourceIds : null;
   if (officialOnly) {
     message += ' Try turning off Official only.';
+  }
+  if (sourceIds?.length) {
+    message += ' Try clearing source filters.';
   }
   return message;
 }

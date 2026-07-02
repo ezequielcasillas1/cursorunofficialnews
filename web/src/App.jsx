@@ -19,35 +19,27 @@ import {
   triggerIngest,
 } from './services/newsApi.js';
 import { filterNewsItems } from './feed/filterNewsItems.js';
+import {
+  createInitialFilterPrefs,
+  loadFilterPrefs,
+  saveFilterPrefs,
+} from './feed/filterPrefsStorage.js';
+import {
+  buildFeedQueryFilters,
+  getActiveCategoryFilter,
+  normalizeCategoryFilter,
+} from './feed/categoryFilterPrefs.js';
 import './App.css';
 
-const FILTER_PREFS_KEY = 'cursor_news_filter_prefs';
-
-function loadFilterPrefs() {
-  try {
-    const raw = localStorage.getItem(FILTER_PREFS_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch {
-    /* ignore corrupt prefs */
-  }
-  return null;
-}
-
-function saveFilterPrefs(category, officialOnly) {
-  try {
-    localStorage.setItem(FILTER_PREFS_KEY, JSON.stringify({ category, officialOnly }));
-  } catch {
-    /* non-fatal */
-  }
-}
-
 export default function App() {
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [officialOnly, setOfficialOnly] = useState(false);
+  const initialPrefs = useMemo(() => loadFilterPrefs() || createInitialFilterPrefs(), []);
+  const [selectedCategory, setSelectedCategory] = useState(initialPrefs.category);
+  const [categoryFilters, setCategoryFilters] = useState(initialPrefs.categoryFilters);
   const [searchQuery, setSearchQuery] = useState('');
   const [items, setItems] = useState([]);
   const [feedPage, setFeedPage] = useState(1);
   const [feedMeta, setFeedMeta] = useState({ total: 0, totalPages: 1, pageSize: FEED_PAGE_SIZE });
+  const [sources, setSources] = useState([]);
   const [sourceMap, setSourceMap] = useState({});
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -55,30 +47,37 @@ export default function App() {
   const [status, setStatus] = useState({ lastIngestAt: null, sourceCount: 0, feedPublishedAfter: null });
   const membership = useMembership();
 
-  useEffect(() => {
-    const prefs = loadFilterPrefs();
-    if (prefs?.category) setSelectedCategory(prefs.category);
-    if (typeof prefs?.officialOnly === 'boolean') setOfficialOnly(prefs.officialOnly);
+  const activeCategoryFilter = useMemo(
+    () => getActiveCategoryFilter(categoryFilters, selectedCategory),
+    [categoryFilters, selectedCategory],
+  );
 
+  useEffect(() => {
     fetchSources()
-      .then((data) => setSourceMap(buildSourceMap(data.sources || [])))
+      .then((data) => {
+        const nextSources = data.sources || [];
+        setSources(nextSources);
+        setSourceMap(buildSourceMap(nextSources));
+      })
       .catch(() => {});
   }, []);
 
   useEffect(() => {
-    saveFilterPrefs(selectedCategory, officialOnly);
-  }, [selectedCategory, officialOnly]);
+    saveFilterPrefs({ category: selectedCategory, categoryFilters });
+  }, [selectedCategory, categoryFilters]);
 
-  const loadNews = useCallback(async (categoryId, official, page, searching) => {
+  const loadNews = useCallback(async (categoryId, filter, page, searching) => {
     setError('');
     setLoading(true);
     try {
       const limit = searching ? FEED_SEARCH_FETCH_LIMIT : FEED_PAGE_SIZE;
       const requestPage = searching ? 1 : page;
+      const queryFilters = buildFeedQueryFilters(filter);
       const [news, meta] = await Promise.all([
         fetchNews({
           category: getCategoryApiParam(categoryId),
-          official: official ? true : undefined,
+          official: queryFilters.official,
+          sources: queryFilters.sources,
           limit,
           page: requestPage,
         }),
@@ -104,8 +103,8 @@ export default function App() {
   const isSearching = searchQuery.trim().length > 0;
 
   useEffect(() => {
-    loadNews(selectedCategory, officialOnly, feedPage, isSearching);
-  }, [selectedCategory, officialOnly, feedPage, isSearching, loadNews]);
+    loadNews(selectedCategory, activeCategoryFilter, feedPage, isSearching);
+  }, [selectedCategory, activeCategoryFilter, feedPage, isSearching, loadNews]);
 
   useEffect(() => {
     if (!loading && feedPage > 1 && !isSearching) {
@@ -122,11 +121,10 @@ export default function App() {
     setRefreshing(true);
     setError('');
     try {
-      // Public prod: reload cached feed only. Ingest needs X-API-Secret (dev / admin).
       if (INGEST_SECRET) {
         await triggerIngest();
       }
-      await loadNews(selectedCategory, officialOnly, feedPage, isSearching);
+      await loadNews(selectedCategory, activeCategoryFilter, feedPage, isSearching);
     } catch (err) {
       setError(err.message || 'Refresh failed');
     } finally {
@@ -139,9 +137,12 @@ export default function App() {
     setSelectedCategory(categoryId);
   }
 
-  function handleOfficialOnlyChange(nextOfficialOnly) {
+  function handleCategoryFilterChange(nextFilter) {
     setFeedPage(1);
-    setOfficialOnly(nextOfficialOnly);
+    setCategoryFilters((prev) => ({
+      ...prev,
+      [selectedCategory]: normalizeCategoryFilter(nextFilter),
+    }));
   }
 
   function handleSearchChange(nextQuery) {
@@ -167,9 +168,10 @@ export default function App() {
         />
         <CategoryFilter
           selectedCategory={selectedCategory}
-          officialOnly={officialOnly}
+          categoryFilter={activeCategoryFilter}
+          sources={sources}
           onCategoryChange={handleCategoryChange}
-          onOfficialOnlyChange={handleOfficialOnlyChange}
+          onCategoryFilterChange={handleCategoryFilterChange}
         />
         <FeedSearch
           value={searchQuery}
@@ -186,7 +188,7 @@ export default function App() {
             error={error}
             sourceMap={sourceMap}
             selectedCategory={selectedCategory}
-            officialOnly={officialOnly}
+            categoryFilter={activeCategoryFilter}
             searchQuery={searchQuery}
             showFeaturedLead={feedPage === 1 && !isSearching}
           />

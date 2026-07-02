@@ -94,7 +94,39 @@
   user-select: none;
 }
 
-.masthead h1 {
+.masthead-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-md);
+  text-align: left;
+}
+
+.masthead-logo {
+  flex-shrink: 0;
+  width: 3.25rem;
+  height: 3.25rem;
+  object-fit: contain;
+}
+
+.masthead-logo-light {
+  display: none;
+}
+
+html[data-theme='light'] .masthead-logo-default {
+  display: none;
+}
+
+html[data-theme='light'] .masthead-logo-light {
+  display: block;
+}
+
+.masthead-brand-text {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.masthead-brand-text h1 {
   margin: 0;
   font-family: var(--font-display);
   font-size: clamp(2.5rem, 7vw, 3.75rem);
@@ -104,7 +136,7 @@
   color: var(--color-ink);
 }
 
-.masthead-rule-group {
+.masthead-brand-text .masthead-rule-group {
   display: flex;
   flex-direction: column;
   gap: 3px;
@@ -307,6 +339,73 @@
   margin-top: var(--space-sm);
   padding-bottom: var(--space-lg);
   border-bottom: 1px solid var(--rule-color);
+}
+
+.category-filter-panel {
+  margin-top: var(--space-md);
+  border-bottom: 1px solid var(--rule-color);
+}
+
+.category-filter-groups {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.category-filter-group-label {
+  display: block;
+  margin: 0 0 var(--space-sm);
+  font-family: var(--font-ui);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-ink-light);
+}
+
+.category-filter-hint {
+  margin: 0 0 var(--space-sm);
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: var(--color-ink-muted);
+}
+
+.category-filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+}
+
+.category-filter-source-badge {
+  margin-left: 0.35rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-gold-muted);
+}
+
+.category-filter-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.category-filter-reset {
+  border: none;
+  background: none;
+  padding: 0;
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-gold-muted);
+  cursor: pointer;
+}
+
+.category-filter-reset:hover {
+  color: var(--color-ink);
 }
 
 .chip {
@@ -1659,6 +1758,15 @@
     flex-direction: column;
     align-items: flex-start;
     gap: var(--space-xs);
+  }
+
+  .masthead-brand {
+    gap: var(--space-sm);
+  }
+
+  .masthead-logo {
+    width: 2.75rem;
+    height: 2.75rem;
   }
 
   .news-card h2 {
