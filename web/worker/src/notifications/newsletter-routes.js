@@ -63,7 +63,7 @@ export function registerNewsletterRoutes(app) {
           export: exportData,
           n8n: isN8nNewsletterConfigured(c.env)
             ? { status: 'pending', message: 'n8n webhook triggered in background' }
-            : { skipped: true, reason: 'n8n webhook URL not configured' },
+            : { skipped: true, reason: 'N8N_NEWSLETTER_WEBHOOK_URL not configured' },
         },
         202,
       );

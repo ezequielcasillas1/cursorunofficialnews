@@ -83,10 +83,7 @@ npx wrangler secret put INGEST_SECRET
 npx wrangler secret put REGISTER_SECRET
 npx wrangler secret put RESEND_API_KEY
 npx wrangler secret put CURSOR_API_KEY
-npx wrangler secret put N8N_NEWSLETTER_WEBHOOK_URL_TEST
-npx wrangler secret put N8N_NEWSLETTER_WEBHOOK_URL_PROD
-# Optional legacy override (wins over target-specific URLs):
-# npx wrangler secret put N8N_NEWSLETTER_WEBHOOK_URL
+npx wrangler secret put N8N_NEWSLETTER_WEBHOOK_URL
 npx wrangler secret put N8N_NEWSLETTER_WEBHOOK_SECRET
 npx wrangler secret put STRIPE_SECRET_KEY
 npx wrangler secret put STRIPE_WEBHOOK_SECRET
@@ -102,7 +99,7 @@ npx wrangler secret put SCRAPE_API_KEY
 
 Only `INGEST_SECRET` is required in production (guards `POST /api/v1/ingest`); the rest are optional and gracefully skip their feature when unset (see `web/worker/src/*` `isXConfigured()` checks).
 
-Non-secret config lives in `wrangler.jsonc` → `vars` (`ENVIRONMENT`, `PUBLIC_API_BASE`, `PUBLIC_WEB_BASE`, `RESEND_FROM_EMAIL`, `EMAIL_NOTIFICATIONS`, `PUSH_NOTIFICATIONS`, `N8N_NEWSLETTER_MODE`, `N8N_NEWSLETTER_TARGET`).
+Non-secret config lives in `wrangler.jsonc` → `vars` (`ENVIRONMENT`, `PUBLIC_API_BASE`, `PUBLIC_WEB_BASE`, `RESEND_FROM_EMAIL`, `EMAIL_NOTIFICATIONS`, `PUSH_NOTIFICATIONS`, `N8N_NEWSLETTER_MODE`).
 
 Optional production secret for owner newsletter access without paid membership:
 

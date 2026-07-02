@@ -1,7 +1,7 @@
 ### [2026-07-02] - n8n prod/test URLs + membership bypass
 **Status:** PENDING USER VERIFY
 **Files:** web/worker/src/{lib/membership-email-lists.js,lib/membership-entitlement.js,jobs/trigger-n8n-newsletter.js,store/memberships.js,notifications/email-routes.js,monetization/membership-routes.js}; web/src/monetization/{config.js,useMembership.js}; env/{server.example.env,web.example.env}; wrangler.jsonc; docs/CLOUDFLARE-DEPLOY.md
-**Result:** n8n webhook resolves TEST vs PROD via N8N_NEWSLETTER_TARGET + URL vars. Local DEV_BYPASS_MEMBERSHIP skips newsletter membership gate. Prod NEWSLETTER_FREE_EMAILS whitelist grants newsletter-only access.
+**Result:** n8n uses single N8N_NEWSLETTER_WEBHOOK_URL (test URL locally, prod URL in Cloudflare secret). Local DEV_BYPASS_MEMBERSHIP skips newsletter membership gate. Prod NEWSLETTER_FREE_EMAILS whitelist grants newsletter-only access.
 **Status:** PENDING USER VERIFY
 **Files:** mobile/shared/feed/feedPagination.js; mobile/server/src/{index,store/memory-cache}.js; mobile/server/test/{feed-pagination,memory-cache}.test.js; web/src/{config/feedCategories,services/newsApi}.js; mobile/src/{api/newsClient,config/constants,screens/FeedScreen}.js
 **Result:** Shared FEED_PAGE_SIZE=30. GET /v1/news returns page, pageSize, total, totalPages, hasMore. Web paginates per tab; mobile fetches page 1 (30 items). 33/33 server tests, 9/9 web tests, web build OK.
