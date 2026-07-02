@@ -99,6 +99,8 @@ npx wrangler secret put SCRAPE_API_KEY
 
 Only `INGEST_SECRET` is required in production (guards `POST /api/v1/ingest`); the rest are optional and gracefully skip their feature when unset (see `web/worker/src/*` `isXConfigured()` checks).
 
+`N8N_NEWSLETTER_WEBHOOK_URL` is a single secret — use your n8n **live** `/webhook/...` URL in production. Locally, set the same var name in `env/server/.env` with your n8n **test** `/webhook-test/...` URL. There is no separate TARGET or `_TEST`/`_PROD` env var.
+
 Non-secret config lives in `wrangler.jsonc` → `vars` (`ENVIRONMENT`, `PUBLIC_API_BASE`, `PUBLIC_WEB_BASE`, `RESEND_FROM_EMAIL`, `EMAIL_NOTIFICATIONS`, `PUSH_NOTIFICATIONS`, `N8N_NEWSLETTER_MODE`).
 
 Optional production secret for owner newsletter access without paid membership:

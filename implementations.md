@@ -1,7 +1,24 @@
-### [2026-07-02] - n8n prod/test URLs + membership bypass
+### [2026-07-02] - n8n webhook + membership bypass
 **Status:** PENDING USER VERIFY
-**Files:** web/worker/src/{lib/membership-email-lists.js,lib/membership-entitlement.js,jobs/trigger-n8n-newsletter.js,store/memberships.js,notifications/email-routes.js,monetization/membership-routes.js}; web/src/monetization/{config.js,useMembership.js}; env/{server.example.env,web.example.env}; wrangler.jsonc; docs/CLOUDFLARE-DEPLOY.md
-**Result:** n8n uses single N8N_NEWSLETTER_WEBHOOK_URL (test URL locally, prod URL in Cloudflare secret). Local DEV_BYPASS_MEMBERSHIP skips newsletter membership gate. Prod NEWSLETTER_FREE_EMAILS whitelist grants newsletter-only access.
+**Files:** web/worker/src/{lib/membership-email-lists.js,lib/membership-entitlement.js,jobs/trigger-n8n-newsletter.js,store/memberships.js,notifications/email-routes.js,monetization/membership-routes.js}; web/src/monetization/{config.js,useMembership.js}; env/{server.example.env,web.example.env,README.md}; wrangler.jsonc; docs/CLOUDFLARE-DEPLOY.md
+**Result:** Single `N8N_NEWSLETTER_WEBHOOK_URL` only (no TARGET/_TEST/_PROD vars). Local bypass + prod free-email whitelist for newsletter.
+
+**Local test (`env/server/.env` + `env/web/.env`, then restart `dev:api` + `dev:web`):**
+```
+N8N_NEWSLETTER_WEBHOOK_URL=https://your-n8n.app.n8n.cloud/webhook-test/cursor-newsletter
+N8N_NEWSLETTER_MODE=parallel
+DEV_BYPASS_MEMBERSHIP=true
+MEMBERSHIP_DEV_EMAILS=you@example.com
+PUBLIC_WEB_BASE=http://127.0.0.1:5173
+PUBLIC_API_BASE=http://127.0.0.1:8787/api
+```
+```
+VITE_MEMBERSHIP_DEV_ACTIVE=true
+VITE_MEMBERSHIP_DEV_EMAIL=you@example.com
+```
+Prod: `npx wrangler secret put N8N_NEWSLETTER_WEBHOOK_URL` with live `/webhook/` URL (same var name).
+
+### [2026-06-30] - Feed pagination (30 per page)
 **Status:** PENDING USER VERIFY
 **Files:** mobile/shared/feed/feedPagination.js; mobile/server/src/{index,store/memory-cache}.js; mobile/server/test/{feed-pagination,memory-cache}.test.js; web/src/{config/feedCategories,services/newsApi}.js; mobile/src/{api/newsClient,config/constants,screens/FeedScreen}.js
 **Result:** Shared FEED_PAGE_SIZE=30. GET /v1/news returns page, pageSize, total, totalPages, hasMore. Web paginates per tab; mobile fetches page 1 (30 items). 33/33 server tests, 9/9 web tests, web build OK.
