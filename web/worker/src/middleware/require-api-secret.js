@@ -37,11 +37,17 @@ export async function requireIngestSecret(c, next) {
 }
 
 /**
- * When REGISTER_SECRET is set, device register/unregister requires it.
+ * Device register/unregister auth (mobile push only — not used by the website).
+ * When REGISTER_SECRET is unset, push registration is disabled (503).
+ * Website-only deploys can omit this secret; news, membership, email, and Stripe
+ * flows are unaffected.
  */
 export async function optionalRegisterSecret(c, next) {
   const secret = c.env.REGISTER_SECRET?.trim();
   if (!secret) {
+    if (c.env.ENVIRONMENT === 'production') {
+      return c.json({ error: 'Push device registration is not enabled' }, 503);
+    }
     await next();
     return;
   }

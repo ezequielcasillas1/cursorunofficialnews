@@ -147,7 +147,7 @@ Set `INGEST_SECRET=` in `env/server/.env` to that value. Local dev defaults (alr
 | `RESEND_FROM_EMAIL` | `onboarding@resend.dev` | **Sandbox only** — verify your domain in [Resend](https://resend.com/domains) and use your verified address in production |
 | `PUBLIC_API_BASE` | `http://127.0.0.1:8787/api` | Production: `https://cursorunofficial.news/api` (unsubscribe links) |
 | `INGEST_SECRET` | *(generate)* | Required in production (checked against `ENVIRONMENT=production`) |
-| `REGISTER_SECRET` | *(empty)* | Optional; protects device register endpoints |
+| `REGISTER_SECRET` | *(empty locally)* | **Required in production**; pair with mobile `EXPO_PUBLIC_REGISTER_SECRET` — see [SECURITY-HARDENING.md](SECURITY-HARDENING.md) |
 
 In production these become `wrangler secret put` values, not `.env` — see [CLOUDFLARE-DEPLOY.md](CLOUDFLARE-DEPLOY.md). Scheduled ingest is a Cloudflare Cron Trigger (`wrangler.jsonc` → `triggers.crons`), not `INGEST_CRON_ENABLED`.
 

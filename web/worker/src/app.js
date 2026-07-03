@@ -16,11 +16,14 @@ import { handleStripeWebhook } from './monetization/stripe-webhook.js';
 export function createApp() {
   const app = new Hono().basePath('/api');
 
-  app.use('*', async (c, next) => {
+    app.use('*', async (c, next) => {
     c.header('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
     c.header('Referrer-Policy', 'strict-origin-when-cross-origin');
     c.header('X-Content-Type-Options', 'nosniff');
     c.header('X-Frame-Options', 'DENY');
+    if (c.env.ENVIRONMENT === 'production') {
+      c.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    }
     await next();
   });
 

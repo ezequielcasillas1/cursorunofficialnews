@@ -79,8 +79,10 @@ npx wrangler d1 execute cursorunofficialnews --remote --file=web/worker/src/db/s
 Never commit these — set via `wrangler secret put`:
 
 ```powershell
+# Required for production
 npx wrangler secret put INGEST_SECRET
-npx wrangler secret put REGISTER_SECRET
+
+# Website features (set what you use)
 npx wrangler secret put RESEND_API_KEY
 npx wrangler secret put CURSOR_API_KEY
 npx wrangler secret put N8N_NEWSLETTER_WEBHOOK_URL
@@ -92,14 +94,32 @@ npx wrangler secret put STRIPE_PRICE_ID_2
 npx wrangler secret put STRIPE_PRICE_ID_3
 npx wrangler secret put STRIPE_PRICE_ID_4
 npx wrangler secret put STRIPE_PRICE_ID_5
+
+# Ingest sources (optional)
 npx wrangler secret put TWITTER_BEARER_TOKEN
 npx wrangler secret put SCRAPE_API_URL
 npx wrangler secret put SCRAPE_API_KEY
+
+# Mobile push only — skip for website-only deploy
+npx wrangler secret put REGISTER_SECRET
 ```
 
-Only `INGEST_SECRET` is required in production (guards `POST /api/v1/ingest`); the rest are optional and gracefully skip their feature when unset (see `web/worker/src/*` `isXConfigured()` checks).
+Only **`INGEST_SECRET`** is required in production. Other secrets are optional — their features skip gracefully when unset (see `web/worker/src/*` `isXConfigured()` checks).
+
+| Secret | Website needs it? | When unset |
+|---|---|---|
+| `INGEST_SECRET` | **Yes** | `POST /api/v1/ingest` returns 503 |
+| `RESEND_API_KEY` | For email digests | Email subscribe/verify returns 503 |
+| `STRIPE_*` | For membership checkout | Checkout errors; webhook 503 |
+| `CURSOR_API_KEY` | For newsletter AI | Newsletter build skips AI |
+| `N8N_NEWSLETTER_*` | For n8n webhook path | Webhook trigger skipped |
+| `REGISTER_SECRET` | **No** (mobile push only) | `POST /api/v1/devices/register` returns 503; all other website flows work |
+
+**Push registration (mobile only):** If you later enable mobile push, set `REGISTER_SECRET` on the Worker and mirror it in mobile as `EXPO_PUBLIC_REGISTER_SECRET`.
 
 `N8N_NEWSLETTER_WEBHOOK_URL` is a single secret — use your n8n **live** `/webhook/...` URL in production. Locally, set the same var name in `env/server/.env` with your n8n **test** `/webhook-test/...` URL. There is no separate TARGET or `_TEST`/`_PROD` env var.
+
+Workflow export, credentials, and audit-fix import steps: [docs/n8n/README.md](n8n/README.md).
 
 Non-secret config lives in `wrangler.jsonc` → `vars` (`ENVIRONMENT`, `PUBLIC_API_BASE`, `PUBLIC_WEB_BASE`, `RESEND_FROM_EMAIL`, `EMAIL_NOTIFICATIONS`, `PUSH_NOTIFICATIONS`, `N8N_NEWSLETTER_MODE`).
 
@@ -123,6 +143,81 @@ Wrangler bundles `web/worker/index.js` (esbuild resolves all imports across `web
 ### 5. Custom domain
 
 **Workers & Pages** → **`cursorunofficialnews`** → **Settings → Domains & Routes** → **Add Custom Domain** → `cursorunofficial.news` (+ optional `www`). SSL is automatic. Do **not** duplicate domains in `wrangler.jsonc` — CI deploy fails on `domains/records` API conflicts.
+
+---
+
+## Website-only deploy checklist
+
+Use this when deploying **only** the website + Worker API (no mobile app).
+
+### Secrets to set (minimum)
+
+```powershell
+npx wrangler secret put INGEST_SECRET
+```
+
+### Secrets by feature (set what you use)
+
+| Feature | Secrets |
+|---|---|
+| Email digests + verification | `RESEND_API_KEY` |
+| Stripe membership | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_ID_1` … `_5` |
+| Newsletter AI | `CURSOR_API_KEY` |
+| n8n newsletter webhook | `N8N_NEWSLETTER_WEBHOOK_URL`, `N8N_NEWSLETTER_WEBHOOK_SECRET` |
+| Owner newsletter bypass | `NEWSLETTER_FREE_EMAILS` (optional) |
+
+**Skip for website-only:** `REGISTER_SECRET` (mobile push registration only).
+
+### Deploy
+
+```powershell
+cd C:\Dev\CursorAINews
+npm run deploy:web
+```
+
+Or push to `main` — CI auto-deploys via Workers Builds.
+
+### Post-deploy smoke tests
+
+```powershell
+curl https://cursorunofficial.news/api/health
+curl "https://cursorunofficial.news/api/v1/news?limit=5"
+curl "https://cursorunofficial.news/api/v1/status"
+```
+
+Verify membership checkout redirect, email subscribe (if `RESEND_API_KEY` set), and Stripe webhook in dashboard.
+
+### Security headers (built-in)
+
+| Layer | Headers |
+|---|---|
+| Static assets (`web/public/_headers`) | `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, `Content-Security-Policy` |
+| API responses (`web/worker/src/app.js`) | Same + `Strict-Transport-Security` in production |
+| Worker rate limits (in-isolate) | Email subscribe/verify, membership checkout/claim, device register |
+
+### Cloudflare Rate Limiting rules (dashboard — optional belt-and-suspenders)
+
+Worker middleware already rate-limits sensitive endpoints per-IP. Add **Cloudflare Rate Limiting** rules in the dashboard for edge-level protection on abuse-prone API paths:
+
+**Dashboard:** Security → WAF → Rate limiting rules → Create rule
+
+| Rule name | Expression | Characteristics | Action | Period |
+|---|---|---|---|---|
+| Email subscribe | `(http.request.uri.path eq "/api/v1/email/subscribe" and http.request.method eq "POST")` | IP | Block | 60s, threshold 10 |
+| Membership checkout | `(http.request.uri.path eq "/api/v1/membership/checkout" and http.request.method eq "POST")` | IP | Block | 60s, threshold 10 |
+| Membership claim | `(http.request.uri.path eq "/api/v1/membership/claim" and http.request.method eq "POST")` | IP | Block | 60s, threshold 10 |
+| Email unsubscribe | `(http.request.uri.path eq "/api/v1/email/unsubscribe" and http.request.method eq "POST")` | IP | Block | 60s, threshold 20 |
+
+Do **not** rate-limit `GET /api/v1/news` (public feed) or `POST /api/v1/stripe/webhook` (Stripe retries need through).
+
+### npm audit (web only)
+
+```powershell
+cd web
+npm audit
+```
+
+Last run: 0 vulnerabilities.
 
 ---
 
@@ -194,6 +289,7 @@ npx wrangler deploy --dry-run --outdir=.wrangler-dryrun
 | Build fails on Node | Default Node 18 | Set `NODE_VERSION=20` or rely on `web/.node-version` |
 | `/api/v1/news` returns empty `items` | Cold D1 — no ingest has run yet | Hit any `/api/*` route (triggers a background bootstrap ingest) or wait for the next Cron Trigger (≤30 min) |
 | `POST /api/v1/ingest` 401 | Missing/incorrect `X-API-Secret` | Must match the `INGEST_SECRET` Worker secret |
+| Push register 401 / 503 | Missing `REGISTER_SECRET` or mobile secret mismatch | Set Worker secret + `EXPO_PUBLIC_REGISTER_SECRET` on EAS rebuild ([SECURITY-HARDENING.md](SECURITY-HARDENING.md)) |
 | Ingest hangs locally in `wrangler dev` | `workerd`'s own TLS stack under corporate proxy/Zscaler interception — not a code bug | Verified fine in production (Cloudflare's real network); if it blocks local testing, test the ingest functions directly with plain `node --use-system-ca` instead |
 | `Some triggers failed to deploy` / `domains/records` | Custom domains duplicated in `wrangler.jsonc` | Remove `routes`/domains from `wrangler.jsonc`; manage domains in dashboard only |
 | 404 on refresh / deep link | Missing SPA fallback | `not_found_handling: "single-page-application"` in `wrangler.jsonc` |
@@ -203,6 +299,7 @@ npx wrangler deploy --dry-run --outdir=.wrangler-dryrun
 
 ## Related docs
 
+- [SECURITY-HARDENING.md](SECURITY-HARDENING.md) — rate limiting rules, REGISTER_SECRET + mobile EAS
 - [RUN-LOCAL.md](RUN-LOCAL.md) — local dev (Vite proxy to `wrangler dev`)
 - [AGENT-CONTEXT.md](AGENT-CONTEXT.md) — agent cold start
 - [STRIPE-GO-LIVE.md](STRIPE-GO-LIVE.md) — Stripe membership go-live checklist

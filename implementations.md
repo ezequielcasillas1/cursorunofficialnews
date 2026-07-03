@@ -1,3 +1,28 @@
+### [2026-07-02] - Website security hardening (website-only scope)
+**Status:** SUCCESS
+**Files:** web/worker/src/{security/rate-limit.js,security/public-error.js,middleware/require-api-secret.js,routes/core-routes.js,notifications/email-routes.js,notifications/unsubscribe/components/unsubscribe-confirm-form.js,monetization/membership-routes.js,llm/llm-routes.js,app.js}, web/public/_headers, docs/CLOUDFLARE-DEPLOY.md
+**Result:** Website-only hardening complete. REGISTER_SECRET optional (push disabled when unset; news/membership/email/Stripe unaffected). Per-IP rate limits on email verify/subscribe/unsubscribe, device register, membership checkout. GET unsubscribe confirm-then-POST. CSP + security headers on static assets; HSTS on API. /v1/llm/* auth-gated. Cloudflare Rate Limiting rule docs + website deploy checklist in CLOUDFLARE-DEPLOY.md. web/ npm audit: 0 vulnerabilities. Mobile changes left uncommitted separately.
+
+### [2026-07-02] - Security audit follow-ups (in-repo)
+**Status:** SUCCESS
+**Files:** docs/{SECURITY-HARDENING.md,CLOUDFLARE-DEPLOY.md,RUN-LOCAL.md}, env/{server.example.env,web.example.env,mobile.example.env}, web/{public/_headers}, web/worker/src/{notifications/email-routes.js,lib/membership-email-lists.js}
+**Result:** Docs for REGISTER_SECRET + EAS secret + Cloudflare rate-limit rules; env templates aligned to cursorunofficial.news/api; CSP on static assets; per-IP verification email rate limits; subscribe/resubscribe IP limits; NEWSLETTER_FREE_EMAILS prod warn. npm audit: web 0 vulns; mobile/root Expo transitive — needs Expo SDK upgrade (user decision).
+
+### [2026-07-02] - Security audit hardening
+**Status:** SUPERSEDED (see website-only entry above)
+**Files:** web/worker/src/{security/rate-limit.js,security/public-error.js,middleware/require-api-secret.js,routes/core-routes.js,notifications/email-routes.js,notifications/unsubscribe/components/unsubscribe-confirm-form.js,monetization/membership-routes.js,llm/llm-routes.js,app.js}, mobile/src/api/newsClient.js, env/mobile.example.env
+**Result:** Required REGISTER_SECRET in production; IP rate limits on device register/checkout/unsubscribe; GET unsubscribe now confirm-then-POST (blocks prefetch/CSRF); token length cap; /v1/llm/status auth-gated; generic prod errors; HSTS header; mobile sends X-API-Secret when EXPO_PUBLIC_REGISTER_SECRET set. n8n workflow HTTP nodes aligned to `https://cursorunofficial.news/api/v1/...`.
+
+### [2026-07-02] - n8n workflow audit fixes
+**Status:** SUCCESS
+**Files:** docs/n8n/cursor-ai-news-newsletter.workflow.json, docs/n8n/README.md, docs/CLOUDFLARE-DEPLOY.md
+**Result:** Exported workflow AWUxJU3oVLNzP2Op with error handling, webhook 202/500 responses, credential refs (no inline secrets), typeVersion bumps. Live import + credential creation required in n8n UI.
+
+### [2026-07-02] - n8n repo export sync (live AWUxJU3oVLNzP2Op)
+**Status:** SUCCESS
+**Files:** docs/n8n/cursor-ai-news-newsletter.workflow.json, docs/n8n/README.md
+**Result:** Synced repo export to published live workflow. Fixed `If Webhook Error Response` unary boolean (`singleValue: true`, removed invalid `rightValue`). Added credential IDs on HTTP nodes to match live. 10 nodes; re-import should match published graph.
+
 ### [2026-07-02] - Per-category feed filters (web)
 **Status:** PENDING USER VERIFY
 **Files:** mobile/shared/feed/categoryFilterPrefs.js, mobile/shared/feed/feedCategories.js, web/src/{App.jsx,App.css,components/CategoryFilter.jsx,components/CategoryFilterPanel.jsx,components/NewsFeed.jsx,feed/filterPrefsStorage.js,feed/categoryFilterPrefs.test.js,services/newsApi.js}, web/worker/src/{store/news-store.js,routes/core-routes.js}

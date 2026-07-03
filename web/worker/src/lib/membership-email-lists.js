@@ -8,12 +8,21 @@ function parseEmailList(raw) {
     .filter(Boolean);
 }
 
+let newsletterFreeEmailsWarned = false;
+
 export function getDevMemberEmails(env) {
   return parseEmailList(env?.MEMBERSHIP_DEV_EMAILS);
 }
 
 export function getNewsletterFreeEmails(env) {
-  return parseEmailList(env?.NEWSLETTER_FREE_EMAILS);
+  const list = parseEmailList(env?.NEWSLETTER_FREE_EMAILS);
+  if (env?.ENVIRONMENT === 'production' && list.length > 0 && !newsletterFreeEmailsWarned) {
+    newsletterFreeEmailsWarned = true;
+    console.warn(
+      `[security] NEWSLETTER_FREE_EMAILS is set in production (${list.length} address(es)) — keep this list minimal; remove when no longer needed`,
+    );
+  }
+  return list;
 }
 
 export function isDevMemberEmail(email, env) {

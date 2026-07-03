@@ -20,10 +20,13 @@ import {
   sendMembershipClaimEmail,
 } from './send-membership-claim-email.js';
 import { createMembershipCheckoutSession, retrieveCompletedCheckoutSession } from './stripe-checkout.js';
+import { checkRateLimit, clientRateKey } from '../security/rate-limit.js';
+import { publicErrorMessage } from '../security/public-error.js';
 
 // Module-level cache is fine — soft rate-limit hint only, resets on isolate recycle.
 const claimRateLimit = new Map();
 const CLAIM_RATE_MS = 30_000;
+const CHECKOUT_RATE_MS = 30_000;
 
 function checkClaimRateLimit(key) {
   const now = Date.now();
@@ -41,6 +44,9 @@ const CLAIM_PENDING_MESSAGE =
 export function registerMembershipRoutes(app) {
   app.post('/v1/membership/checkout', async (c) => {
     c.header('Cache-Control', 'no-store');
+    if (!checkRateLimit(clientRateKey(c, 'membership-checkout'), CHECKOUT_RATE_MS)) {
+      return c.json({ error: 'Too many requests — try again shortly' }, 429);
+    }
     try {
       const body = await c.req.json().catch(() => ({}));
       const email = body?.email ? normalizeEmail(body.email) : '';
@@ -51,7 +57,7 @@ export function registerMembershipRoutes(app) {
       const { url } = await createMembershipCheckoutSession(c.env, { amount: body?.amount, email });
       return c.json({ ok: true, url });
     } catch (err) {
-      return c.json({ error: err.message || 'Could not start checkout' }, 400);
+      return c.json({ error: publicErrorMessage(err, 'Could not start checkout', c.env) }, 400);
     }
   });
 

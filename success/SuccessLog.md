@@ -52,3 +52,9 @@
 **Status:** SUCCESS
 **Files:** [web/src/components/newsletter/NewsletterSettings.jsx, web/src/App.css, mobile/server/AGENT-CONTEXT.md]
 **Result:** Web digest panel shows beta copy; user verified Resend/Fly pipeline sends; AGENT-CONTEXT documents Fly newsletter secrets.
+
+### [2026-07-02] - Security hardening + INGEST_SECRET sync
+**Status:** SUCCESS
+**Files:** web/worker/src/security/*, email-routes, core-routes, app.js, _headers, docs/SECURITY-HARDENING.md, docs/n8n/*, env/*.example.env, mobile/src/api/newsClient.js
+**Result:** Worker auth/rate limits/CSP/HSTS; n8n workflow URLs aligned to production API; INGEST_SECRET docs and example envs synced. Committed per user git commit --trailer "Co-authored-by: Cursor <cursoragent@cursor.com>" all.
+

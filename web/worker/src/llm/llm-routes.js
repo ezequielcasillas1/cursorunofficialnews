@@ -1,4 +1,5 @@
 import { requireIngestSecret } from '../middleware/require-api-secret.js';
+import { publicErrorMessage } from '../security/public-error.js';
 import {
   chatCompletion,
   getWorkersAiConfig,
@@ -8,7 +9,7 @@ import {
 } from './workers-ai-client.js';
 
 export function registerLlmRoutes(app) {
-  app.get('/v1/llm/status', async (c) => {
+  app.get('/v1/llm/status', requireIngestSecret, async (c) => {
     const status = await pingWorkersAi(c.env);
     return c.json(status);
   });
@@ -29,7 +30,7 @@ export function registerLlmRoutes(app) {
       return c.json({ ok: true, ...result });
     } catch (err) {
       console.error('[POST /v1/llm/chat]', err);
-      return c.json({ error: err.message || 'Workers AI request failed' }, 502);
+      return c.json({ error: publicErrorMessage(err, 'Workers AI request failed', c.env) }, 502);
     }
   });
 
@@ -49,7 +50,7 @@ export function registerLlmRoutes(app) {
       return c.json({ ok: true, excerpt, model: getWorkersAiConfig(c.env).model });
     } catch (err) {
       console.error('[POST /v1/llm/summarize]', err);
-      return c.json({ error: err.message || 'Summarize failed' }, 502);
+      return c.json({ error: publicErrorMessage(err, 'Summarize failed', c.env) }, 502);
     }
   });
 }

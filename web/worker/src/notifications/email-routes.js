@@ -15,13 +15,20 @@ import {
 } from '../store/email-subscribers.js';
 import { resolveNewsletterEntitlement } from '../lib/membership-entitlement.js';
 import { buildUnsubscribeHtmlPage } from './unsubscribe/unsubscribe-html-page.js';
+import { renderUnsubscribeConfirmForm } from './unsubscribe/components/unsubscribe-confirm-form.js';
+import { renderPageShell, renderMessageParagraph } from './unsubscribe/components/page-shell.js';
 import { sendWelcomeDigest } from '../jobs/send-welcome-digest.js';
+import { escapeHtml } from './unsubscribe/services/escape.js';
+import { checkRateLimit, clientRateKey } from '../security/rate-limit.js';
+import { publicErrorMessage } from '../security/public-error.js';
 import {
   isSubscriptionVerificationEmailConfigured,
   sendSubscriptionVerificationEmail,
 } from './send-subscription-verification-email.js';
 
 const VERIFICATION_EMAIL_RATE_MS = 60_000;
+const VERIFICATION_IP_RATE_MS = 60_000;
+const EMAIL_ACTION_RATE_MS = 30_000;
 
 const VERIFY_PENDING_MESSAGE =
   'If that address is valid, we sent a confirmation link. Check your email to finish subscribing.';
@@ -67,6 +74,10 @@ function checkVerificationEmailRateLimit(email) {
   return true;
 }
 
+function checkVerificationIpRateLimit(c) {
+  return checkRateLimit(clientRateKey(c, 'email-verify-send'), VERIFICATION_IP_RATE_MS);
+}
+
 function markVerificationEmailSent(email) {
   verificationEmailRateLimit.set(normalizeEmail(email), Date.now());
 }
@@ -75,6 +86,24 @@ function shouldSendVerificationEmail(result, resendVerification) {
   if (!result.needsVerification) return false;
   if (result.resendVerification) return true;
   return Boolean(resendVerification);
+}
+
+function wantsHtmlResponse(c) {
+  const accept = c.req.header('accept') || '';
+  return accept.includes('text/html');
+}
+
+function parseUnsubscribeToken(c, body = {}) {
+  return String(body?.token || c.req.query('token') || '').trim();
+}
+
+async function parseUnsubscribeBody(c) {
+  const contentType = c.req.header('content-type') || '';
+  if (contentType.includes('application/x-www-form-urlencoded')) {
+    const form = await c.req.parseBody().catch(() => ({}));
+    return { token: form?.token, _fromForm: true };
+  }
+  return c.req.json().catch(() => ({}));
 }
 
 function verifyHtmlPage(success, message) {
@@ -95,7 +124,7 @@ function verifyHtmlPage(success, message) {
 <body>
   <div class="card">
     <h1>${title}</h1>
-    <p>${message}</p>
+    <p>${escapeHtml(message)}</p>
   </div>
 </body>
 </html>`;
@@ -105,6 +134,9 @@ export function registerEmailRoutes(app) {
   app.post('/v1/email/subscribe', async (c) => {
     c.header('Cache-Control', 'no-store');
     const db = c.env.DB;
+    if (!checkRateLimit(clientRateKey(c, 'email-subscribe'), EMAIL_ACTION_RATE_MS)) {
+      return c.json({ error: 'Too many requests — try again shortly' }, 429);
+    }
     try {
       const body = await c.req.json().catch(() => ({}));
       const { categories, categoryLimits, officialOnly, enabled, resendVerification, membershipToken } = body || {};
@@ -143,6 +175,10 @@ export function registerEmailRoutes(app) {
 
       if (!shouldSendVerificationEmail(result, wantsResend)) {
         return c.json({ ok: true, pending: true, message: VERIFY_PENDING_MESSAGE });
+      }
+
+      if (!checkVerificationIpRateLimit(c)) {
+        return c.json({ error: VERIFY_RESEND_RATE_MESSAGE }, 429);
       }
 
       if (!checkVerificationEmailRateLimit(normalizedEmail)) {
@@ -244,21 +280,68 @@ export function registerEmailRoutes(app) {
     c.header('Cache-Control', 'no-store');
     const db = c.env.DB;
     try {
-      const body = await c.req.json().catch(() => ({}));
-      const token = String(body?.token || c.req.query('token') || '').trim();
+      const body = await parseUnsubscribeBody(c);
+      const token = parseUnsubscribeToken(c, body);
       if (!token) {
+        if (wantsHtmlResponse(c) || body?._fromForm) {
+          return c.html(
+            renderPageShell({
+              title: 'Unsubscribe',
+              bodyContent: renderMessageParagraph('Missing unsubscribe token.'),
+            }),
+            400,
+          );
+        }
         return c.json({ error: 'token is required' }, 400);
       }
+
+      if (!checkRateLimit(clientRateKey(c, `email-unsub:${token.slice(0, 8)}`), EMAIL_ACTION_RATE_MS)) {
+        const message = 'Too many requests — try again shortly';
+        if (wantsHtmlResponse(c) || body?._fromForm) {
+          return c.html(
+            renderPageShell({ title: 'Unsubscribe', bodyContent: renderMessageParagraph(message) }),
+            429,
+          );
+        }
+        return c.json({ error: message }, 429);
+      }
+
+      const subscriber = await getSubscriberByToken(db, token);
       const removed = await unsubscribeByToken(db, token);
+
+      if (wantsHtmlResponse(c) || body?._fromForm) {
+        return c.html(
+          buildUnsubscribeHtmlPage({
+            success: removed,
+            message: removed
+              ? 'You have been unsubscribed from Unofficial Cursor News email digests.'
+              : 'This unsubscribe link is invalid or has already been used.',
+            token: removed ? token : '',
+            previousCategories: subscriber?.categories || [],
+            previousCategoryLimits: subscriber?.categoryLimits || {},
+          }),
+        );
+      }
+
       return c.json({ ok: true, removed });
     } catch (err) {
-      return c.json({ error: err.message || 'Unsubscribe failed' }, 400);
+      const message = publicErrorMessage(err, 'Unsubscribe failed', c.env);
+      if (wantsHtmlResponse(c)) {
+        return c.html(
+          renderPageShell({ title: 'Unsubscribe', bodyContent: renderMessageParagraph(message) }),
+          400,
+        );
+      }
+      return c.json({ error: message }, 400);
     }
   });
 
   app.post('/v1/email/resubscribe', async (c) => {
     c.header('Cache-Control', 'no-store');
     const db = c.env.DB;
+    if (!checkRateLimit(clientRateKey(c, 'email-resubscribe'), EMAIL_ACTION_RATE_MS)) {
+      return c.json({ error: 'Too many requests — try again shortly' }, 429);
+    }
     try {
       const body = await c.req.json().catch(() => ({}));
       const token = String(body?.token || '').trim();
@@ -303,6 +386,10 @@ export function registerEmailRoutes(app) {
         return c.json({ ok: true, pending: true, message: VERIFY_PENDING_MESSAGE });
       }
 
+      if (!checkVerificationIpRateLimit(c)) {
+        return c.json({ error: VERIFY_RESEND_RATE_MESSAGE }, 429);
+      }
+
       if (!checkVerificationEmailRateLimit(existing.email)) {
         return c.json({ error: VERIFY_RESEND_RATE_MESSAGE }, 429);
       }
@@ -336,7 +423,7 @@ export function registerEmailRoutes(app) {
   app.get('/v1/email/unsubscribe', async (c) => {
     c.header('Cache-Control', 'no-store');
     const db = c.env.DB;
-    const token = c.req.query('token');
+    const token = String(c.req.query('token') || '').trim();
     const accept = c.req.header('accept') || '';
     const wantsJson = accept.includes('application/json') || c.req.query('format') === 'json';
 
@@ -350,23 +437,30 @@ export function registerEmailRoutes(app) {
       );
     }
 
-    const tokenValue = String(token);
-    const subscriber = await getSubscriberByToken(db, tokenValue);
-    const removed = await unsubscribeByToken(db, tokenValue);
-
     if (wantsJson) {
+      const subscriber = await getSubscriberByToken(db, token);
+      if (!subscriber) {
+        return c.json({ error: 'This unsubscribe link is invalid or has already been used.' }, 410);
+      }
+      const removed = await unsubscribeByToken(db, token);
       return c.json({ ok: true, removed });
     }
 
+    const subscriber = await getSubscriberByToken(db, token);
+    if (!subscriber) {
+      return c.html(
+        buildUnsubscribeHtmlPage({
+          success: false,
+          message: 'This unsubscribe link is invalid or has already been used.',
+        }),
+        410,
+      );
+    }
+
     return c.html(
-      buildUnsubscribeHtmlPage({
-        success: removed,
-        message: removed
-          ? 'You have been unsubscribed from Unofficial Cursor News email digests.'
-          : 'This unsubscribe link is invalid or has already been used.',
-        token: removed ? tokenValue : '',
-        previousCategories: subscriber?.categories || [],
-        previousCategoryLimits: subscriber?.categoryLimits || {},
+      renderPageShell({
+        title: 'Unsubscribe',
+        bodyContent: renderUnsubscribeConfirmForm(token),
       }),
     );
   });

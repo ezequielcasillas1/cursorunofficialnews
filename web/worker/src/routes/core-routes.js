@@ -4,6 +4,11 @@ import { listSourcesForApi } from '../sources/registry.js';
 import { getLastIngestAt, getNews, getStatus } from '../store/news-store.js';
 import { listDevices, registerDevice, unregisterDevice } from '../store/device-tokens.js';
 import { optionalRegisterSecret, requireIngestSecret } from '../middleware/require-api-secret.js';
+import { checkRateLimit, clientRateKey } from '../security/rate-limit.js';
+import { publicErrorMessage } from '../security/public-error.js';
+
+const DEVICE_REGISTER_RATE_MS = 60_000;
+const MAX_DEVICE_TOKEN_LENGTH = 512;
 import { isScrapeConfigured } from '../ingest/scrape.js';
 import { isTwitterApiConfigured } from '../ingest/twitter-api.js';
 import { isWorkersAiConfigured } from '../llm/workers-ai-client.js';
@@ -56,13 +61,28 @@ export function registerCoreRoutes(app) {
 
   app.post('/v1/devices/register', optionalRegisterSecret, async (c) => {
     const db = c.env.DB;
+    if (!checkRateLimit(clientRateKey(c, 'device-register'), DEVICE_REGISTER_RATE_MS)) {
+      return c.json({ error: 'Too many requests — try again shortly' }, 429);
+    }
     try {
       const body = await c.req.json().catch(() => ({}));
       const { token, platform, categories, enabled } = body || {};
-      const device = await registerDevice(db, { token, platform, categories, enabled });
+      const tokenValue = String(token || '').trim();
+      if (!tokenValue || tokenValue.length > MAX_DEVICE_TOKEN_LENGTH) {
+        return c.json({ error: 'A valid push token is required' }, 400);
+      }
+      const device = await registerDevice(db, {
+        token: tokenValue,
+        platform,
+        categories,
+        enabled,
+      });
       return c.json({ ok: true, device });
     } catch (err) {
-      return c.json({ error: err.message || 'Registration failed' }, 400);
+      return c.json(
+        { error: publicErrorMessage(err, 'Registration failed', c.env) },
+        400,
+      );
     }
   });
 
@@ -102,7 +122,7 @@ export function registerCoreRoutes(app) {
       });
     } catch (err) {
       console.error('[POST /v1/ingest]', err);
-      return c.json({ error: err.message || 'Ingest failed' }, 500);
+      return c.json({ error: publicErrorMessage(err, 'Ingest failed', c.env) }, 500);
     }
   });
 }

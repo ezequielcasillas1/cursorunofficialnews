@@ -3,8 +3,16 @@ import { FEED_PAGE_SIZE } from '../../shared/feed/feedPagination.js';
 
 const REQUEST_TIMEOUT_MS = 15000;
 
-async function fetchJson(path, options = {}) {
-  const controller = new AbortController();
+function registerHeaders() {
+  const secret = process.env.EXPO_PUBLIC_REGISTER_SECRET?.trim();
+  if (!secret) return { 'Content-Type': 'application/json' };
+  return {
+    'Content-Type': 'application/json',
+    'X-API-Secret': secret,
+  };
+}
+
+async function fetchJson(path, options = {}) {  const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
   try {
@@ -57,7 +65,7 @@ export function fetchStatus() {
 export function registerDevice({ token, platform, categories, enabled }) {
   return fetchJson('/v1/devices/register', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: registerHeaders(),
     body: JSON.stringify({ token, platform, categories, enabled }),
   });
 }
@@ -65,7 +73,7 @@ export function registerDevice({ token, platform, categories, enabled }) {
 export function unregisterDevice(token) {
   return fetchJson('/v1/devices/register', {
     method: 'DELETE',
-    headers: { 'Content-Type': 'application/json' },
+    headers: registerHeaders(),
     body: JSON.stringify({ token }),
   });
 }
