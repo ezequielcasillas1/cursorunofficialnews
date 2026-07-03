@@ -54,14 +54,13 @@ export async function resolveMembershipClaim(db, email, env) {
   }
 
   if (isNewsletterFreeEmail(normalized, env)) {
-    const member = await ensureMemberRecord(db, normalized);
-    const entitlement = await getEntitlement(db, member.membershipToken, env);
+    const member = await activateMember(db, { email: normalized });
     return {
       email: member.email,
       membershipToken: member.membershipToken,
-      adFree: entitlement.adFree,
-      newsletterUnlocked: entitlement.newsletterUnlocked,
-      membershipStatus: entitlement.membershipStatus,
+      adFree: true,
+      newsletterUnlocked: true,
+      membershipStatus: 'active',
     };
   }
 

@@ -20,6 +20,32 @@ function createMockDb(initialSessions = []) {
     lastNowModifier,
     prepare(sql) {
       const query = String(sql);
+
+      async function runBound(...params) {
+        if (query.includes('CREATE TABLE') || query.includes('CREATE INDEX')) {
+          return { meta: { changes: 0 } };
+        }
+
+        if (query.includes('DELETE FROM site_presence')) {
+          lastNowModifier = params[0];
+          const cutoff = Date.now() - 2 * 60 * 1000;
+          for (const [id, lastSeen] of sessions.entries()) {
+            if (new Date(lastSeen).getTime() < cutoff) {
+              sessions.delete(id);
+            }
+          }
+          return { meta: { changes: 1 } };
+        }
+
+        if (query.includes('INSERT INTO site_presence')) {
+          const [sessionId] = params;
+          sessions.set(sessionId, new Date().toISOString());
+          return { meta: { changes: 1 } };
+        }
+
+        return { meta: { changes: 0 } };
+      }
+
       return {
         bind(...params) {
           if (query.includes('DELETE FROM site_presence')) {
@@ -38,27 +64,10 @@ function createMockDb(initialSessions = []) {
               }
               return null;
             },
-            async run() {
-              if (query.includes('DELETE FROM site_presence')) {
-                const cutoff = Date.now() - 2 * 60 * 1000;
-                for (const [id, lastSeen] of sessions.entries()) {
-                  if (new Date(lastSeen).getTime() < cutoff) {
-                    sessions.delete(id);
-                  }
-                }
-                return { meta: { changes: 1 } };
-              }
-
-              if (query.includes('INSERT INTO site_presence')) {
-                const [sessionId] = params;
-                sessions.set(sessionId, new Date().toISOString());
-                return { meta: { changes: 1 } };
-              }
-
-              return { meta: { changes: 0 } };
-            },
+            run: () => runBound(...params),
           };
         },
+        run: () => runBound(),
       };
     },
   };

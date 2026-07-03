@@ -27,21 +27,9 @@ import {
 import { checkRateLimit, clientRateKey } from '../security/rate-limit.js';
 import { publicErrorMessage } from '../security/public-error.js';
 
-// Module-level cache is fine — soft rate-limit hint only, resets on isolate recycle.
-const claimRateLimit = new Map();
 const CLAIM_RATE_MS = 30_000;
 const CHECKOUT_RATE_MS = 30_000;
 const REFUND_RATE_MS = 60_000;
-
-function checkClaimRateLimit(key) {
-  const now = Date.now();
-  const last = claimRateLimit.get(key);
-  if (last && now - last < CLAIM_RATE_MS) {
-    return false;
-  }
-  claimRateLimit.set(key, now);
-  return true;
-}
 
 const CLAIM_PENDING_MESSAGE =
   'If that email has an active membership, we sent a verification link.';
@@ -125,11 +113,6 @@ export function registerMembershipRoutes(app) {
         return c.json({ error: 'A valid email address is required' }, 400);
       }
 
-      const rateKey = `${c.req.header('cf-connecting-ip') || 'unknown'}:${email}`;
-      if (!checkClaimRateLimit(rateKey)) {
-        return c.json({ error: 'Too many requests — try again shortly' }, 429);
-      }
-
       if (c.env.ENVIRONMENT !== 'production' && isDevMemberEmail(email, c.env)) {
         const devRecord = await activateMember(db, { email });
         return c.json({
@@ -152,6 +135,10 @@ export function registerMembershipRoutes(app) {
           token: freeClaim.membershipToken,
           activationUrl: buildMembershipActivationUrl(freeClaim.membershipToken, c.env),
         });
+      }
+
+      if (!checkRateLimit(clientRateKey(c, `membership-claim:${email}`), CLAIM_RATE_MS)) {
+        return c.json({ error: 'Too many requests — try again shortly' }, 429);
       }
 
       if (!isMembershipClaimEmailConfigured(c.env)) {

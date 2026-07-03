@@ -40,9 +40,36 @@ async function getMemberRowByStripeCustomerId(db, stripeCustomerId) {
 }
 
 async function upsertMember(db, record) {
-  await db
-    .prepare(
-      `INSERT INTO memberships
+  const coreBind = [
+    record.email,
+    record.membershipToken,
+    record.stripeCustomerId || null,
+    record.stripeSubscriptionId || null,
+    record.amountCents ?? null,
+    record.active ? 1 : 0,
+    record.status,
+    record.membershipStartedAt || null,
+    record.pausedAt || null,
+    record.cancelledAt || null,
+    record.updatedAt,
+  ];
+
+  const coreSql = `INSERT INTO memberships
+         (email, membership_token, stripe_customer_id, stripe_subscription_id, amount_cents, active, status, membership_started_at, paused_at, cancelled_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(email) DO UPDATE SET
+         membership_token = excluded.membership_token,
+         stripe_customer_id = excluded.stripe_customer_id,
+         stripe_subscription_id = excluded.stripe_subscription_id,
+         amount_cents = excluded.amount_cents,
+         active = excluded.active,
+         status = excluded.status,
+         membership_started_at = excluded.membership_started_at,
+         paused_at = excluded.paused_at,
+         cancelled_at = excluded.cancelled_at,
+         updated_at = excluded.updated_at`;
+
+  const adminSql = `INSERT INTO memberships
          (email, membership_token, stripe_customer_id, stripe_subscription_id, amount_cents, active, status, membership_started_at, paused_at, cancelled_at, blocked, access_source, intruder_flagged_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT(email) DO UPDATE SET
@@ -58,25 +85,26 @@ async function upsertMember(db, record) {
          blocked = excluded.blocked,
          access_source = excluded.access_source,
          intruder_flagged_at = excluded.intruder_flagged_at,
-         updated_at = excluded.updated_at`,
-    )
-    .bind(
-      record.email,
-      record.membershipToken,
-      record.stripeCustomerId || null,
-      record.stripeSubscriptionId || null,
-      record.amountCents ?? null,
-      record.active ? 1 : 0,
-      record.status,
-      record.membershipStartedAt || null,
-      record.pausedAt || null,
-      record.cancelledAt || null,
-      record.blocked ? 1 : 0,
-      record.accessSource || null,
-      record.intruderFlaggedAt || null,
-      record.updatedAt,
-    )
-    .run();
+         updated_at = excluded.updated_at`;
+
+  try {
+    await db
+      .prepare(adminSql)
+      .bind(
+        ...coreBind.slice(0, 10),
+        record.blocked ? 1 : 0,
+        record.accessSource || null,
+        record.intruderFlaggedAt || null,
+        record.updatedAt,
+      )
+      .run();
+  } catch (err) {
+    const message = String(err?.message || err);
+    if (!/no such column|has no column named/i.test(message)) {
+      throw err;
+    }
+    await db.prepare(coreSql).bind(...coreBind).run();
+  }
   return record;
 }
 
@@ -215,7 +243,9 @@ export async function getEntitlement(db, token, env = null) {
     return { active: false, adFree: false, newsletterUnlocked: false, email: null, membershipStatus: null };
   }
 
-  if (member.blocked) {
+  const freeNewsletter = env ? isNewsletterFreeEmail(member.email, env) : false;
+
+  if (member.blocked && !freeNewsletter) {
     return {
       active: false,
       adFree: false,
@@ -226,7 +256,6 @@ export async function getEntitlement(db, token, env = null) {
   }
 
   const active = Boolean(member.active);
-  const freeNewsletter = env ? isNewsletterFreeEmail(member.email, env) : false;
   const membershipStatus = active
     ? 'active'
     : freeNewsletter

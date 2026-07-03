@@ -5,9 +5,9 @@
 -- Apply remote before deploying worker code that references blocked/access_source:
 --   npx wrangler d1 execute cursorunofficialnews --remote --file=web/worker/src/db/migrations/003_membership_admin.sql
 
-ALTER TABLE memberships ADD COLUMN blocked INTEGER NOT NULL DEFAULT 0;
-ALTER TABLE memberships ADD COLUMN access_source TEXT;
-ALTER TABLE memberships ADD COLUMN intruder_flagged_at TEXT;
+ALTER TABLE memberships ADD COLUMN IF NOT EXISTS blocked INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE memberships ADD COLUMN IF NOT EXISTS access_source TEXT;
+ALTER TABLE memberships ADD COLUMN IF NOT EXISTS intruder_flagged_at TEXT;
 
 CREATE TABLE IF NOT EXISTS membership_access_overrides (
   email TEXT PRIMARY KEY,

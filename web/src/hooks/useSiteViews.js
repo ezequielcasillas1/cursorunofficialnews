@@ -17,14 +17,17 @@ export function useSiteViews() {
             setOnlineCount(data.online);
           }
         })
-        .catch(() => {
-          fetchOnlineCount()
-            .then((data) => {
-              if (!cancelled && typeof data?.online === 'number') {
-                setOnlineCount(data.online);
-              }
-            })
-            .catch(() => {});
+        .catch((err) => {
+          // Only fall back to read-only count when heartbeat is rate-limited.
+          if (err?.message?.includes('429')) {
+            fetchOnlineCount()
+              .then((data) => {
+                if (!cancelled && typeof data?.online === 'number') {
+                  setOnlineCount(data.online);
+                }
+              })
+              .catch(() => {});
+          }
         });
     };
 

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { MEMBERSHIP_DEV_ACTIVE, MEMBERSHIP_DEV_EMAIL } from './config.js';
 import {
   clearStoredMembershipToken,
@@ -152,16 +152,18 @@ export function useMembership() {
     [applyEntitlement],
   );
 
+  const bootRef = useRef(false);
+
   useEffect(() => {
     if (MEMBERSHIP_DEV_ACTIVE && !MEMBERSHIP_DEV_EMAIL) return;
+    if (bootRef.current) return;
+    bootRef.current = true;
 
     let cancelled = false;
 
     async function boot() {
       if (MEMBERSHIP_DEV_ACTIVE && MEMBERSHIP_DEV_EMAIL) {
-        const ok = await verifyToken(getStoredMembershipToken());
-        if (ok || cancelled) return;
-        await verifyToken('');
+        await verifyToken(getStoredMembershipToken());
         return;
       }
 

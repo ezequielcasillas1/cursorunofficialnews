@@ -58,34 +58,44 @@ export function registerCoreRoutes(app) {
 
   app.get('/v1/views', async (c) => {
     const db = c.env.DB;
-    await pruneStalePresence(db);
-    const online = await getActiveVisitorCount(db);
-    return c.json({ online });
+    try {
+      await pruneStalePresence(db);
+      const online = await getActiveVisitorCount(db);
+      return c.json({ online });
+    } catch (err) {
+      console.error('[GET /v1/views]', err.message || err);
+      return c.json({ online: 0 }, 200);
+    }
   });
 
   app.post('/v1/views', async (c) => {
     const db = c.env.DB;
 
-    if (!checkRateLimit(clientRateKey(c, 'presence-heartbeat'), PRESENCE_HEARTBEAT_RATE_MS)) {
-      await pruneStalePresence(db);
-      const online = await getActiveVisitorCount(db);
-      return c.json({ online, recorded: false }, 429);
-    }
+    try {
+      if (!checkRateLimit(clientRateKey(c, 'presence-heartbeat'), PRESENCE_HEARTBEAT_RATE_MS)) {
+        await pruneStalePresence(db);
+        const online = await getActiveVisitorCount(db);
+        return c.json({ online, recorded: false }, 429);
+      }
 
-    let sessionId = getCookie(c, PRESENCE_SESSION_COOKIE);
-    if (!isValidSessionId(sessionId)) {
-      sessionId = createSessionId();
-    }
+      let sessionId = getCookie(c, PRESENCE_SESSION_COOKIE);
+      if (!isValidSessionId(sessionId)) {
+        sessionId = createSessionId();
+      }
 
-    const online = await recordPresence(db, sessionId);
-    setCookie(c, PRESENCE_SESSION_COOKIE, sessionId, {
-      httpOnly: true,
-      secure: c.env.ENVIRONMENT === 'production',
-      sameSite: 'Lax',
-      path: '/',
-      maxAge: PRESENCE_SESSION_MAX_AGE,
-    });
-    return c.json({ online, recorded: true });
+      const online = await recordPresence(db, sessionId);
+      setCookie(c, PRESENCE_SESSION_COOKIE, sessionId, {
+        httpOnly: true,
+        secure: c.env.ENVIRONMENT === 'production',
+        sameSite: 'Lax',
+        path: '/',
+        maxAge: PRESENCE_SESSION_MAX_AGE,
+      });
+      return c.json({ online, recorded: true });
+    } catch (err) {
+      console.error('[POST /v1/views]', err.message || err);
+      return c.json({ online: 0, recorded: false }, 200);
+    }
   });
 
   app.get('/v1/news', async (c) => {
