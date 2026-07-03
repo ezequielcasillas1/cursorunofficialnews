@@ -149,3 +149,11 @@ CREATE TABLE IF NOT EXISTS ingest_state (
   last_ingest_at TEXT
 );
 INSERT OR IGNORE INTO ingest_state (id, running, started_at, last_ingest_at) VALUES (1, 0, NULL, NULL);
+
+-- Single-row site analytics (see store/site-views.js).
+CREATE TABLE IF NOT EXISTS site_stats (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  view_count INTEGER NOT NULL DEFAULT 0,
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+INSERT OR IGNORE INTO site_stats (id, view_count) VALUES (1, 0);

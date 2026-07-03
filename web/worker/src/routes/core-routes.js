@@ -1,13 +1,18 @@
+import { getCookie, setCookie } from 'hono/cookie';
 import { FEED_PUBLISHED_AFTER_ISO } from '../shared/feed/feedPolicy.js';
 import { buildFeedPaginationMeta, parseFeedPaginationQuery } from '../shared/feed/feedPagination.js';
 import { listSourcesForApi } from '../sources/registry.js';
 import { getLastIngestAt, getNews, getStatus } from '../store/news-store.js';
+import { getViewCount, incrementViewCount } from '../store/site-views.js';
 import { listDevices, registerDevice, unregisterDevice } from '../store/device-tokens.js';
 import { optionalRegisterSecret, requireIngestSecret } from '../middleware/require-api-secret.js';
 import { checkRateLimit, clientRateKey } from '../security/rate-limit.js';
 import { publicErrorMessage } from '../security/public-error.js';
 
 const DEVICE_REGISTER_RATE_MS = 60_000;
+const VIEW_RECORD_RATE_MS = 10_000;
+const VIEW_SESSION_COOKIE = 'cain_view_recorded';
+const VIEW_SESSION_MAX_AGE = 60 * 60 * 4;
 const MAX_DEVICE_TOKEN_LENGTH = 512;
 import { isScrapeConfigured } from '../ingest/scrape.js';
 import { isTwitterApiConfigured } from '../ingest/twitter-api.js';
@@ -44,6 +49,34 @@ export function registerCoreRoutes(app) {
   });
 
   app.get('/v1/sources', (c) => c.json({ sources: listSourcesForApi() }));
+
+  app.get('/v1/views', async (c) => {
+    const views = await getViewCount(c.env.DB);
+    return c.json({ views });
+  });
+
+  app.post('/v1/views', async (c) => {
+    const db = c.env.DB;
+    const alreadyRecorded = getCookie(c, VIEW_SESSION_COOKIE) === '1';
+
+    if (alreadyRecorded) {
+      return c.json({ views: await getViewCount(db), recorded: false });
+    }
+
+    if (!checkRateLimit(clientRateKey(c, 'view-record'), VIEW_RECORD_RATE_MS)) {
+      return c.json({ views: await getViewCount(db), recorded: false }, 429);
+    }
+
+    const views = await incrementViewCount(db);
+    setCookie(c, VIEW_SESSION_COOKIE, '1', {
+      httpOnly: true,
+      secure: c.env.ENVIRONMENT === 'production',
+      sameSite: 'Lax',
+      path: '/',
+      maxAge: VIEW_SESSION_MAX_AGE,
+    });
+    return c.json({ views, recorded: true });
+  });
 
   app.get('/v1/news', async (c) => {
     const db = c.env.DB;

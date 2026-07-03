@@ -1,4 +1,5 @@
 import { APP_NAME } from '../config.js';
+import { useSiteViews } from '../hooks/useSiteViews.js';
 import { SupporterSlot } from './SupporterSlot.jsx';
 import { ThemeToggle } from './ThemeToggle.jsx';
 
@@ -8,6 +9,7 @@ const SOCIAL_LINKS = [
 ];
 
 export function Header({ onRefresh, refreshing }) {
+  const viewCount = useSiteViews();
   const today = new Date().toLocaleDateString(undefined, {
     weekday: 'long',
     year: 'numeric',
@@ -19,7 +21,16 @@ export function Header({ onRefresh, refreshing }) {
     <header className="masthead">
       <div className="masthead-inner">
         <div className="masthead-utility">
-          <p className="masthead-eyebrow">{today}</p>
+          <div className="masthead-utility-start">
+            <p className="masthead-eyebrow">{today}</p>
+            {viewCount !== null ? (
+              <p className="masthead-view-count" aria-live="polite">
+                <span className="masthead-view-count-value">{viewCount.toLocaleString()}</span>
+                {' '}
+                site {viewCount === 1 ? 'view' : 'views'}
+              </p>
+            ) : null}
+          </div>
           <nav className="masthead-social" aria-label="Follow on social media">
             <span className="masthead-social-label">Follow</span>
             {SOCIAL_LINKS.map((link, index) => (

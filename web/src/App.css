@@ -44,6 +44,28 @@
   border-bottom: 1px solid var(--rule-color);
 }
 
+.masthead-utility-start {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+}
+
+.masthead-view-count {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-ink-muted);
+}
+
+.masthead-view-count-value {
+  color: var(--color-ink);
+  font-variant-numeric: tabular-nums;
+}
+
 .masthead-eyebrow {
   margin: 0;
   font-family: var(--font-ui);
