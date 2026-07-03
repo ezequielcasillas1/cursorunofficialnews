@@ -63,3 +63,8 @@
 **Status:** SUCCESS
 **Files:** web/src/App.css
 **Result:** Commit ea0d707 — gold .taco-tier-btn color in html[data-theme='dark'] so $1–/mo tier labels are readable.
+
+### [Thursday Jul 2, 2026] - Live people-online presence counter
+**Status:** SUCCESS
+**Files:** Header.jsx, useSiteViews.js, siteViewsApi.js, site-views.js, core-routes.js, schema.sql, 005_site_presence.sql, implementations.md
+**Result:** Commit 558955b — heartbeat-based site_presence replaces view_count; masthead shows active visitors.
