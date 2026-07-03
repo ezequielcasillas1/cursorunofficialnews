@@ -1,20 +1,13 @@
 import { APP_NAME } from '../config.js';
+import { HEADER_NAV } from '../config/siteNav.js';
 import { useSiteViews } from '../hooks/useSiteViews.js';
 import { SupporterSlot } from './SupporterSlot.jsx';
 import { ThemeToggle } from './ThemeToggle.jsx';
+import { Tooltip } from './Tooltip.jsx';
 
 const SOCIAL_LINKS = [
   { label: 'X', href: 'https://x.com/casiezeq' },
   { label: 'Reddit', href: 'https://reddit.com/user/Ok-Address3409' },
-];
-
-const HEADER_NAV = [
-  { href: '/updates', label: 'Updates' },
-  { href: '/news', label: 'News' },
-  { href: '/tutorials', label: 'Tutorials' },
-  { href: '/newsletter', label: 'Newsletter' },
-  { href: '/about', label: 'About' },
-  { href: '/sources', label: 'Sources' },
 ];
 
 export function Header({ onRefresh, refreshing }) {
@@ -92,9 +85,9 @@ export function Header({ onRefresh, refreshing }) {
         </a>
         <nav className="masthead-nav" aria-label="Site sections">
           {HEADER_NAV.map((link) => (
-            <a key={link.href} href={link.href}>
-              {link.label}
-            </a>
+            <Tooltip key={link.href} text={link.tooltip}>
+              <a href={link.href}>{link.label}</a>
+            </Tooltip>
           ))}
         </nav>
         <div className="masthead-actions">

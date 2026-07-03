@@ -27,7 +27,9 @@ export function NewsletterPage() {
           <h1>Email newsletter</h1>
           <p>
             Get a curated digest of Cursor changelog entries, releases, and community highlights.
-            The email newsletter is a membership benefit — join below to subscribe.
+            The email newsletter is a membership benefit — join below to subscribe.{' '}
+            <a href="/newsletter/unsubscribe">Unsubscribe</a> anytime. By subscribing you agree to
+            our <a href="/terms">Terms</a> and <a href="/privacy">Privacy Policy</a>.
           </p>
         </section>
         <MonetizationSection membership={membership} />

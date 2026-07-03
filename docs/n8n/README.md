@@ -9,9 +9,18 @@ Canonical JSON: [`cursor-ai-news-newsletter.workflow.json`](./cursor-ai-news-new
 | Source | Schedule | Notes |
 |---|---|---|
 | **Cloudflare Worker** | **1:00 PM America/Chicago** (`DIGEST_HOURS=13`) | Hourly cron; sends only when local hour is 13. Queues items between sends. |
-| **n8n `Daily 9am ET1 (DISABLED — use Worker 1pm CT digest)`** | ~~9:00 AM ET (`0 9 * * *`)~~ **disabled in export** | Was a separate daily blast independent of Worker. Disabled to avoid duplicate sends and n8n credit use. |
+| **n8n `Daily 9am ET (DISABLED — use Worker 1pm CT digest)`** | ~~9:00 AM ET (`0 9 * * *`)~~ **disabled in export** | Was a separate daily blast independent of Worker. Disabled to avoid duplicate sends and n8n credit use. |
 
-After importing this workflow, confirm **Daily 9am ET1 (DISABLED — use Worker 1pm CT digest)** stays disabled in the n8n UI (toggle off or delete the node). The **Ingest Webhook** path still runs when the Worker POSTs on ingest (if webhook URL is set).
+After importing this workflow, confirm **Daily 9am ET (DISABLED — use Worker 1pm CT digest)** stays disabled in the n8n UI (toggle off or delete the node). The **Ingest Webhook** path still runs when the Worker POSTs on ingest (if webhook URL is set).
+
+### Manual test runs in n8n UI
+
+Do **not** use "Execute from node" on mid-pipeline nodes after a rename — n8n caches the old node name and fails with `Could not find a node named "…"`. Instead:
+
+1. Use **Test workflow** from the canvas toolbar (webhook test URL), or
+2. POST to the webhook from the Worker/curl with `X-Webhook-Secret`.
+
+"Execute workflow" with only the webhook trigger disabled and schedule disabled will fail with `No node to start the workflow from could be found` — that is expected.
 
 ### Saving n8n credits on scheduled digests
 
@@ -47,8 +56,8 @@ HTTP nodes call **`https://cursorunofficial.news/api/v1/...`** (Worker canonical
 ## Audit fixes in this export
 
 - **Digest sections:** Per-subscriber `digestSections` from `/v1/newsletter/export` (topic-grouped, 1–3 headlines per enabled category) are passed to `/v1/newsletter/generate-html`. Flat `matchingNewItems` / `matchingRecentItems` are fallback only when sections are empty. Email subject comes from the generate-html response (`assembleEmailSubject`), not a hardcoded string.
-- **Error handling:** `continueOnFail` + `onError: continueErrorOutput` on HTTP nodes; error branch → `Respond Webhook Error` (webhook runs only).
-- **Webhook responses:** `Ingest Webhook1` uses `responseMode: responseNode`; `Respond Webhook Accepted` returns `202` immediately; failures on webhook path return `500` JSON.
+- **Error handling:** `onError: continueErrorOutput` on HTTP nodes (no deprecated `continueOnFail`); error output on `main[1]` → `If Webhook Error Response` → `Respond Webhook Error` (webhook runs only).
+- **Webhook responses:** `Ingest Webhook` uses `responseMode: responseNode`; `Respond Webhook Accepted` returns `202` immediately; failures on webhook path return `500` JSON.
 - **Secrets:** HTTP nodes use `genericCredentialType` / `httpHeaderAuth` (no inline tokens).
 - **typeVersions:** Webhook 2.1, Schedule 1.3, HTTP Request 4.4, Filter 2.3, Respond 1.5.
 - **If node unary ops:** boolean `true`/`false` use `operator.singleValue: true` (no `rightValue`).
@@ -59,4 +68,4 @@ This project uses **n8n Cloud** (`casiezeq.app.n8n.cloud`). There is no local `d
 
 ## Unused credential audit note
 
-If the built-in audit reports “credential unused in 90 days,” it usually means **no workflow executions** in that window. **Cursor AI News Webhook Secret** is referenced by `Ingest Webhook1` — do not delete it. Re-run audit after the next successful execution.
+If the built-in audit reports “credential unused in 90 days,” it usually means **no workflow executions** in that window. **Cursor AI News Webhook Secret** is referenced by `Ingest Webhook` — do not delete it. Re-run audit after the next successful execution.

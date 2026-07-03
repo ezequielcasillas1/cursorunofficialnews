@@ -27,6 +27,10 @@ export const FEED_SECTION_ROUTES = FEED_CATEGORIES.filter((cat) => cat.id !== 'a
 
 export const STATIC_PAGE_ROUTES = [
   { path: '/newsletter', id: 'newsletter', label: 'Newsletter' },
+  { path: '/newsletter/unsubscribe', id: 'newsletterUnsubscribe', label: 'Unsubscribe' },
+  { path: '/membership/unsubscribe', id: 'membershipUnsubscribe', label: 'Cancel membership' },
   { path: '/about', id: 'about', label: 'About' },
   { path: '/sources', id: 'sources', label: 'Sources' },
+  { path: '/privacy', id: 'privacy', label: 'Privacy' },
+  { path: '/terms', id: 'terms', label: 'Terms' },
 ];

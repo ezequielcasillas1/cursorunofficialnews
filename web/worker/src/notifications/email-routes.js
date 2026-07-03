@@ -10,17 +10,18 @@ import {
   normalizeEmail,
   resubscribeByToken,
   subscribeEmail,
+  unsubscribeByEmail,
   unsubscribeByToken,
   verifySubscriberByToken,
 } from '../store/email-subscribers.js';
 import { resolveNewsletterEntitlement } from '../lib/membership-entitlement.js';
 import { buildUnsubscribeHtmlPage } from './unsubscribe/unsubscribe-html-page.js';
-import { renderUnsubscribeConfirmForm } from './unsubscribe/components/unsubscribe-confirm-form.js';
 import { renderPageShell, renderMessageParagraph } from './unsubscribe/components/page-shell.js';
 import { sendWelcomeDigest } from '../jobs/send-welcome-digest.js';
 import { escapeHtml } from './unsubscribe/services/escape.js';
 import { checkRateLimit, clientRateKey } from '../security/rate-limit.js';
 import { publicErrorMessage } from '../security/public-error.js';
+import { getPublicWebBase } from '../lib/env.js';
 import {
   isSubscriptionVerificationEmailConfigured,
   sendSubscriptionVerificationEmail,
@@ -97,13 +98,27 @@ function parseUnsubscribeToken(c, body = {}) {
   return String(body?.token || c.req.query('token') || '').trim();
 }
 
+function parseUnsubscribeEmail(body = {}) {
+  return normalizeEmail(body?.email);
+}
+
 async function parseUnsubscribeBody(c) {
   const contentType = c.req.header('content-type') || '';
   if (contentType.includes('application/x-www-form-urlencoded')) {
     const form = await c.req.parseBody().catch(() => ({}));
-    return { token: form?.token, _fromForm: true };
+    return { token: form?.token, email: form?.email, _fromForm: true };
   }
-  return c.req.json().catch(() => ({}));
+  const json = await c.req.json().catch(() => ({}));
+  return json;
+}
+
+function buildUnsubscribePageUrl(env, { token = '', email = '' } = {}) {
+  const params = new URLSearchParams();
+  if (token) params.set('token', token);
+  if (email) params.set('email', email);
+  const query = params.toString();
+  const base = `${getPublicWebBase(env).replace(/\/$/, '')}/newsletter/unsubscribe`;
+  return query ? `${base}?${query}` : base;
 }
 
 function verifyHtmlPage(success, message) {
@@ -282,20 +297,54 @@ export function registerEmailRoutes(app) {
     try {
       const body = await parseUnsubscribeBody(c);
       const token = parseUnsubscribeToken(c, body);
-      if (!token) {
+      const email = parseUnsubscribeEmail(body);
+
+      if (!token && !email) {
         if (wantsHtmlResponse(c) || body?._fromForm) {
           return c.html(
             renderPageShell({
               title: 'Unsubscribe',
-              bodyContent: renderMessageParagraph('Missing unsubscribe token.'),
+              bodyContent: renderMessageParagraph('Missing unsubscribe token or email.'),
             }),
             400,
           );
         }
-        return c.json({ error: 'token is required' }, 400);
+        return c.json({ error: 'token or email is required' }, 400);
       }
 
-      if (!checkRateLimit(clientRateKey(c, `email-unsub:${token.slice(0, 8)}`), EMAIL_ACTION_RATE_MS)) {
+      if (token) {
+        if (!checkRateLimit(clientRateKey(c, `email-unsub:${token.slice(0, 8)}`), EMAIL_ACTION_RATE_MS)) {
+          const message = 'Too many requests — try again shortly';
+          if (wantsHtmlResponse(c) || body?._fromForm) {
+            return c.html(
+              renderPageShell({ title: 'Unsubscribe', bodyContent: renderMessageParagraph(message) }),
+              429,
+            );
+          }
+          return c.json({ error: message }, 429);
+        }
+
+        const subscriber = await getSubscriberByToken(db, token);
+        const removed = await unsubscribeByToken(db, token);
+
+        if (wantsHtmlResponse(c) || body?._fromForm) {
+          return c.html(
+            buildUnsubscribeHtmlPage({
+              success: removed,
+              message: removed
+                ? 'You have been unsubscribed from Unofficial Cursor News email digests.'
+                : 'This unsubscribe link is invalid or has already been used.',
+              token: removed ? token : '',
+              previousCategories: subscriber?.categories || [],
+              previousCategoryLimits: subscriber?.categoryLimits || {},
+            }),
+          );
+        }
+
+        return c.json({ ok: true, removed });
+      }
+
+      if (!checkRateLimit(clientRateKey(c, 'email-unsub-email'), EMAIL_ACTION_RATE_MS)) {
         const message = 'Too many requests — try again shortly';
         if (wantsHtmlResponse(c) || body?._fromForm) {
           return c.html(
@@ -306,24 +355,37 @@ export function registerEmailRoutes(app) {
         return c.json({ error: message }, 429);
       }
 
-      const subscriber = await getSubscriberByToken(db, token);
-      const removed = await unsubscribeByToken(db, token);
+      if (!isValidEmail(email)) {
+        if (wantsHtmlResponse(c) || body?._fromForm) {
+          return c.html(
+            renderPageShell({
+              title: 'Unsubscribe',
+              bodyContent: renderMessageParagraph('Enter a valid email address.'),
+            }),
+            400,
+          );
+        }
+        return c.json({ error: 'Enter a valid email address.' }, 400);
+      }
+
+      await unsubscribeByEmail(db, email);
 
       if (wantsHtmlResponse(c) || body?._fromForm) {
         return c.html(
           buildUnsubscribeHtmlPage({
-            success: removed,
-            message: removed
-              ? 'You have been unsubscribed from Unofficial Cursor News email digests.'
-              : 'This unsubscribe link is invalid or has already been used.',
-            token: removed ? token : '',
-            previousCategories: subscriber?.categories || [],
-            previousCategoryLimits: subscriber?.categoryLimits || {},
+            success: true,
+            message:
+              'If that address was subscribed, you will no longer receive Unofficial Cursor News email digests.',
           }),
         );
       }
 
-      return c.json({ ok: true, removed });
+      return c.json({
+        ok: true,
+        removed: true,
+        message:
+          'If that address was subscribed, you will no longer receive Unofficial Cursor News email digests.',
+      });
     } catch (err) {
       const message = publicErrorMessage(err, 'Unsubscribe failed', c.env);
       if (wantsHtmlResponse(c)) {
@@ -424,45 +486,24 @@ export function registerEmailRoutes(app) {
     c.header('Cache-Control', 'no-store');
     const db = c.env.DB;
     const token = String(c.req.query('token') || '').trim();
+    const email = normalizeEmail(c.req.query('email'));
     const accept = c.req.header('accept') || '';
     const wantsJson = accept.includes('application/json') || c.req.query('format') === 'json';
 
-    if (!token) {
-      if (wantsJson) {
-        return c.json({ error: 'token query parameter is required' }, 400);
-      }
-      return c.html(
-        buildUnsubscribeHtmlPage({ success: false, message: 'Missing unsubscribe token.' }),
-        400,
-      );
+    if (!wantsJson) {
+      return c.redirect(buildUnsubscribePageUrl(c.env, { token, email }), 302);
     }
 
-    if (wantsJson) {
-      const subscriber = await getSubscriberByToken(db, token);
-      if (!subscriber) {
-        return c.json({ error: 'This unsubscribe link is invalid or has already been used.' }, 410);
-      }
-      const removed = await unsubscribeByToken(db, token);
-      return c.json({ ok: true, removed });
+    if (!token) {
+      return c.json({ error: 'token query parameter is required' }, 400);
     }
 
     const subscriber = await getSubscriberByToken(db, token);
     if (!subscriber) {
-      return c.html(
-        buildUnsubscribeHtmlPage({
-          success: false,
-          message: 'This unsubscribe link is invalid or has already been used.',
-        }),
-        410,
-      );
+      return c.json({ error: 'This unsubscribe link is invalid or has already been used.' }, 410);
     }
-
-    return c.html(
-      renderPageShell({
-        title: 'Unsubscribe',
-        bodyContent: renderUnsubscribeConfirmForm(token),
-      }),
-    );
+    const removed = await unsubscribeByToken(db, token);
+    return c.json({ ok: true, removed });
   });
 
   app.get('/v1/email/status', async (c) => {

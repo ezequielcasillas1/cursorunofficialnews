@@ -53,6 +53,20 @@ export function getStaticPageMeta(pageId) {
       path: '/newsletter',
       breadcrumbLabel: 'Newsletter',
     },
+    newsletterUnsubscribe: {
+      title: 'Unsubscribe — Unofficial Cursor News',
+      description:
+        'Unsubscribe from the Unofficial Cursor News email digest. Stop curated Cursor updates in your inbox anytime.',
+      path: '/newsletter/unsubscribe',
+      breadcrumbLabel: 'Unsubscribe',
+    },
+    membershipUnsubscribe: {
+      title: 'Cancel membership — Unofficial Cursor News',
+      description:
+        'Cancel your Unofficial Cursor News monthly membership. Stop Stripe billing while keeping access until period end.',
+      path: '/membership/unsubscribe',
+      breadcrumbLabel: 'Cancel membership',
+    },
     about: {
       title: 'About — Unofficial Cursor News',
       description:
@@ -66,6 +80,20 @@ export function getStaticPageMeta(pageId) {
         'Human-readable list of ingest sources powering Unofficial Cursor News — official and community feeds.',
       path: '/sources',
       breadcrumbLabel: 'Sources',
+    },
+    privacy: {
+      title: 'Privacy Policy — Unofficial Cursor News',
+      description:
+        'Privacy Policy for Unofficial Cursor News — how we handle newsletter, membership, and site data.',
+      path: '/privacy',
+      breadcrumbLabel: 'Privacy',
+    },
+    terms: {
+      title: 'Terms of Use — Unofficial Cursor News',
+      description:
+        'Terms of Use for Unofficial Cursor News — rules for using this unofficial fan news feed and membership.',
+      path: '/terms',
+      breadcrumbLabel: 'Terms',
     },
   };
 

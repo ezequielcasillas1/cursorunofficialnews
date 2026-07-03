@@ -64,6 +64,14 @@ export function unsubscribeNewsletter(token) {
   });
 }
 
+export function unsubscribeNewsletterByEmail(email) {
+  return fetchJson('/v1/email/unsubscribe', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: String(email || '').trim().toLowerCase() }),
+  });
+}
+
 export function fetchNewsletterStatus(token) {
   const params = new URLSearchParams({ token: String(token || '').trim() });
   return fetchJson(`/v1/email/status?${params.toString()}`);

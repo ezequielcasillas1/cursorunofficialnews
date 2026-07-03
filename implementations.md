@@ -1,3 +1,28 @@
+### [2026-07-03] - Privacy Policy and Terms of Use pages
+**Status:** SUCCESS
+**Files:** web/src/{legal/privacyContent.js,legal/termsContent.js,components/legal/LegalDocument.jsx,pages/PrivacyPage.jsx,pages/TermsPage.jsx,App.jsx,App.css,components/Footer.jsx,config/siteNav.js,pages/NewsletterPage.jsx,routes/feedRoutes.js,seo/pageMeta.js}, web/public/sitemap.xml
+**Result:** Added `/privacy` and `/terms` with Texas-governed template copy, footer legal nav, newsletter agreement links, prerender + sitemap entries. No AdSense/cookie sections per plan.
+
+### [2026-07-03] - Footer and header nav tooltips
+**Status:** SUCCESS
+**Files:** web/src/config/siteNav.js, web/src/components/{Header.jsx,Footer.jsx}
+**Result:** Shared HEADER_NAV/FOOTER_NAV/LEGAL_NAV with tooltip copy; masthead and footer links use stylish Tooltips like category tabs.
+
+### [2026-07-03] - Dedicated membership unsubscribe page
+**Status:** PENDING USER VERIFY
+**Files:** web/src/pages/MembershipUnsubscribePage.jsx, web/src/{App.jsx,components/Footer.jsx,components/monetization/MembershipPanel.jsx,monetization/{useMembership.js,services/membershipApi.js},seo/pageMeta.js,routes/feedRoutes.js,App.css}, web/worker/src/monetization/{stripe-membership-cancel.js,stripe-membership-cancel.test.js,membership-routes.js}
+**Result:** Added `/membership/unsubscribe` SPA + footer/supporter links. API: GET/POST `/v1/membership/cancel` — Stripe `cancel_at_period_end` for billable subs; immediate deactivate for non-Stripe. Rate-limited; clears local token on immediate cancel.
+
+### [2026-07-03] - Dedicated newsletter unsubscribe page
+**Status:** PENDING USER VERIFY
+**Files:** web/src/pages/UnsubscribePage.jsx, web/src/{App.jsx,components/Footer.jsx,components/newsletter/NewsletterSettings.jsx,pages/NewsletterPage.jsx,newsletter/services/newsletterApi.js,seo/pageMeta.js,routes/feedRoutes.js,App.css}, web/worker/src/{store/email-subscribers.js,notifications/email-routes.js}, env/server.example.env
+**Result:** Added `/newsletter/unsubscribe` SPA with token (from email) or email form flows, confirm-then-POST UX, success state. Footer + newsletter pages link to it. Digest unsubscribe URLs now use `PUBLIC_WEB_BASE/newsletter/unsubscribe?token&email`; legacy GET `/api/v1/email/unsubscribe` redirects to SPA. POST accepts email when no token.
+
+### [2026-07-03] - n8n newsletter node name de-suffix
+**Status:** PENDING USER VERIFY
+**Files:** docs/n8n/cursor-ai-news-newsletter.workflow.json, docs/n8n/README.md
+**Result:** Dropped trailing `1` from Ingest Webhook, Fetch Subscribers + Items, Split Subscribers, Has Matching Items, Daily 9am ET schedule node. Updated `$('…')` expressions and connections keys. Live push via n8n MCP blocked (daily quota); re-import export + Publish in n8n UI.
+
 ### [2026-07-02] - Prod NEWSLETTER_FREE_EMAILS update
 **Status:** SUCCESS
 **Files:** Cloudflare Worker `cursorunofficialnews` secret
@@ -160,7 +185,16 @@ Prod: `npx wrangler secret put N8N_NEWSLETTER_WEBHOOK_URL` with live `/webhook/`
 **Files:** fly.toml, web/vite.config.js
 **Result:** Config fix in 6b8bb76 (internal_port=8787). User confirmed manual Fly redeploy restored /api.
 
-### [2026-07-02] - Root npm run dev (api + web)
+### [2026-07-03] - n8n workflow error-handling fix
+**Status:** PENDING USER VERIFY
+**Files:** docs/n8n/cursor-ai-news-newsletter.workflow.json, docs/n8n/README.md, n8n live AWUxJU3oVLNzP2Op
+**Result:** MCP fixed 6 validation errors: removed deprecated continueOnFail, migrated error connections to main[1], upgraded If node v2.3, fixed Respond Webhook Error expression. Manual "execute from node" errors were stale pin data during rename session.
+
+### [2026-07-03] - n8n Generate HTML node name fix
+**Status:** PENDING USER VERIFY
+**Files:** docs/n8n/cursor-ai-news-newsletter.workflow.json, n8n live AWUxJU3oVLNzP2Op
+**Result:** Renamed `Generate HTML (Composer 2.5)` → `Generate HTML (Composer 2.5)1` to match manual-execution name and other pipeline nodes. Synced Has Matching Items1 digestSections filter in repo export.
+
 **Status:** PENDING USER VERIFY
 **Files:** package.json, package-lock.json
 **Result:** Added \dev\ script via concurrently (-n api,web) running dev:api and dev:web in parallel. devDependency concurrently ^9.1.2 installed.

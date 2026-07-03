@@ -11,8 +11,10 @@ import {
 import {
   claimMembership,
   confirmMembershipCheckout,
+  fetchCancelEligibility,
   fetchMembershipStatus,
   fetchRefundEligibility,
+  cancelMembership,
   requestMembershipRefund,
   startMembershipCheckout,
   verifyMembershipClaim,
@@ -33,6 +35,10 @@ export function useMembership() {
   const [refunding, setRefunding] = useState(false);
   const [refundError, setRefundError] = useState('');
   const [refundNotice, setRefundNotice] = useState('');
+  const [cancelEligibility, setCancelEligibility] = useState(null);
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState('');
+  const [cancelNotice, setCancelNotice] = useState('');
 
   const applyEntitlement = useCallback((token, data) => {
     const active = Boolean(data.adFree);
@@ -259,6 +265,9 @@ export function useMembership() {
     setRefundEligibility(null);
     setRefundError('');
     setRefundNotice('');
+    setCancelEligibility(null);
+    setCancelError('');
+    setCancelNotice('');
   }, []);
 
   const refreshRefundEligibility = useCallback(async (token) => {
@@ -305,6 +314,68 @@ export function useMembership() {
     }
   }, [clearMembership, membershipToken]);
 
+  const refreshCancelEligibility = useCallback(async (token) => {
+    const resolved = String(token || membershipToken || getStoredMembershipToken() || '').trim();
+    if (!resolved || MEMBERSHIP_DEV_ACTIVE) {
+      setCancelEligibility(null);
+      return null;
+    }
+    try {
+      const data = await fetchCancelEligibility(resolved);
+      setCancelEligibility(data);
+      return data;
+    } catch {
+      setCancelEligibility(null);
+      return null;
+    }
+  }, [membershipToken]);
+
+  const cancelActiveMembership = useCallback(async () => {
+    const token = membershipToken || getStoredMembershipToken();
+    if (!token) {
+      setCancelError('Membership token not found on this device');
+      return false;
+    }
+
+    setCancelError('');
+    setCancelNotice('');
+    setCancelling(true);
+    try {
+      const data = await cancelMembership(token);
+      if (data.immediate) {
+        clearMembership();
+        setCancelNotice('Your membership has been cancelled. Newsletter access has ended on this device.');
+        return true;
+      }
+
+      const endDate = data.currentPeriodEnd || data.cancelAt;
+      const formatted = endDate
+        ? new Date(endDate).toLocaleDateString(undefined, {
+            month: 'long',
+            day: 'numeric',
+            year: 'numeric',
+          })
+        : null;
+
+      setCancelNotice(
+        data.alreadyScheduled
+          ? formatted
+            ? `Cancellation is already scheduled. Your membership stays active until ${formatted}.`
+            : 'Cancellation is already scheduled. Your membership stays active until the end of the billing period.'
+          : formatted
+            ? `Membership cancellation scheduled. You keep access until ${formatted}, and billing will not renew.`
+            : 'Membership cancellation scheduled. You keep access until the end of your billing period.',
+      );
+      await refreshCancelEligibility(token);
+      return true;
+    } catch (err) {
+      setCancelError(err.message || 'Could not cancel membership');
+      return false;
+    } finally {
+      setCancelling(false);
+    }
+  }, [clearMembership, membershipToken, refreshCancelEligibility]);
+
   useEffect(() => {
     if (!adFree || !membershipToken || MEMBERSHIP_DEV_ACTIVE) {
       setRefundEligibility(null);
@@ -312,6 +383,14 @@ export function useMembership() {
     }
     refreshRefundEligibility(membershipToken);
   }, [adFree, membershipToken, refreshRefundEligibility]);
+
+  useEffect(() => {
+    if (!adFree || !membershipToken || MEMBERSHIP_DEV_ACTIVE) {
+      setCancelEligibility(null);
+      return;
+    }
+    refreshCancelEligibility(membershipToken);
+  }, [adFree, membershipToken, refreshCancelEligibility]);
 
   return {
     adFree,
@@ -328,10 +407,16 @@ export function useMembership() {
     refunding,
     refundError,
     refundNotice,
+    cancelEligibility,
+    cancelling,
+    cancelError,
+    cancelNotice,
     startCheckout,
     claimAdFree,
     clearMembership,
     requestRefund,
+    cancelActiveMembership,
+    refreshCancelEligibility,
     refreshStatus: () => verifyToken(getStoredMembershipToken()),
   };
 }

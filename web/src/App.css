@@ -303,6 +303,27 @@ html[data-theme='light'] .masthead-logo-light {
   border-color: var(--color-border-strong);
 }
 
+.btn-danger {
+  background: #9b1c1c;
+  border-color: #9b1c1c;
+  color: #fff;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: #7f1515;
+  border-color: #7f1515;
+}
+
+html[data-theme='dark'] .btn-danger {
+  background: #c53030;
+  border-color: #c53030;
+}
+
+html[data-theme='dark'] .btn-danger:hover:not(:disabled) {
+  background: #9b2c2c;
+  border-color: #9b2c2c;
+}
+
 /* ── Feed search ───────────────────────────────────────── */
 
 .feed-search {
@@ -1503,6 +1524,26 @@ html[data-theme='light'] .masthead-logo-light {
   margin-bottom: 0;
 }
 
+.unsubscribe-panel {
+  max-width: 32rem;
+  padding: var(--space-xl);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--color-card);
+}
+
+.unsubscribe-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.unsubscribe-success {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
 /* ── About panel ───────────────────────────────────────── */
 
 .about-panel {
@@ -1558,6 +1599,63 @@ html[data-theme='light'] .masthead-logo-light {
   font-size: 1rem;
   line-height: 1.65;
   color: var(--color-ink-muted);
+}
+
+.legal-document {
+  max-width: 42rem;
+}
+
+.legal-document-updated {
+  font-size: 0.875rem;
+  color: var(--color-ink-light);
+}
+
+.legal-document-section {
+  margin-top: var(--space-2xl);
+  padding-top: var(--space-xl);
+  border-top: 1px solid var(--rule-color);
+}
+
+.legal-document-section h2 {
+  margin: 0 0 var(--space-md);
+  font-family: var(--font-ui);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-ink-light);
+}
+
+.legal-document-section p {
+  margin: 0 0 var(--space-md);
+  color: var(--color-ink-muted);
+  line-height: 1.7;
+  font-size: 0.9375rem;
+}
+
+.legal-document-section ul,
+.legal-document-links {
+  margin: 0 0 var(--space-md);
+  padding-left: 1.25rem;
+  color: var(--color-ink-muted);
+  line-height: 1.7;
+  font-size: 0.9375rem;
+}
+
+.legal-document-section li + li,
+.legal-document-links li + li {
+  margin-top: var(--space-xs);
+}
+
+.legal-document-section a,
+.legal-document-links a {
+  color: var(--color-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.site-footer-legal {
+  margin-top: var(--space-sm);
 }
 
 .sources-list {
@@ -1825,6 +1923,31 @@ html[data-theme='dark'] .taco-tier-btn {
   font-family: var(--font-ui);
   font-size: 0.85rem;
   color: var(--color-success);
+}
+
+.membership-unsubscribe-panel {
+  margin-top: var(--space-xl);
+}
+
+.membership-unsubscribe-details {
+  margin: var(--space-md) 0 var(--space-lg);
+  padding-left: 1.25rem;
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  line-height: 1.55;
+  color: var(--color-ink-soft);
+}
+
+.membership-unsubscribe-details li + li {
+  margin-top: var(--space-sm);
+}
+
+.membership-unsubscribe-success {
+  color: var(--color-success);
+}
+
+.taco-panel--supporter .taco-claim-toggle + .taco-claim-toggle {
+  margin-left: var(--space-md);
 }
 
 .adsense-slot {

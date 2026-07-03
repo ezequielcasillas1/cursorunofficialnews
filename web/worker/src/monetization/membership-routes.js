@@ -24,12 +24,17 @@ import {
   MIN_REFUND_AMOUNT_CENTS,
   processMembershipRefund,
 } from './stripe-refund.js';
+import {
+  getMembershipCancelEligibility,
+  processMembershipCancel,
+} from './stripe-membership-cancel.js';
 import { checkRateLimit, clientRateKey } from '../security/rate-limit.js';
 import { publicErrorMessage } from '../security/public-error.js';
 
 const CLAIM_RATE_MS = 30_000;
 const CHECKOUT_RATE_MS = 30_000;
 const REFUND_RATE_MS = 60_000;
+const CANCEL_RATE_MS = 60_000;
 
 const CLAIM_PENDING_MESSAGE =
   'If that email has an active membership, we sent a verification link.';
@@ -256,6 +261,53 @@ export function registerMembershipRoutes(app) {
       }
       console.error('[membership/refund]', err.message || err);
       return c.json({ error: publicErrorMessage(err, 'Could not process refund', c.env) }, 502);
+    }
+  });
+
+  app.get('/v1/membership/cancel/eligibility', async (c) => {
+    c.header('Cache-Control', 'no-store');
+    const db = c.env.DB;
+    const token = String(c.req.query('token') || '').trim();
+    if (!token) {
+      return c.json({ error: 'token query parameter is required' }, 400);
+    }
+
+    const eligibility = await getMembershipCancelEligibility(db, token, c.env);
+    return c.json({ ok: true, ...eligibility });
+  });
+
+  app.post('/v1/membership/cancel', async (c) => {
+    c.header('Cache-Control', 'no-store');
+    if (!checkRateLimit(clientRateKey(c, 'membership-cancel'), CANCEL_RATE_MS)) {
+      return c.json({ error: 'Too many requests — try again shortly' }, 429);
+    }
+
+    const db = c.env.DB;
+    const body = await c.req.json().catch(() => ({}));
+    const membershipToken = String(body?.membershipToken || body?.token || '').trim();
+    if (!membershipToken) {
+      return c.json({ error: 'membershipToken is required' }, 400);
+    }
+
+    try {
+      const result = await processMembershipCancel(c.env, db, { membershipToken });
+      return c.json(result);
+    } catch (err) {
+      const code = err.code || '';
+      if (code === 'NOT_CANCELLABLE') {
+        return c.json(
+          {
+            error: publicErrorMessage(err, 'Cancellation not available', c.env),
+            membershipStatus: err.membershipStatus || null,
+          },
+          403,
+        );
+      }
+      if (code === 'ALREADY_CANCELLED') {
+        return c.json({ error: publicErrorMessage(err, 'Already cancelled', c.env) }, 409);
+      }
+      console.error('[membership/cancel]', err.message || err);
+      return c.json({ error: publicErrorMessage(err, 'Could not cancel membership', c.env) }, 502);
     }
   });
 

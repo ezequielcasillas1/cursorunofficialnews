@@ -1,4 +1,10 @@
-﻿### [July 1, 2026] - n8n newsletter E2E (Cloud + news-api)
+﻿### [July 3, 2026] - Privacy, terms, unsubscribe pages, nav tooltips
+**Status:** SUCCESS
+**Commit:** 597f0fd
+**Files:** web/src legal pages, unsubscribe pages, siteNav tooltips, worker membership/email routes, docs/n8n workflow
+**Result:** `/privacy` + `/terms`, newsletter/membership unsubscribe SPAs, shared footer/header tooltips, Stripe cancel-at-period-end API, n8n node rename sync.
+
+### [July 1, 2026] - n8n newsletter E2E (Cloud + news-api)
 **Status:** SUCCESS
 **Files:** env/server/.env, mobile/server/n8n/cursor-ai-news-newsletter.json, mobile/server/src/notifications/newsletter-routes.js
 **Result:** Full n8n chain green (Fetch ? Generate HTML ? Resend); digest delivered to ezequielcasillas1@gmail.com. Fixed fly.dev 404 ? news-api URL; CURSOR_API_KEY required server restart (env not hot-reloaded).

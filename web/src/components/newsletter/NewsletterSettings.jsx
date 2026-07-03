@@ -286,8 +286,9 @@ export function NewsletterSettings({ membership }) {
 
       <p className="hint newsletter-footer-note">
         New sign-ups must confirm via the email we send before digests begin. This
-        browser remembers your settings after you subscribe. You can also unsubscribe
-        anytime from the link at the bottom of every digest email.
+        browser remembers your settings after you subscribe. You can also{' '}
+        <a href="/newsletter/unsubscribe">unsubscribe here</a> or from the link at the bottom of
+        every digest email.
       </p>
     </CollapsiblePanel>
   );

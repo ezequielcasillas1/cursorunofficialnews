@@ -93,8 +93,10 @@ export function MembershipPanel({
       </div>
 
       <p className="taco-footnote">
-        Secure checkout via Stripe. Cancel anytime — newsletter access stays unlocked for as long as
-        your membership is active. Ad-free browsing will be enabled when AdSense goes live.
+        Secure checkout via Stripe.{' '}
+        <a href="/membership/unsubscribe">Cancel membership</a> anytime — newsletter access stays
+        unlocked for as long as your membership is active. Ad-free browsing will be enabled when
+        AdSense goes live.
       </p>
 
       {!showClaimForm ? (
@@ -195,9 +197,14 @@ export function SupporterBadge({
       ) : null}
       {refundNotice ? <p className="hint">{refundNotice}</p> : null}
       {onClear ? (
-        <button type="button" className="taco-claim-toggle" onClick={onClear}>
-          Sign out of membership
-        </button>
+        <>
+          <a href="/membership/unsubscribe" className="taco-claim-toggle">
+            Cancel membership
+          </a>
+          <button type="button" className="taco-claim-toggle" onClick={onClear}>
+            Sign out of membership
+          </button>
+        </>
       ) : null}
     </section>
   );

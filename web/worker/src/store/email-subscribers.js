@@ -1,6 +1,7 @@
 import { normalizeCategoryLimits } from '../shared/notifications/category-limits.js';
 import { VALID_CATEGORY_IDS } from '../shared/notifications/constants.js';
 import { randomToken } from '../lib/crypto.js';
+import { getPublicWebBase } from '../lib/env.js';
 
 const VALID_CATEGORIES = new Set(VALID_CATEGORY_IDS);
 
@@ -266,6 +267,19 @@ export async function unsubscribeEmail(db, email) {
   return (result.meta?.changes || 0) > 0;
 }
 
+/** Soft-disable digest emails for a subscriber matched by email (same as token unsubscribe). */
+export async function unsubscribeByEmail(db, email) {
+  const normalized = normalizeEmail(email);
+  if (!normalized || !isValidEmail(normalized)) return false;
+  const record = await getSubscriber(db, normalized);
+  if (!record) return false;
+  if (!record.enabled) return true;
+  record.enabled = false;
+  record.updatedAt = new Date().toISOString();
+  await upsertSubscriber(db, record);
+  return true;
+}
+
 export async function unsubscribeByToken(db, token) {
   if (!token) return false;
   const record = rowToSubscriber(
@@ -325,11 +339,14 @@ export async function getSubscribedEmails(db, category) {
 }
 
 export function getUnsubscribeUrl(subscriber, env) {
-  const base =
-    env?.PUBLIC_API_BASE?.trim() || 'https://cursorunofficial.news/api';
+  const base = getPublicWebBase(env);
   const token = recordToken(subscriber);
   if (!token) return null;
-  return `${base.replace(/\/$/, '')}/v1/email/unsubscribe?token=${encodeURIComponent(token)}`;
+  const params = new URLSearchParams({ token });
+  if (subscriber?.email) {
+    params.set('email', subscriber.email);
+  }
+  return `${base.replace(/\/$/, '')}/newsletter/unsubscribe?${params.toString()}`;
 }
 
 export function buildSubscriberForClient(subscriber) {
