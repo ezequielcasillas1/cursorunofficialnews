@@ -1,3 +1,8 @@
+### [2026-07-02] - Prod NEWSLETTER_FREE_EMAILS update
+**Status:** SUCCESS
+**Files:** Cloudflare Worker `cursorunofficialnews` secret
+**Result:** Set `NEWSLETTER_FREE_EMAILS=ezequielcasillas1@gmail.com` via `wrangler secret put` (repo root, NODE_OPTIONS=--use-system-ca). Verified name in `wrangler secret list`. Replaces prior whitelist address.
+
 ### [2026-07-02] - Local membership admin dashboard
 **Status:** PENDING USER VERIFY
 **Files:** web/admin/*, web/worker/src/admin/*, web/worker/src/middleware/require-local-admin.js, web/worker/src/store/memberships.js, web/worker/src/db/migrations/003_membership_admin.sql, env/server.example.env, package.json

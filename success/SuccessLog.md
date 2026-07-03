@@ -58,3 +58,8 @@
 **Files:** web/worker/src/security/*, email-routes, core-routes, app.js, _headers, docs/SECURITY-HARDENING.md, docs/n8n/*, env/*.example.env, mobile/src/api/newsClient.js
 **Result:** Worker auth/rate limits/CSP/HSTS; n8n workflow URLs aligned to production API; INGEST_SECRET docs and example envs synced. Committed per user git commit --trailer "Co-authored-by: Cursor <cursoragent@cursor.com>" all.
 
+
+### [Thursday Jul 2, 2026] - Dark mode subscription tier text contrast
+**Status:** SUCCESS
+**Files:** web/src/App.css
+**Result:** Commit ea0d707 — gold .taco-tier-btn color in html[data-theme='dark'] so $1–/mo tier labels are readable.

@@ -2,7 +2,7 @@ import { API_BASE } from '../config.js';
 
 const REQUEST_TIMEOUT_MS = import.meta.env.PROD ? 30000 : 15000;
 
-async function fetchViewsJson(path, options = {}) {
+async function fetchPresenceJson(path, options = {}) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
@@ -30,10 +30,10 @@ async function fetchViewsJson(path, options = {}) {
   }
 }
 
-export function fetchViewCount() {
-  return fetchViewsJson('/v1/views');
+export function fetchOnlineCount() {
+  return fetchPresenceJson('/v1/views');
 }
 
-export function recordSiteView() {
-  return fetchViewsJson('/v1/views', { method: 'POST' });
+export function sendPresenceHeartbeat() {
+  return fetchPresenceJson('/v1/views', { method: 'POST' });
 }

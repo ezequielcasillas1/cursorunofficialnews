@@ -1,32 +1,41 @@
 import { useEffect, useState } from 'react';
-import { fetchViewCount, recordSiteView } from '../services/siteViewsApi.js';
+import { fetchOnlineCount, sendPresenceHeartbeat } from '../services/siteViewsApi.js';
+
+const HEARTBEAT_MS = 45_000;
 
 export function useSiteViews() {
-  const [viewCount, setViewCount] = useState(null);
+  const [onlineCount, setOnlineCount] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
+    let intervalId;
 
-    recordSiteView()
-      .then((data) => {
-        if (!cancelled && typeof data?.views === 'number') {
-          setViewCount(data.views);
-        }
-      })
-      .catch(() => {
-        fetchViewCount()
-          .then((data) => {
-            if (!cancelled && typeof data?.views === 'number') {
-              setViewCount(data.views);
-            }
-          })
-          .catch(() => {});
-      });
+    const syncPresence = () => {
+      sendPresenceHeartbeat()
+        .then((data) => {
+          if (!cancelled && typeof data?.online === 'number') {
+            setOnlineCount(data.online);
+          }
+        })
+        .catch(() => {
+          fetchOnlineCount()
+            .then((data) => {
+              if (!cancelled && typeof data?.online === 'number') {
+                setOnlineCount(data.online);
+              }
+            })
+            .catch(() => {});
+        });
+    };
+
+    syncPresence();
+    intervalId = setInterval(syncPresence, HEARTBEAT_MS);
 
     return () => {
       cancelled = true;
+      clearInterval(intervalId);
     };
   }, []);
 
-  return viewCount;
+  return onlineCount;
 }

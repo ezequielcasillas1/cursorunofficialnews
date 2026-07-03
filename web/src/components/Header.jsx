@@ -9,7 +9,7 @@ const SOCIAL_LINKS = [
 ];
 
 export function Header({ onRefresh, refreshing }) {
-  const viewCount = useSiteViews();
+  const onlineCount = useSiteViews();
   const today = new Date().toLocaleDateString(undefined, {
     weekday: 'long',
     year: 'numeric',
@@ -23,11 +23,15 @@ export function Header({ onRefresh, refreshing }) {
         <div className="masthead-utility">
           <div className="masthead-utility-start">
             <p className="masthead-eyebrow">{today}</p>
-            {viewCount !== null ? (
-              <p className="masthead-view-count" aria-live="polite">
-                <span className="masthead-view-count-value">{viewCount.toLocaleString()}</span>
+            {onlineCount !== null ? (
+              <p
+                className="masthead-view-count"
+                aria-live="polite"
+                aria-label={`${onlineCount} ${onlineCount === 1 ? 'person' : 'people'} currently on the site`}
+              >
+                <span className="masthead-view-count-value">{onlineCount.toLocaleString()}</span>
                 {' '}
-                site {viewCount === 1 ? 'view' : 'views'}
+                {onlineCount === 1 ? 'person' : 'people'} online
               </p>
             ) : null}
           </div>

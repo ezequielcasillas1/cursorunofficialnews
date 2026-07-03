@@ -1,27 +1,60 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { getViewCount, incrementViewCount } from './site-views.js';
+import {
+  createSessionId,
+  getActiveVisitorCount,
+  isValidSessionId,
+  pruneStalePresence,
+  recordPresence,
+  touchPresence,
+} from './site-views.js';
 
-function createMockDb(initialCount = 0) {
-  let viewCount = initialCount;
+function createMockDb(initialSessions = []) {
+  const sessions = new Map(
+    initialSessions.map(({ session_id, last_seen }) => [session_id, last_seen]),
+  );
+  let lastNowModifier = '-2 minutes';
 
   return {
+    sessions,
+    lastNowModifier,
     prepare(sql) {
       const query = String(sql);
       return {
         bind(...params) {
+          if (query.includes('DELETE FROM site_presence')) {
+            lastNowModifier = params[0];
+          }
           return {
             async first() {
-              if (query.includes('SELECT view_count FROM site_stats')) {
-                return { view_count: viewCount };
+              if (query.includes('SELECT COUNT(*) AS count FROM site_presence')) {
+                lastNowModifier = params[0];
+                const cutoff = Date.now() - 2 * 60 * 1000;
+                let count = 0;
+                for (const lastSeen of sessions.values()) {
+                  if (new Date(lastSeen).getTime() >= cutoff) count += 1;
+                }
+                return { count };
               }
               return null;
             },
             async run() {
-              if (query.includes('UPDATE site_stats SET view_count = view_count + 1')) {
-                viewCount += 1;
+              if (query.includes('DELETE FROM site_presence')) {
+                const cutoff = Date.now() - 2 * 60 * 1000;
+                for (const [id, lastSeen] of sessions.entries()) {
+                  if (new Date(lastSeen).getTime() < cutoff) {
+                    sessions.delete(id);
+                  }
+                }
                 return { meta: { changes: 1 } };
               }
+
+              if (query.includes('INSERT INTO site_presence')) {
+                const [sessionId] = params;
+                sessions.set(sessionId, new Date().toISOString());
+                return { meta: { changes: 1 } };
+              }
+
               return { meta: { changes: 0 } };
             },
           };
@@ -31,24 +64,36 @@ function createMockDb(initialCount = 0) {
   };
 }
 
-describe('site-views store', () => {
-  it('returns zero when no row is present', async () => {
-    const db = {
-      prepare() {
-        return {
-          bind() {
-            return { async first() { return null; } };
-          },
-        };
-      },
-    };
-    assert.equal(await getViewCount(db), 0);
+describe('site presence store', () => {
+  it('validates opaque session ids', () => {
+    assert.equal(isValidSessionId(createSessionId()), true);
+    assert.equal(isValidSessionId('not-a-uuid'), false);
+    assert.equal(isValidSessionId(''), false);
   });
 
-  it('reads and increments the persisted count', async () => {
-    const db = createMockDb(41);
-    assert.equal(await getViewCount(db), 41);
-    assert.equal(await incrementViewCount(db), 42);
-    assert.equal(await getViewCount(db), 42);
+  it('returns zero when no sessions are active', async () => {
+    const db = createMockDb();
+    assert.equal(await getActiveVisitorCount(db), 0);
+  });
+
+  it('records a heartbeat and counts active sessions', async () => {
+    const db = createMockDb();
+    const sessionId = createSessionId();
+
+    assert.equal(await recordPresence(db, sessionId), 1);
+    await touchPresence(db, createSessionId());
+    assert.equal(await getActiveVisitorCount(db), 2);
+  });
+
+  it('prunes stale sessions before counting', async () => {
+    const staleId = createSessionId();
+    const freshId = createSessionId();
+    const db = createMockDb([
+      { session_id: staleId, last_seen: new Date(Date.now() - 5 * 60 * 1000).toISOString() },
+      { session_id: freshId, last_seen: new Date().toISOString() },
+    ]);
+
+    await pruneStalePresence(db);
+    assert.equal(await getActiveVisitorCount(db), 1);
   });
 });
