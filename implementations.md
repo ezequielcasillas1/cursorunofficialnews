@@ -165,3 +165,8 @@ Prod: `npx wrangler secret put N8N_NEWSLETTER_WEBHOOK_URL` with live `/webhook/`
 **Files:** package.json, package-lock.json
 **Result:** Added \dev\ script via concurrently (-n api,web) running dev:api and dev:web in parallel. devDependency concurrently ^9.1.2 installed.
 
+### [2026-07-02] - CSP, views 500, membership claim 429, D1 fallback
+**Status:** SUCCESS
+**Files:** web/public/_headers, useSiteViews.js, useMembership.js, worker migrations, membership/site-views stores, tests
+**Result:** Commit 3348f58. User confirmed post-deploy: membership email link OK; CSP and views errors fixed; claim rate limit + prod D1 blocked column fallback; ezequielcasillas1@gmail.com bypass.
+

@@ -68,3 +68,8 @@
 **Status:** SUCCESS
 **Files:** Header.jsx, useSiteViews.js, siteViewsApi.js, site-views.js, core-routes.js, schema.sql, 005_site_presence.sql, implementations.md
 **Result:** Commit 558955b — heartbeat-based site_presence replaces view_count; masthead shows active visitors.
+
+### [Thursday Jul 2, 2026] - CSP, views 500, membership claim 429, D1 fallback
+**Status:** SUCCESS
+**Files:** web/public/_headers, web/src/hooks/useSiteViews.js, web/src/monetization/useMembership.js, web/worker migrations, membership/site-views store files, tests
+**Result:** Commit 3348f58 on main. After wrangler deploy, membership email link works; CSP and /api/v1/views 500 fixed; claim 429 eased; prod D1 blocked column fallback; ezequielcasillas1@gmail.com bypass.
