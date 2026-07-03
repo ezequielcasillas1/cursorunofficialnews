@@ -22,6 +22,7 @@ Feature requests (numbered). Concise bullets only.
 ## 4. Stripe membership replaces Buy Me a Coffee — DONE (pending Stripe object creation)
 - $1–$5/mo Stripe Checkout subscription; one entitlement unlocks ad-free + email newsletter
 - Newsletter subscribe/resubscribe now membership-gated (`membershipToken` required)
+- Refunds: $4+/mo members can request full refund via `POST /v1/membership/refund` (membershipToken)
 - See `docs/STRIPE-GO-LIVE.md` for required secrets + manual Stripe dashboard steps
 
 ## 5. New Yorker-inspired web redesign + WaPo-style fonts

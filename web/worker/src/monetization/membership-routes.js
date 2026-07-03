@@ -20,6 +20,11 @@ import {
   sendMembershipClaimEmail,
 } from './send-membership-claim-email.js';
 import { createMembershipCheckoutSession, retrieveCompletedCheckoutSession } from './stripe-checkout.js';
+import {
+  getMembershipRefundEligibility,
+  MIN_REFUND_AMOUNT_CENTS,
+  processMembershipRefund,
+} from './stripe-refund.js';
 import { checkRateLimit, clientRateKey } from '../security/rate-limit.js';
 import { publicErrorMessage } from '../security/public-error.js';
 
@@ -27,6 +32,7 @@ import { publicErrorMessage } from '../security/public-error.js';
 const claimRateLimit = new Map();
 const CLAIM_RATE_MS = 30_000;
 const CHECKOUT_RATE_MS = 30_000;
+const REFUND_RATE_MS = 60_000;
 
 function checkClaimRateLimit(key) {
   const now = Date.now();
@@ -218,6 +224,51 @@ export function registerMembershipRoutes(app) {
       email: status.email,
       membershipStatus: status.membershipStatus,
     });
+  });
+
+  app.get('/v1/membership/refund/eligibility', async (c) => {
+    c.header('Cache-Control', 'no-store');
+    const db = c.env.DB;
+    const token = String(c.req.query('token') || '').trim();
+    if (!token) {
+      return c.json({ error: 'token query parameter is required' }, 400);
+    }
+
+    const eligibility = await getMembershipRefundEligibility(db, token);
+    return c.json({
+      ok: true,
+      minAmountCents: MIN_REFUND_AMOUNT_CENTS,
+      ...eligibility,
+    });
+  });
+
+  app.post('/v1/membership/refund', async (c) => {
+    c.header('Cache-Control', 'no-store');
+    if (!checkRateLimit(clientRateKey(c, 'membership-refund'), REFUND_RATE_MS)) {
+      return c.json({ error: 'Too many requests — try again shortly' }, 429);
+    }
+
+    const db = c.env.DB;
+    const body = await c.req.json().catch(() => ({}));
+    const membershipToken = String(body?.membershipToken || body?.token || '').trim();
+    if (!membershipToken) {
+      return c.json({ error: 'membershipToken is required' }, 400);
+    }
+
+    try {
+      const result = await processMembershipRefund(c.env, db, { membershipToken });
+      return c.json(result);
+    } catch (err) {
+      const code = err.code || '';
+      if (code === 'NOT_ELIGIBLE') {
+        return c.json({ error: publicErrorMessage(err, 'Refund not available', c.env) }, 403);
+      }
+      if (code === 'ALREADY_REFUNDED') {
+        return c.json({ error: publicErrorMessage(err, 'Already refunded', c.env) }, 409);
+      }
+      console.error('[membership/refund]', err.message || err);
+      return c.json({ error: publicErrorMessage(err, 'Could not process refund', c.env) }, 502);
+    }
   });
 
   app.get('/v1/membership/members', async (c) => {

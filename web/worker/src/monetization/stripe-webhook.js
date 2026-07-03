@@ -4,6 +4,10 @@ import {
   getMemberByStripeCustomerId,
   pauseMember,
 } from '../store/memberships.js';
+import {
+  getRefundByStripeRefundId,
+  updateRefundStatus,
+} from '../store/membership-refunds.js';
 import { isValidEmail, normalizeEmail } from '../store/email-subscribers.js';
 import { getStripeClient, getStripeCryptoProvider } from './stripe-client.js';
 
@@ -123,6 +127,69 @@ async function handleSubscriptionDeleted(c, event) {
   return { ok: true, event: event.type, email, active: false, membershipStatus: 'cancelled' };
 }
 
+async function handleChargeRefunded(c, event) {
+  const db = c.env.DB;
+  const charge = event.data.object;
+  const refunds = charge.refunds?.data || [];
+  const latestRefund = refunds[0];
+  if (!latestRefund?.id) {
+    return { ok: true, ignored: true, reason: 'no refund on charge event' };
+  }
+
+  const record = await getRefundByStripeRefundId(db, latestRefund.id);
+  if (!record && charge.metadata?.subscription_id) {
+    const email = charge.metadata.membership_email;
+    if (email) {
+      await deactivateMember(db, {
+        email,
+        stripeCustomerId: typeof charge.customer === 'string' ? charge.customer : charge.customer?.id,
+      });
+    }
+    return { ok: true, event: event.type, synced: 'deactivated_from_metadata' };
+  }
+
+  if (record) {
+    await updateRefundStatus(db, record.id, {
+      status: latestRefund.status === 'succeeded' ? 'succeeded' : record.status,
+      refundedAmountCents: latestRefund.amount ?? charge.amount_refunded,
+      stripeChargeId: charge.id,
+    });
+    if (latestRefund.status === 'succeeded') {
+      await deactivateMember(db, {
+        email: record.email,
+        stripeCustomerId: record.stripeCustomerId,
+      });
+    }
+  }
+
+  return { ok: true, event: event.type, refundId: latestRefund.id, status: latestRefund.status };
+}
+
+async function handleRefundUpdated(c, event) {
+  const db = c.env.DB;
+  const refund = event.data.object;
+  const record = await getRefundByStripeRefundId(db, refund.id);
+  if (!record) {
+    return { ok: true, ignored: true, reason: 'refund not tracked locally' };
+  }
+
+  const status = refund.status === 'succeeded' ? 'succeeded' : refund.status === 'failed' ? 'failed' : 'pending';
+  await updateRefundStatus(db, record.id, {
+    status,
+    refundedAmountCents: refund.amount,
+    failureMessage: refund.failure_reason || null,
+  });
+
+  if (status === 'succeeded') {
+    await deactivateMember(db, {
+      email: record.email,
+      stripeCustomerId: record.stripeCustomerId,
+    });
+  }
+
+  return { ok: true, event: event.type, refundId: refund.id, status };
+}
+
 /** Hono handler — expects the raw request body (registered before JSON body parsing). */
 export async function handleStripeWebhook(c) {
   const env = c.env;
@@ -160,6 +227,10 @@ export async function handleStripeWebhook(c) {
         return c.json(await handleSubscriptionUpdated(c, event));
       case 'customer.subscription.deleted':
         return c.json(await handleSubscriptionDeleted(c, event));
+      case 'charge.refunded':
+        return c.json(await handleChargeRefunded(c, event));
+      case 'refund.updated':
+        return c.json(await handleRefundUpdated(c, event));
       default:
         return c.json({ ok: true, ignored: true, event: event.type });
     }

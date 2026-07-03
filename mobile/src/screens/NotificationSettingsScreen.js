@@ -378,9 +378,9 @@ export function NotificationSettingsScreen({ onBack, previewItem }) {
       <View style={styles.membershipCard}>
         <Text style={styles.masterLabel}>Membership required</Text>
         <Text style={styles.membershipHint}>
-          The email newsletter is a $1–$5/mo membership benefit (same membership that removes ads on
-          the website). Join or manage your membership on the website, then paste your membership
-          token below to unlock the newsletter on this device.
+          The email newsletter is a $1–$5/mo membership benefit. Join or manage your membership on the
+          website, then paste your membership token below to unlock the newsletter on this device.
+          Ad-free browsing on the website is coming soon once AdSense is enabled.
         </Text>
         <Pressable onPress={handleOpenMembershipPage} style={styles.previewButton}>
           <Text style={styles.previewButtonText}>Open membership page</Text>

@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import { MEMBERSHIP_TIER_AMOUNTS } from '../../monetization/config.js';
 
 const MEMBERSHIP_EMAIL_INFO =
-  'Enter the email you used at checkout (or want to use). We send a one-time verification link to confirm your active membership, then ad-free browsing and the email newsletter unlock on this device.';
+  'Enter the email you used at checkout (or want to use). We send a one-time verification link to confirm your active membership, then the email newsletter unlocks on this device. Ad-free browsing will follow once AdSense is enabled.';
 
 function MembershipEmailInfoButton() {
   const dialogRef = useRef(null);
@@ -71,8 +71,8 @@ export function MembershipPanel({
         <div>
           <h2 className="taco-title">Become a member</h2>
           <p className="taco-subtitle">
-            Choose a monthly amount to unlock ad-free browsing and the email newsletter, and help fund
-            dev time for this unofficial feed.
+            Choose a monthly amount to unlock the email newsletter and help fund dev time for this
+            unofficial feed. Ad-free browsing is coming soon once AdSense is enabled.
           </p>
         </div>
       </div>
@@ -93,8 +93,8 @@ export function MembershipPanel({
       </div>
 
       <p className="taco-footnote">
-        Secure checkout via Stripe. Cancel anytime — ad-free browsing and the newsletter stay unlocked
-        for as long as your membership is active.
+        Secure checkout via Stripe. Cancel anytime — newsletter access stays unlocked for as long as
+        your membership is active. Ad-free browsing will be enabled when AdSense goes live.
       </p>
 
       {!showClaimForm ? (
@@ -130,13 +130,70 @@ export function MembershipPanel({
   );
 }
 
-export function SupporterBadge({ onClear, email }) {
+export function SupporterBadge({
+  onClear,
+  email,
+  refundEligibility,
+  refunding,
+  refundError,
+  refundNotice,
+  onRequestRefund,
+}) {
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const showRefund = Boolean(refundEligibility?.eligible);
+
+  async function handleConfirmRefund() {
+    if (!onRequestRefund) return;
+    const ok = await onRequestRefund();
+    if (ok) setConfirmOpen(false);
+  }
+
   return (
     <section className="taco-panel taco-panel--supporter">
       <p className="taco-supporter-msg">
-        <span aria-hidden="true">💛</span> Member — ads are off and the newsletter is unlocked
-        {email ? ` for ${email}` : ''}. Thank you!
+        <span aria-hidden="true">💛</span> Member — the email newsletter is unlocked
+        {email ? ` for ${email}` : ''}. Ad-free browsing is coming soon once AdSense is enabled.
+        Thank you!
       </p>
+      {showRefund ? (
+        <div className="taco-refund-block">
+          <p className="taco-footnote">
+            Not happy with your membership? Members at $4/mo and above can request a full refund of
+            their latest payment.
+          </p>
+          {!confirmOpen ? (
+            <button type="button" className="taco-claim-toggle" onClick={() => setConfirmOpen(true)}>
+              Request a refund
+            </button>
+          ) : (
+            <div className="taco-refund-confirm" role="group" aria-label="Confirm refund">
+              <p className="hint">
+                This refunds your latest payment, cancels your subscription, and removes member access
+                on this device. Continue?
+              </p>
+              <div className="taco-claim-row">
+                <button type="button" className="btn" disabled={refunding} onClick={handleConfirmRefund}>
+                  {refunding ? 'Processing…' : 'Yes, refund me'}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  disabled={refunding}
+                  onClick={() => setConfirmOpen(false)}
+                >
+                  Keep membership
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      ) : null}
+      {refundError ? (
+        <p className="taco-claim-error" role="alert">
+          {refundError}
+        </p>
+      ) : null}
+      {refundNotice ? <p className="hint">{refundNotice}</p> : null}
       {onClear ? (
         <button type="button" className="taco-claim-toggle" onClick={onClear}>
           Sign out of membership

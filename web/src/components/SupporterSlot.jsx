@@ -16,7 +16,8 @@ export function SupporterSlot({ variant = 'block' }) {
     <aside className="monetization-slot supporter-slot" aria-label="Support the project">
       <p className="monetization-slot-label">Support</p>
       <p className="supporter-message">
-        Enjoying the feed? Become a member to unlock ad-free browsing and the email newsletter.
+        Enjoying the feed? Become a member to unlock the email newsletter. Ad-free browsing is coming
+        soon once AdSense is enabled.
       </p>
       <a href="#membership-section" onClick={scrollToMembershipSection} className="btn-supporter">
         Become a member 💛

@@ -72,3 +72,16 @@ export function verifyMembershipClaim(token) {
     body: JSON.stringify({ token }),
   });
 }
+
+export function fetchRefundEligibility(token) {
+  const params = new URLSearchParams({ token });
+  return fetchJson(`/v1/membership/refund/eligibility?${params.toString()}`);
+}
+
+export function requestMembershipRefund(membershipToken) {
+  return fetchJson('/v1/membership/refund', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ membershipToken }),
+  });
+}

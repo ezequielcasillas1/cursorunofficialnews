@@ -1,3 +1,18 @@
+### [2026-07-02] - Membership copy: newsletter now, ad-free pending AdSense
+**Status:** PENDING USER VERIFY
+**Files:** web/src/components/{monetization/MembershipPanel.jsx,monetization/MonetizationSection.jsx,SupporterSlot.jsx,newsletter/NewsletterSettings.jsx}, mobile/src/screens/NotificationSettingsScreen.js
+**Result:** User-facing copy no longer claims ad-free is live. Newsletter is the current benefit; AdSense-pending note added across web + mobile membership CTAs.
+
+### [2026-07-02] - Prod NEWSLETTER_FREE_EMAILS secret
+**Status:** SUCCESS
+**Files:** Cloudflare Worker `cursorunofficialnews` secret; web/worker/src/lib/{membership-email-lists.js,membership-entitlement.js,store/memberships.js}
+**Result:** Set `NEWSLETTER_FREE_EMAILS=72afterda@gmail.com` via Cloudflare MCP (PUT /workers/scripts/cursorunofficialnews/secrets, 201). Unlocks free newsletter entitlement + membership claim without Stripe.
+
+### [2026-07-02] - Membership refund flow ($4+)
+**Status:** PENDING USER VERIFY
+**Files:** web/worker/src/{monetization/stripe-refund.js,monetization/stripe-refund.test.js,monetization/membership-routes.js,monetization/stripe-webhook.js,store/membership-refunds.js,db/schema.sql,db/migrations/002_membership_refunds.sql}, web/src/{monetization/useMembership.js,monetization/services/membershipApi.js,components/monetization/MembershipPanel.jsx,components/monetization/MonetizationSection.jsx}, docs/STRIPE-GO-LIVE.md, request.md
+**Result:** $4+/mo members can request a full refund via POST /api/v1/membership/refund (membershipToken). D1 audit table, Stripe idempotency, subscription cancel + deactivate. Web UI confirm flow on supporter badge. Webhooks: charge.refunded, refund.updated. Apply migration 002 to D1 before deploy.
+
 ### [2026-07-02] - Website security hardening (website-only scope)
 **Status:** SUCCESS
 **Files:** web/worker/src/{security/rate-limit.js,security/public-error.js,middleware/require-api-secret.js,routes/core-routes.js,notifications/email-routes.js,notifications/unsubscribe/components/unsubscribe-confirm-form.js,monetization/membership-routes.js,llm/llm-routes.js,app.js}, web/public/_headers, docs/CLOUDFLARE-DEPLOY.md

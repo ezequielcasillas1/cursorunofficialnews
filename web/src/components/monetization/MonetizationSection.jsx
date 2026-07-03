@@ -6,7 +6,7 @@ function PausedMembershipNotice({ email }) {
     <section className="taco-panel taco-panel--muted">
       <p className="taco-supporter-msg">
         <span aria-hidden="true">⏸️</span> Membership paused
-        {email ? ` for ${email}` : ''}. Ads are shown and the newsletter is locked until billing resumes.
+        {email ? ` for ${email}` : ''}. Newsletter access is locked until billing resumes.
       </p>
     </section>
   );
@@ -38,7 +38,15 @@ export function MonetizationSection({ membership }) {
   if (adFree) {
     return (
       <section id="membership-section" className="monetization-section">
-        <SupporterBadge email={memberEmail} onClear={clearMembership} />
+        <SupporterBadge
+          email={memberEmail}
+          onClear={clearMembership}
+          refundEligibility={membership.refundEligibility}
+          refunding={membership.refunding}
+          refundError={membership.refundError}
+          refundNotice={membership.refundNotice}
+          onRequestRefund={membership.requestRefund}
+        />
       </section>
     );
   }

@@ -94,6 +94,28 @@ CREATE TABLE IF NOT EXISTS membership_claim_requests (
 );
 CREATE INDEX IF NOT EXISTS idx_membership_claim_requests_email ON membership_claim_requests (email);
 
+-- Refund audit trail — one row per refund attempt (see store/membership-refunds.js).
+CREATE TABLE IF NOT EXISTS membership_refunds (
+  id TEXT PRIMARY KEY,
+  email TEXT NOT NULL,
+  stripe_customer_id TEXT,
+  stripe_subscription_id TEXT NOT NULL,
+  stripe_refund_id TEXT,
+  stripe_charge_id TEXT,
+  stripe_invoice_id TEXT,
+  stripe_payment_intent_id TEXT,
+  amount_cents INTEGER NOT NULL,
+  refunded_amount_cents INTEGER,
+  status TEXT NOT NULL DEFAULT 'pending',
+  idempotency_key TEXT NOT NULL UNIQUE,
+  reason TEXT,
+  failure_message TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_membership_refunds_email ON membership_refunds (email);
+CREATE INDEX IF NOT EXISTS idx_membership_refunds_subscription ON membership_refunds (stripe_subscription_id);
+
 -- Single-row ingest guard. acquireIngestLock() does an atomic
 -- UPDATE ... WHERE running = 0, relying on D1's single-writer semantics
 -- instead of the in-process Promise mutex the Express server used.

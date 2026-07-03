@@ -12,6 +12,8 @@ import {
   claimMembership,
   confirmMembershipCheckout,
   fetchMembershipStatus,
+  fetchRefundEligibility,
+  requestMembershipRefund,
   startMembershipCheckout,
   verifyMembershipClaim,
 } from './services/membershipApi.js';
@@ -27,6 +29,10 @@ export function useMembership() {
   const [memberEmail, setMemberEmail] = useState('');
   const [membershipStatus, setMembershipStatus] = useState(null);
   const [membershipToken, setMembershipToken] = useState('');
+  const [refundEligibility, setRefundEligibility] = useState(null);
+  const [refunding, setRefunding] = useState(false);
+  const [refundError, setRefundError] = useState('');
+  const [refundNotice, setRefundNotice] = useState('');
 
   const applyEntitlement = useCallback((token, data) => {
     const active = Boolean(data.adFree);
@@ -242,7 +248,62 @@ export function useMembership() {
     setMembershipToken('');
     setClaimError('');
     setClaimNotice('');
+    setRefundEligibility(null);
+    setRefundError('');
+    setRefundNotice('');
   }, []);
+
+  const refreshRefundEligibility = useCallback(async (token) => {
+    const resolved = String(token || membershipToken || getStoredMembershipToken() || '').trim();
+    if (!resolved || MEMBERSHIP_DEV_ACTIVE) {
+      setRefundEligibility(null);
+      return null;
+    }
+    try {
+      const data = await fetchRefundEligibility(resolved);
+      setRefundEligibility(data);
+      return data;
+    } catch {
+      setRefundEligibility(null);
+      return null;
+    }
+  }, [membershipToken]);
+
+  const requestRefund = useCallback(async () => {
+    const token = membershipToken || getStoredMembershipToken();
+    if (!token) {
+      setRefundError('Membership token not found on this device');
+      return false;
+    }
+
+    setRefundError('');
+    setRefundNotice('');
+    setRefunding(true);
+    try {
+      const data = await requestMembershipRefund(token);
+      const dollars = ((data.amountCents || 0) / 100).toFixed(2);
+      setRefundNotice(
+        data.pending
+          ? 'Your refund is processing — membership access will end once Stripe completes it.'
+          : `Refund of $${dollars} submitted. Membership access has ended on this device.`,
+      );
+      clearMembership();
+      return true;
+    } catch (err) {
+      setRefundError(err.message || 'Could not request refund');
+      return false;
+    } finally {
+      setRefunding(false);
+    }
+  }, [clearMembership, membershipToken]);
+
+  useEffect(() => {
+    if (!adFree || !membershipToken || MEMBERSHIP_DEV_ACTIVE) {
+      setRefundEligibility(null);
+      return;
+    }
+    refreshRefundEligibility(membershipToken);
+  }, [adFree, membershipToken, refreshRefundEligibility]);
 
   return {
     adFree,
@@ -255,9 +316,14 @@ export function useMembership() {
     memberEmail,
     membershipStatus,
     membershipToken,
+    refundEligibility,
+    refunding,
+    refundError,
+    refundNotice,
     startCheckout,
     claimAdFree,
     clearMembership,
+    requestRefund,
     refreshStatus: () => verifyToken(getStoredMembershipToken()),
   };
 }

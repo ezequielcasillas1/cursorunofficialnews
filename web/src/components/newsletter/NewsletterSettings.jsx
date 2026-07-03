@@ -38,8 +38,8 @@ function MembershipRequiredNotice() {
       defaultExpanded={NEWSLETTER_PANEL_DEFAULT_EXPANDED}
     >
       <p className="hint">
-        The email newsletter is a membership benefit alongside ad-free browsing. Join for $1–$5/mo to
-        unlock it.
+        The email newsletter is a membership benefit today. Ad-free browsing will follow once AdSense
+        is enabled. Join for $1–$5/mo to unlock the newsletter.
       </p>
       <a className="btn" href="#membership-section" onClick={scrollToMembershipSection}>
         Become a member

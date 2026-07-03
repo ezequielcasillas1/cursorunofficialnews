@@ -12,6 +12,8 @@ Web (cursorunofficial.news)
   → GET  /api/v1/membership/checkout/confirm (post-redirect confirm)
   → POST /api/v1/membership/claim(/verify)   (restore on new device)
   → GET  /api/v1/membership/status           (poll entitlement)
+  → GET  /api/v1/membership/refund/eligibility (refund eligibility — $4+/mo)
+  → POST /api/v1/membership/refund           (request full refund + cancel)
 ```
 
 ---
@@ -47,8 +49,8 @@ All prices: **Recurring · Monthly · USD**. After each price is saved, copy its
 | **$1.00 / mo** | `Community Supporter — $1/mo` | `Entry-level support. Same member perks as every tier: ad-free browsing and email newsletter access for Unofficial Cursor News.` |
 | **$2.00 / mo** | `Feed Friend — $2/mo` | `Pay-what-you-want tier. Unlocks ad-free feed browsing and the membership email newsletter. Independent fan project — not affiliated with Cursor.` |
 | **$3.00 / mo** | `Steady Supporter — $3/mo` | `Mid-tier monthly support. Full member benefits: ad-free browsing, email newsletter, and restore access on new devices via email verification.` |
-| **$4.00 / mo** | `Newsletter Patron — $4/mo` | `Stronger support for hosting, ingest, and newsletter delivery. Same entitlements as all tiers: ad-free feed + email newsletter while active.` |
-| **$5.00 / mo** | `Core Supporter — $5/mo` | `Top supporter tier. Maximum monthly contribution with the same member unlocks: ad-free browsing and email newsletter for Unofficial Cursor News.` |
+| **$4.00 / mo** | `Newsletter Patron — $4/mo` | `Stronger support for hosting, ingest, and newsletter delivery. Same entitlements as all tiers: ad-free feed + email newsletter while active. Refund available on request if you are not satisfied.` |
+| **$5.00 / mo** | `Core Supporter — $5/mo` | `Top supporter tier. Maximum monthly contribution with the same member unlocks: ad-free browsing and email newsletter for Unofficial Cursor News. Refund available on request if you are not satisfied.` |
 
 **Dashboard steps:** Products → **Add product** → paste name + description → under Pricing add the first recurring monthly price → **Save product** → open the product → **Add another price** for tiers $2–$5.
 
@@ -146,7 +148,7 @@ Dashboard → **Developers → Webhooks** (Live mode) → endpoint URL:
 
 `https://cursorunofficial.news/api/v1/stripe/webhook`
 
-Events: `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`.
+Events: `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, `charge.refunded`, `refund.updated`.
 
 Copy the signing secret (`whsec_...`) immediately — it is shown once at creation.
 
