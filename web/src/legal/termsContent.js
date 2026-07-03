@@ -73,11 +73,12 @@ export const TERMS_OF_USE = {
       ],
     },
     {
-      heading: 'Account management',
+      heading: 'Account management and contact',
       paragraphs: [
-        'We do not provide a general support email. Manage your newsletter, membership, and related account actions on the Site:',
+        'For account, billing, membership, or privacy questions, email customerservice@cursorunofficial.news. You can also manage newsletter and membership settings on the Site:',
       ],
       list: [
+        { label: 'customerservice@cursorunofficial.news', href: 'mailto:customerservice@cursorunofficial.news' },
         { label: 'Newsletter', href: '/newsletter' },
         { label: 'Unsubscribe from emails', href: '/newsletter/unsubscribe' },
         { label: 'Cancel membership', href: '/membership/unsubscribe' },

@@ -46,9 +46,10 @@ export const PRIVACY_POLICY = {
     {
       heading: 'Your choices',
       paragraphs: [
-        'We do not provide a dedicated privacy email address. You can manage your data directly on the site:',
+        'For privacy-related questions or requests, contact us at customerservice@cursorunofficial.news. You can also manage your data directly on the site:',
       ],
       list: [
+        { label: 'customerservice@cursorunofficial.news', href: 'mailto:customerservice@cursorunofficial.news' },
         { label: 'Newsletter settings', href: '/newsletter' },
         { label: 'Unsubscribe from newsletter emails', href: '/newsletter/unsubscribe' },
         { label: 'Cancel paid membership (Stripe subscription)', href: '/membership/unsubscribe' },
