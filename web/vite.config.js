@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { loadProjectEnv } from '../env/load-env.js';
+import { prerenderMetaPlugin } from './vite-plugin-prerender-meta.js';
 
 export default defineConfig(({ mode }) => {
   loadProjectEnv('web');
@@ -12,7 +13,7 @@ export default defineConfig(({ mode }) => {
     }
   }
 
-  const plugins = [react()];
+  const plugins = [react(), prerenderMetaPlugin()];
 
   // Optional Google Search Console HTML-tag verification (VITE_GOOGLE_SITE_VERIFICATION).
   plugins.push({

@@ -1521,6 +1521,13 @@ html[data-theme='light'] .masthead-logo-light {
   color: var(--color-ink-light);
 }
 
+.about-panel p {
+  margin: 0 0 var(--space-md);
+  color: var(--color-ink-muted);
+  line-height: 1.7;
+  font-size: 0.9375rem;
+}
+
 .about-panel ul {
   margin: 0;
   padding-left: 1.25rem;

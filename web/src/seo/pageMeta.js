@@ -5,6 +5,11 @@ export const DEFAULT_SITE_TITLE = 'Unofficial Cursor News';
 export const DEFAULT_DESCRIPTION =
   'Unofficial Cursor news — changelog, releases, and updates. Not affiliated with Anysphere.';
 
+export const OG_IMAGE_PATH = '/brand/og-image.png';
+export const OG_IMAGE_URL = `${SITE_ORIGIN}${OG_IMAGE_PATH}`;
+export const OG_IMAGE_WIDTH = 1200;
+export const OG_IMAGE_HEIGHT = 630;
+
 const SECTION_DESCRIPTIONS = {
   updates: 'Cursor changelog, releases, and version updates from official and community sources.',
   news: 'Cursor blog posts and product news from official and community sources.',
