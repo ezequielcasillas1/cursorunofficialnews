@@ -1,3 +1,13 @@
+### [2026-07-02] - Local membership admin dashboard
+**Status:** PENDING USER VERIFY
+**Files:** web/admin/*, web/worker/src/admin/*, web/worker/src/middleware/require-local-admin.js, web/worker/src/store/memberships.js, web/worker/src/db/migrations/003_membership_admin.sql, env/server.example.env, package.json
+**Result:** Local-only admin UI on :5174 with intruder scan, grandfather allowlists (MEMBERSHIP_GRANDFATHER_EMAILS / BEFORE), manual overrides, audit log. Admin API returns 404 in production. Run migration 003 locally before dev:api.
+
+### [2026-07-02] - Prod email_subscribers official_only column
+**Status:** SUCCESS
+**Files:** prod D1 `cursorunofficialnews` (email_subscribers); web/worker/src/db/migrations/001_email_official_only.sql
+**Result:** Subscribe failed with `no column named official_only`. Prod had all other email_subscribers columns; only `official_only` missing (migration 001 never applied remote). Applied `ALTER TABLE email_subscribers ADD COLUMN official_only INTEGER NOT NULL DEFAULT 0` via Cloudflare MCP. Probe INSERT/DELETE succeeded; indexes present.
+
 ### [2026-07-02] - Prod newsletter whitelist fix (D1 + claim UI)
 **Status:** PENDING USER VERIFY
 **Files:** prod D1 `cursorunofficialnews` (memberships, membership_refunds tables); web/src/monetization/useMembership.js; web/worker/src/lib/membership-entitlement.test.js

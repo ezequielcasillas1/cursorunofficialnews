@@ -7,6 +7,7 @@ import { registerNewsletterRoutes } from './notifications/newsletter-routes.js';
 import { registerMembershipRoutes } from './monetization/membership-routes.js';
 import { registerLlmRoutes } from './llm/llm-routes.js';
 import { handleStripeWebhook } from './monetization/stripe-webhook.js';
+import { registerAdminRoutes } from './admin/admin-routes.js';
 
 /**
  * Builds the API Hono app under the `/api` base path, so the web frontend's
@@ -45,6 +46,7 @@ export function createApp() {
   registerEmailRoutes(app);
   registerNewsletterRoutes(app);
   registerLlmRoutes(app);
+  registerAdminRoutes(app);
 
   return app;
 }

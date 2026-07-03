@@ -81,6 +81,9 @@ CREATE TABLE IF NOT EXISTS memberships (
   membership_started_at TEXT,
   paused_at TEXT,
   cancelled_at TEXT,
+  blocked INTEGER NOT NULL DEFAULT 0,
+  access_source TEXT,
+  intruder_flagged_at TEXT,
   updated_at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_memberships_membership_token ON memberships (membership_token);
@@ -93,6 +96,26 @@ CREATE TABLE IF NOT EXISTS membership_claim_requests (
   expires_at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_membership_claim_requests_email ON membership_claim_requests (email);
+
+-- Local admin only (intruder detection + manual overrides) — not used in production deploy.
+CREATE TABLE IF NOT EXISTS membership_access_overrides (
+  email TEXT PRIMARY KEY,
+  override_status TEXT NOT NULL CHECK (override_status IN ('allow', 'block')),
+  reason TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS membership_admin_audit (
+  id TEXT PRIMARY KEY,
+  email TEXT,
+  action TEXT NOT NULL,
+  actor TEXT NOT NULL DEFAULT 'system',
+  detail_json TEXT,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_membership_admin_audit_email ON membership_admin_audit (email);
+CREATE INDEX IF NOT EXISTS idx_membership_admin_audit_created_at ON membership_admin_audit (created_at);
 
 -- Refund audit trail — one row per refund attempt (see store/membership-refunds.js).
 CREATE TABLE IF NOT EXISTS membership_refunds (

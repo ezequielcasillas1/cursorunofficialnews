@@ -20,6 +20,9 @@ function rowToMember(row) {
     membershipStartedAt: row.membership_started_at || null,
     pausedAt: row.paused_at || null,
     cancelledAt: row.cancelled_at || null,
+    blocked: Boolean(row.blocked),
+    accessSource: row.access_source || null,
+    intruderFlaggedAt: row.intruder_flagged_at || null,
     updatedAt: row.updated_at,
   };
 }
@@ -40,8 +43,8 @@ async function upsertMember(db, record) {
   await db
     .prepare(
       `INSERT INTO memberships
-         (email, membership_token, stripe_customer_id, stripe_subscription_id, amount_cents, active, status, membership_started_at, paused_at, cancelled_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         (email, membership_token, stripe_customer_id, stripe_subscription_id, amount_cents, active, status, membership_started_at, paused_at, cancelled_at, blocked, access_source, intruder_flagged_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT(email) DO UPDATE SET
          membership_token = excluded.membership_token,
          stripe_customer_id = excluded.stripe_customer_id,
@@ -52,6 +55,9 @@ async function upsertMember(db, record) {
          membership_started_at = excluded.membership_started_at,
          paused_at = excluded.paused_at,
          cancelled_at = excluded.cancelled_at,
+         blocked = excluded.blocked,
+         access_source = excluded.access_source,
+         intruder_flagged_at = excluded.intruder_flagged_at,
          updated_at = excluded.updated_at`,
     )
     .bind(
@@ -65,6 +71,9 @@ async function upsertMember(db, record) {
       record.membershipStartedAt || null,
       record.pausedAt || null,
       record.cancelledAt || null,
+      record.blocked ? 1 : 0,
+      record.accessSource || null,
+      record.intruderFlaggedAt || null,
       record.updatedAt,
     )
     .run();
@@ -72,6 +81,7 @@ async function upsertMember(db, record) {
 }
 
 function buildActiveRecord(email, existing, { stripeCustomerId, stripeSubscriptionId, amountCents } = {}) {
+  const hasStripe = Boolean(stripeSubscriptionId || stripeCustomerId);
   return {
     email,
     membershipToken: existing?.membershipToken || generateMembershipToken(),
@@ -83,6 +93,9 @@ function buildActiveRecord(email, existing, { stripeCustomerId, stripeSubscripti
     membershipStartedAt: existing?.membershipStartedAt || new Date().toISOString(),
     pausedAt: null,
     cancelledAt: null,
+    blocked: false,
+    accessSource: hasStripe ? 'stripe' : existing?.accessSource || null,
+    intruderFlaggedAt: null,
     updatedAt: new Date().toISOString(),
   };
 }
@@ -126,6 +139,7 @@ export async function pauseMember(db, { email, stripeCustomerId } = {}) {
   record.stripeCustomerId = stripeCustomerId || record.stripeCustomerId || null;
   record.pausedAt = new Date().toISOString();
   record.cancelledAt = null;
+  record.blocked = record.blocked ?? false;
   record.updatedAt = new Date().toISOString();
   await upsertMember(db, record);
   return true;
@@ -150,6 +164,7 @@ export async function deactivateMember(db, { email, stripeCustomerId } = {}) {
   record.stripeCustomerId = stripeCustomerId || record.stripeCustomerId || null;
   record.cancelledAt = new Date().toISOString();
   record.pausedAt = null;
+  record.blocked = record.blocked ?? false;
   record.updatedAt = new Date().toISOString();
   await upsertMember(db, record);
   return true;
@@ -198,6 +213,16 @@ export async function getEntitlement(db, token, env = null) {
   const member = await getMemberByToken(db, token);
   if (!member) {
     return { active: false, adFree: false, newsletterUnlocked: false, email: null, membershipStatus: null };
+  }
+
+  if (member.blocked) {
+    return {
+      active: false,
+      adFree: false,
+      newsletterUnlocked: false,
+      email: member.email,
+      membershipStatus: 'blocked',
+    };
   }
 
   const active = Boolean(member.active);
