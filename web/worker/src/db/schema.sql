@@ -151,7 +151,7 @@ CREATE TABLE IF NOT EXISTS ingest_state (
 );
 INSERT OR IGNORE INTO ingest_state (id, running, started_at, last_ingest_at, last_digest_slot) VALUES (1, 0, NULL, NULL, NULL);
 
--- Items queued between scheduled digest sends (default 10am / 5pm / 10pm America/Chicago).
+-- Items queued between scheduled digest sends (default 1pm America/Chicago).
 CREATE TABLE IF NOT EXISTS digest_queue (
   id TEXT PRIMARY KEY,
   title TEXT NOT NULL,

@@ -1,5 +1,5 @@
 export const DEFAULT_DIGEST_TIMEZONE = 'America/Chicago';
-export const DEFAULT_DIGEST_HOURS = [10, 17, 22];
+export const DEFAULT_DIGEST_HOURS = [13];
 
 export function getDigestScheduleConfig(env) {
   const timezone = env?.DIGEST_TIMEZONE?.trim() || DEFAULT_DIGEST_TIMEZONE;

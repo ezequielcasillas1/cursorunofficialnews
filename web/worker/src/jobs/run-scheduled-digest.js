@@ -13,7 +13,7 @@ import {
 } from '../store/digest-queue.js';
 
 /**
- * Send batched digest emails at configured local hours (default 10:00, 17:00, 22:00 CT).
+ * Send batched digest emails at configured local hours (default 13:00 / 1pm America/Chicago).
  * Called from the hourly cron — no-ops outside digest windows or if slot already sent.
  */
 export async function runScheduledDigest(db, env, { force = false, now = new Date() } = {}) {

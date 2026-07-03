@@ -1,4 +1,4 @@
--- Queue new items between scheduled digest sends (10am / 5pm / 10pm local).
+-- Queue new items between scheduled digest sends (default 1pm America/Chicago).
 CREATE TABLE IF NOT EXISTS digest_queue (
   id TEXT PRIMARY KEY,
   title TEXT NOT NULL,

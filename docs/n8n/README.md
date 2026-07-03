@@ -4,6 +4,24 @@ Workflow export for **Cursor AI News Newsletter** (`AWUxJU3oVLNzP2Op` on n8n Clo
 
 Canonical JSON: [`cursor-ai-news-newsletter.workflow.json`](./cursor-ai-news-newsletter.workflow.json)
 
+## Digest schedule (Worker vs n8n)
+
+| Source | Schedule | Notes |
+|---|---|---|
+| **Cloudflare Worker** | **1:00 PM America/Chicago** (`DIGEST_HOURS=13`) | Hourly cron; sends only when local hour is 13. Queues items between sends. |
+| **n8n `Daily 9am ET1`** | ~~9:00 AM ET (`0 9 * * *`)~~ **disabled in export** | Was a separate daily blast independent of Worker. Disabled to avoid duplicate sends and n8n credit use. |
+
+After importing this workflow, confirm **Daily 9am ET1** stays disabled in the n8n UI (toggle off or delete the node). The **Ingest Webhook** path still runs when the Worker POSTs on ingest (if webhook URL is set).
+
+### Saving n8n credits on scheduled digests
+
+Worker `N8N_NEWSLETTER_MODE=parallel` (default) still POSTs to the n8n webhook when the **1pm scheduled digest** runs, in addition to server-side Resend sends. To use Worker/Resend only for scheduled digests:
+
+- Remove or unset `N8N_NEWSLETTER_WEBHOOK_URL` on the Worker, **or**
+- Keep webhook for manual/testing but accept parallel n8n runs on each digest.
+
+(`N8N_NEWSLETTER_MODE=off` is defined but does not yet skip the webhook trigger — use webhook URL removal for server-only sends.)
+
 ## Required credentials (create in n8n UI first)
 
 | Credential name | Type | Header name | Value source |
@@ -28,6 +46,7 @@ HTTP nodes call **`https://cursorunofficial.news/api/v1/...`** (Worker canonical
 
 ## Audit fixes in this export
 
+- **Digest sections:** Per-subscriber `digestSections` from `/v1/newsletter/export` (topic-grouped, 1–3 headlines per enabled category) are passed to `/v1/newsletter/generate-html`. Flat `matchingNewItems` / `matchingRecentItems` are fallback only when sections are empty. Email subject comes from the generate-html response (`assembleEmailSubject`), not a hardcoded string.
 - **Error handling:** `continueOnFail` + `onError: continueErrorOutput` on HTTP nodes; error branch → `Respond Webhook Error` (webhook runs only).
 - **Webhook responses:** `Ingest Webhook1` uses `responseMode: responseNode`; `Respond Webhook Accepted` returns `202` immediately; failures on webhook path return `500` JSON.
 - **Secrets:** HTTP nodes use `genericCredentialType` / `httpHeaderAuth` (no inline tokens).

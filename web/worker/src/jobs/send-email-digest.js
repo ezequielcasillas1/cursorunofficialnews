@@ -1,6 +1,5 @@
-import { flattenDigestSections } from '../shared/notifications/category-limits.js';
 import { assembleEmailDigest } from '../notifications/assemble-email.js';
-import { polishEmailHeadline } from '../llm/rewrite-email-title.js';
+import { polishSingleHeadlineSections } from '../llm/rewrite-email-title.js';
 import {
   getResendClient,
   getTransactionalFromAddress,
@@ -23,21 +22,6 @@ function getItemsForSubscriber(subscriber, newItems) {
   if (!isSubscriberVerified(subscriber)) return [];
   if (!subscriber.categories?.length) return [];
   return buildSubscriberDigestSections(newItems, subscriber);
-}
-
-async function polishSingleHeadlineSections(sections, env) {
-  const flat = flattenDigestSections(sections);
-  if (flat.length !== 1) return sections;
-
-  const polishedTitle = await polishEmailHeadline(flat[0].title, env);
-  if (!polishedTitle || polishedTitle === flat[0].title) return sections;
-
-  return sections.map((section) => ({
-    ...section,
-    items: section.items.map((item) =>
-      item.id === flat[0].id ? { ...item, title: polishedTitle } : item,
-    ),
-  }));
 }
 
 /**

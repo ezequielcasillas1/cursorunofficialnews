@@ -13,7 +13,7 @@
     "PUSH_NOTIFICATIONS": "true",
     "N8N_NEWSLETTER_MODE": "parallel",
     "DIGEST_TIMEZONE": "America/Chicago",
-    "DIGEST_HOURS": "10,17,22"
+    "DIGEST_HOURS": "13"
   },
   "assets": {
     "directory": "./web/dist",

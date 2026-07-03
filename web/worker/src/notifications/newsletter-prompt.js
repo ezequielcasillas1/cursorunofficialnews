@@ -4,11 +4,20 @@ export function buildNewsletterHtmlPrompt({
   matchingNewItems = [],
   matchingRecentItems = [],
   digestSections = [],
+  officialOnly,
+  subscriber,
 } = {}) {
   const sections =
     digestSections.length > 0
       ? digestSections
       : [{ items: [...matchingNewItems, ...matchingRecentItems] }];
+
+  const subscriberMeta = {
+    email: email || subscriber?.email || 'subscriber',
+    officialOnly: officialOnly ?? subscriber?.officialOnly ?? false,
+    categories: subscriber?.categories || [],
+    categoryLimits: subscriber?.categoryLimits || {},
+  };
 
   return `You write HTML email newsletters for Cursor AI News (unofficial fan digest, not affiliated with Anysphere). Output ONLY valid HTML for the email body — no markdown fences.
 
@@ -27,7 +36,7 @@ Structure rules:
 
 Include: greeting, grouped headline cards (title as link, source, one-line summary), footer with unsubscribe link.
 
-Subscriber: ${email || 'subscriber'}
+Subscriber: ${JSON.stringify(subscriberMeta)}
 Unsubscribe: ${unsubscribeUrl || ''}
 Digest sections: ${JSON.stringify(sections)}`;
 }

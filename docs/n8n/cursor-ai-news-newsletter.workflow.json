@@ -109,10 +109,12 @@
         }
       },
       "id": "ac8b6cf8-e827-468b-ba8a-23a199f2245d",
-      "name": "Daily 9am ET1",
+      "name": "Daily 9am ET1 (DISABLED — use Worker 1pm CT digest)",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.3,
-      "position": [1456, 432]
+      "position": [1456, 432],
+      "disabled": true,
+      "notes": "Disabled 2026-07-03: Worker cron sends one daily digest at 1pm America/Chicago (DIGEST_HOURS=13). Re-enable only if you want a separate n8n-only morning send."
     },
     {
       "parameters": {
@@ -175,7 +177,7 @@
           "conditions": [
             {
               "id": "has-items",
-              "leftValue": "={{ ($json.matchingNewItems || []).length + ($json.matchingRecentItems || []).length }}",
+              "leftValue": "={{ ($json.digestSections || []).reduce((sum, section) => sum + (section.items || []).length, 0) || (($json.matchingNewItems || []).length + ($json.matchingRecentItems || []).length) }}",
               "rightValue": 0,
               "operator": {
                 "type": "number",
@@ -210,7 +212,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ email: $json.email, unsubscribeUrl: $json.unsubscribeUrl, matchingNewItems: $json.matchingNewItems || [], matchingRecentItems: $json.matchingRecentItems || [] }) }}",
+        "jsonBody": "={{ JSON.stringify({ email: $json.email, unsubscribeUrl: $json.unsubscribeUrl, digestSections: $json.digestSections || [], officialOnly: $json.officialOnly, subscriber: { email: $json.email, officialOnly: $json.officialOnly, categories: $json.categories || [], categoryLimits: $json.categoryLimits || {} }, matchingNewItems: ($json.digestSections || []).length ? [] : ($json.matchingNewItems || []), matchingRecentItems: ($json.digestSections || []).length ? [] : ($json.matchingRecentItems || []) }) }}",
         "options": {
           "timeout": 180000
         }
@@ -250,7 +252,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ from: 'Cursor AI News <notifications@cursorunofficial.news>', to: [$('Has Matching Items1').item.json.email], subject: 'Cursor AI News — Latest headlines', html: $json.html }) }}",
+        "jsonBody": "={{ JSON.stringify({ from: 'Cursor AI News <notifications@cursorunofficial.news>', to: [$('Has Matching Items1').item.json.email], subject: $json.subject || 'Unofficial Cursor News · Latest headlines', html: $json.html }) }}",
         "options": {}
       },
       "id": "4e8f29af-f7a6-413b-a80d-13622f61b5f1",

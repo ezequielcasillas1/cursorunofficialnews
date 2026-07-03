@@ -184,7 +184,15 @@ export function registerNewsletterRoutes(app) {
     }
 
     const body = await c.req.json().catch(() => ({}));
-    const { email, unsubscribeUrl, matchingNewItems, matchingRecentItems } = body || {};
+    const {
+      email,
+      unsubscribeUrl,
+      matchingNewItems,
+      matchingRecentItems,
+      digestSections,
+      officialOnly,
+      subscriber,
+    } = body || {};
 
     if (!email) {
       return c.json({ error: 'email is required' }, 400);
@@ -197,6 +205,9 @@ export function registerNewsletterRoutes(app) {
           unsubscribeUrl,
           matchingNewItems: Array.isArray(matchingNewItems) ? matchingNewItems : [],
           matchingRecentItems: Array.isArray(matchingRecentItems) ? matchingRecentItems : [],
+          digestSections: Array.isArray(digestSections) ? digestSections : [],
+          officialOnly: Boolean(officialOnly),
+          subscriber: subscriber && typeof subscriber === 'object' ? subscriber : undefined,
         },
         c.env,
       );

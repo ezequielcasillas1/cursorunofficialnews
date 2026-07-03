@@ -1,3 +1,4 @@
+import { flattenDigestSections } from '../shared/notifications/category-limits.js';
 import { chatCompletion, isWorkersAiConfigured } from './workers-ai-client.js';
 
 const MAX_SUBJECT_CHARS = 78;
@@ -43,4 +44,20 @@ export async function polishEmailHeadline(originalTitle, env) {
     console.warn('[email] AI title rewrite failed:', error.message || error);
     return source;
   }
+}
+
+/** When digest has exactly one headline, polish it for subject/preview (same as server Resend path). */
+export async function polishSingleHeadlineSections(sections, env) {
+  const flat = flattenDigestSections(sections);
+  if (flat.length !== 1) return sections;
+
+  const polishedTitle = await polishEmailHeadline(flat[0].title, env);
+  if (!polishedTitle || polishedTitle === flat[0].title) return sections;
+
+  return sections.map((section) => ({
+    ...section,
+    items: section.items.map((item) =>
+      item.id === flat[0].id ? { ...item, title: polishedTitle } : item,
+    ),
+  }));
 }

@@ -61,7 +61,7 @@ export default {
     return env.ASSETS.fetch(request);
   },
 
-  /** Cron Trigger — ingest every 30 min; digest batch at top of each hour (CT windows). */
+  /** Cron Trigger — ingest every 30 min; digest batch at 1pm CT (hourly cron, slot-gated). */
   async scheduled(controller, env, ctx) {
     const cron = controller.cron;
 

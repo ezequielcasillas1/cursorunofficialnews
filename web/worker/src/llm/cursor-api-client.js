@@ -7,6 +7,9 @@ import {
   buildNewsletterHtmlPrompt,
   stripMarkdownHtmlFences,
 } from '../notifications/newsletter-prompt.js';
+import { assembleEmailSubject } from '../notifications/assemble-email.js';
+import { flattenDigestSections } from '../shared/notifications/category-limits.js';
+import { polishSingleHeadlineSections } from './rewrite-email-title.js';
 
 export { isCursorApiConfigured };
 
@@ -119,20 +122,39 @@ export async function generateNewsletterHtml(
     unsubscribeUrl,
     matchingNewItems,
     matchingRecentItems,
+    digestSections,
+    officialOnly,
+    subscriber,
     modelId,
     promptText,
   } = {},
   env,
 ) {
+  let sections = Array.isArray(digestSections) && digestSections.length > 0
+    ? digestSections
+    : null;
+
+  if (sections) {
+    sections = await polishSingleHeadlineSections(sections, env);
+  }
+
   const text =
     promptText ||
     buildNewsletterHtmlPrompt({
       email,
       unsubscribeUrl,
-      matchingNewItems,
-      matchingRecentItems,
+      matchingNewItems: sections ? [] : (Array.isArray(matchingNewItems) ? matchingNewItems : []),
+      matchingRecentItems: sections ? [] : (Array.isArray(matchingRecentItems) ? matchingRecentItems : []),
+      digestSections: sections || [],
+      officialOnly,
+      subscriber,
     });
 
   const result = await runCursorPrompt({ promptText: text, modelId }, env);
-  return { html: result.content, model: result.model, runId: result.runId };
+  const subjectItems = flattenDigestSections(
+    sections || [{ items: [...(matchingNewItems || []), ...(matchingRecentItems || [])] }],
+  );
+  const subject = assembleEmailSubject(subjectItems);
+
+  return { html: result.content, subject, model: result.model, runId: result.runId };
 }
