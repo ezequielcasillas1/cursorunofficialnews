@@ -17,7 +17,7 @@ const SECTION_DESCRIPTIONS = {
   issues: 'Cursor bug reports and GitHub issues tracked in one feed.',
   community: 'Cursor community posts and fan content.',
   discussion: 'Cursor discussion threads, opinions, and analysis.',
-  social: 'Cursor posts from social media and community channels.',
+  social: 'Posts from Cursor on X (Twitter).',
   videos: 'Cursor YouTube videos and video content.',
   tutorials: 'Cursor tutorials, guides, and how-to content.',
 };

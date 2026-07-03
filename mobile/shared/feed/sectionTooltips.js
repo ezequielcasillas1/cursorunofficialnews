@@ -6,7 +6,7 @@ export const SECTION_TOOLTIPS = {
   news: 'Latest announcements and articles',
   forum: 'Posts from community message boards',
   issues: 'Bug reports, tracking, and known problems',
-  community: 'User-generated content and community hubs',
+  community: 'Reddit, Hacker News, and other community discussions',
   discussion: 'General conversations and threads',
   social: 'Posts from Cursor on X (Twitter)',
   videos: 'Video content (YouTube, Twitch clips, etc.)',
