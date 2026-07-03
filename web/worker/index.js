@@ -23,12 +23,18 @@ export default {
       return response;
     }
 
-    // Serve ads.txt as plain text (never SPA fallback) for AdSense crawlers.
-    if (url.pathname === '/ads.txt') {
+    // SEO / crawler static files — never SPA fallback; explicit Content-Type.
+    const crawlerStatic = {
+      '/ads.txt': 'text/plain; charset=utf-8',
+      '/robots.txt': 'text/plain; charset=utf-8',
+      '/sitemap.xml': 'application/xml; charset=utf-8',
+    };
+    const crawlerContentType = crawlerStatic[url.pathname];
+    if (crawlerContentType) {
       const assetResponse = await env.ASSETS.fetch(request);
       if (assetResponse.ok) {
         const headers = new Headers(assetResponse.headers);
-        headers.set('Content-Type', 'text/plain; charset=utf-8');
+        headers.set('Content-Type', crawlerContentType);
         return new Response(assetResponse.body, {
           status: assetResponse.status,
           headers,

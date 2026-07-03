@@ -12,9 +12,23 @@ export default defineConfig(({ mode }) => {
     }
   }
 
+  const plugins = [react()];
+
+  // Optional Google Search Console HTML-tag verification (VITE_GOOGLE_SITE_VERIFICATION).
+  plugins.push({
+    name: 'inject-google-site-verification',
+    transformIndexHtml(html) {
+      const code = process.env.VITE_GOOGLE_SITE_VERIFICATION?.trim();
+      if (!code) return html;
+      const safe = code.replace(/"/g, '&quot;');
+      const meta = `<meta name="google-site-verification" content="${safe}" />`;
+      return html.replace('</head>', `    ${meta}\n  </head>`);
+    },
+  });
+
   return {
     define: viteEnvDefines,
-    plugins: [react()],
+    plugins,
     server: {
       host: '127.0.0.1',
       port: 5173,

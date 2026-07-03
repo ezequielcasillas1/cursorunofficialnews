@@ -1,0 +1,23 @@
+{
+  "name": "Unofficial Cursor News",
+  "short_name": "Cursor News",
+  "description": "Unofficial Cursor news — changelog, releases, and updates.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0f",
+  "theme_color": "#1a2a3e",
+  "icons": [
+    {
+      "src": "/brand/logo-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/brand/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
