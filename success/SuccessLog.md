@@ -1,7 +1,7 @@
 ﻿### [July 1, 2026] - n8n newsletter E2E (Cloud + news-api)
 **Status:** SUCCESS
 **Files:** env/server/.env, mobile/server/n8n/cursor-ai-news-newsletter.json, mobile/server/src/notifications/newsletter-routes.js
-**Result:** Full n8n chain green (Fetch → Generate HTML → Resend); digest delivered to ezequielcasillas1@gmail.com. Fixed fly.dev 404 → news-api URL; CURSOR_API_KEY required server restart (env not hot-reloaded).
+**Result:** Full n8n chain green (Fetch ? Generate HTML ? Resend); digest delivered to ezequielcasillas1@gmail.com. Fixed fly.dev 404 ? news-api URL; CURSOR_API_KEY required server restart (env not hot-reloaded).
 
 ### [June 30, 2026] - Discussion tab classification + scrape pagination support
 **Status:** SUCCESS
@@ -62,7 +62,7 @@
 ### [Thursday Jul 2, 2026] - Dark mode subscription tier text contrast
 **Status:** SUCCESS
 **Files:** web/src/App.css
-**Result:** Commit ea0d707 — gold .taco-tier-btn color in html[data-theme='dark'] so $1–/mo tier labels are readable.
+**Result:** Commit ea0d707 - gold .taco-tier-btn color in html[data-theme='dark'] so $1-$5/mo tier labels are readable.
 
 ### [Thursday Jul 2, 2026] - Live people-online presence counter
 **Status:** SUCCESS
