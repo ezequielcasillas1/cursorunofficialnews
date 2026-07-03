@@ -72,13 +72,17 @@ export function registerCoreRoutes(app) {
     const db = c.env.DB;
 
     try {
-      if (!checkRateLimit(clientRateKey(c, 'presence-heartbeat'), PRESENCE_HEARTBEAT_RATE_MS)) {
+      let sessionId = getCookie(c, PRESENCE_SESSION_COOKIE);
+      const rateKey = isValidSessionId(sessionId)
+        ? `session:${sessionId}:presence-heartbeat`
+        : clientRateKey(c, 'presence-heartbeat');
+
+      if (!checkRateLimit(rateKey, PRESENCE_HEARTBEAT_RATE_MS)) {
         await pruneStalePresence(db);
         const online = await getActiveVisitorCount(db);
         return c.json({ online, recorded: false }, 429);
       }
 
-      let sessionId = getCookie(c, PRESENCE_SESSION_COOKIE);
       if (!isValidSessionId(sessionId)) {
         sessionId = createSessionId();
       }

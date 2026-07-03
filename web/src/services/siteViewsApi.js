@@ -14,12 +14,21 @@ async function fetchPresenceJson(path, options = {}) {
       ...options,
     });
 
+    const body = await res.json().catch(() => ({}));
+
+    // Heartbeat rate limit still returns the live count — treat as success.
+    if (res.status === 429 && options.method === 'POST') {
+      return {
+        online: typeof body.online === 'number' ? body.online : 0,
+        recorded: false,
+      };
+    }
+
     if (!res.ok) {
-      const body = await res.json().catch(() => ({}));
       throw new Error(body.error || `Request failed (${res.status})`);
     }
 
-    return res.json();
+    return body;
   } catch (err) {
     if (err.name === 'AbortError') {
       throw new Error(`Request timed out — is the API running at ${API_BASE}?`);
