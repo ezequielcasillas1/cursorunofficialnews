@@ -9,9 +9,9 @@ Canonical JSON: [`cursor-ai-news-newsletter.workflow.json`](./cursor-ai-news-new
 | Source | Schedule | Notes |
 |---|---|---|
 | **Cloudflare Worker** | **1:00 PM America/Chicago** (`DIGEST_HOURS=13`) | Hourly cron; sends only when local hour is 13. Queues items between sends. |
-| **n8n `Daily 9am ET1`** | ~~9:00 AM ET (`0 9 * * *`)~~ **disabled in export** | Was a separate daily blast independent of Worker. Disabled to avoid duplicate sends and n8n credit use. |
+| **n8n `Daily 9am ET1 (DISABLED — use Worker 1pm CT digest)`** | ~~9:00 AM ET (`0 9 * * *`)~~ **disabled in export** | Was a separate daily blast independent of Worker. Disabled to avoid duplicate sends and n8n credit use. |
 
-After importing this workflow, confirm **Daily 9am ET1** stays disabled in the n8n UI (toggle off or delete the node). The **Ingest Webhook** path still runs when the Worker POSTs on ingest (if webhook URL is set).
+After importing this workflow, confirm **Daily 9am ET1 (DISABLED — use Worker 1pm CT digest)** stays disabled in the n8n UI (toggle off or delete the node). The **Ingest Webhook** path still runs when the Worker POSTs on ingest (if webhook URL is set).
 
 ### Saving n8n credits on scheduled digests
 

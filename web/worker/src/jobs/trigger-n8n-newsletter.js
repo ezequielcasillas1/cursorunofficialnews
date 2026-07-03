@@ -25,6 +25,10 @@ export function shouldUseServerEmailDigest(env) {
  * Fire-and-forget — failures are logged but do not block ingest.
  */
 export async function triggerN8nNewsletter({ newItems, ingestAt } = {}, env) {
+  if (!newItems?.length) {
+    return { skipped: true, reason: 'no_new_items' };
+  }
+
   const webhookUrl = env?.N8N_NEWSLETTER_WEBHOOK_URL?.trim();
   if (!webhookUrl) {
     return { skipped: true, reason: 'N8N_NEWSLETTER_WEBHOOK_URL not configured' };

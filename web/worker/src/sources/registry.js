@@ -407,7 +407,7 @@ export const SOURCES = [
     category: 'social',
     feedUrl: 'https://nitter.net/cursor_ai/rss',
     ingestMethod: 'rss',
-    enabled: true,
+    enabled: false,
     priority: 15,
     isOfficial: true,
     maxExcerptChars: 300,

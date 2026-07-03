@@ -177,7 +177,7 @@
           "conditions": [
             {
               "id": "has-items",
-              "leftValue": "={{ ($json.digestSections || []).reduce((sum, section) => sum + (section.items || []).length, 0) || (($json.matchingNewItems || []).length + ($json.matchingRecentItems || []).length) }}",
+              "leftValue": "={{ ($json.matchingNewItems || []).length }}",
               "rightValue": 0,
               "operator": {
                 "type": "number",
@@ -291,7 +291,7 @@
         ]
       ]
     },
-    "Daily 9am ET1": {
+    "Daily 9am ET1 (DISABLED — use Worker 1pm CT digest)": {
       "main": [
         [
           {

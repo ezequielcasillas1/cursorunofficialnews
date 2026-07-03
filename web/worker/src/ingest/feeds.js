@@ -11,7 +11,14 @@ const DEFAULT_FEED_HEADERS = {
   Accept: 'application/rss+xml, application/atom+xml, application/xml, text/xml',
 };
 
-const REDDIT_FETCH_DELAY_MS = 2_000;
+/** Reddit requires a descriptive UA; datacenter IPs are rate-limited aggressively. */
+const REDDIT_FEED_HEADERS = {
+  'User-Agent': 'web:UnofficialCursorNews:1.0 (by /u/cursorunofficialnews)',
+  Accept: 'application/atom+xml, application/xml, text/xml, */*',
+};
+
+const REDDIT_FETCH_DELAY_MS = 5_000;
+const REDDIT_MAX_RETRIES = 3;
 const FEED_FETCH_TIMEOUT_MS = 20_000;
 
 function isRedditFeed(source) {
@@ -32,28 +39,42 @@ function delay(ms) {
 async function fetchFeedSource(source) {
   if (!source.feedUrl) return [];
 
-  const parser = new Parser({
-    headers: {
-      ...DEFAULT_FEED_HEADERS,
-      ...(source.feedHeaders || {}),
-    },
-  });
+  const isReddit = isRedditFeed(source);
+  const requestHeaders = {
+    ...DEFAULT_FEED_HEADERS,
+    ...(source.feedHeaders || {}),
+    ...(isReddit ? REDDIT_FEED_HEADERS : {}),
+  };
 
-  const response = await fetch(source.feedUrl, {
-    headers: {
-      ...DEFAULT_FEED_HEADERS,
-      ...(source.feedHeaders || {}),
-    },
-    signal: AbortSignal.timeout(FEED_FETCH_TIMEOUT_MS),
-  });
+  const parser = new Parser({ headers: requestHeaders });
+  const maxAttempts = isReddit ? REDDIT_MAX_RETRIES : 1;
 
-  if (!response.ok) {
-    throw new Error(`Feed fetch ${response.status} for ${source.feedUrl}`);
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    const response = await fetch(source.feedUrl, {
+      headers: requestHeaders,
+      signal: AbortSignal.timeout(FEED_FETCH_TIMEOUT_MS),
+    });
+
+    if (response.status === 429 && isReddit && attempt < maxAttempts - 1) {
+      const retryAfterSec = Number(response.headers.get('retry-after')) || 2 ** attempt * 2;
+      await delay(retryAfterSec * 1000);
+      continue;
+    }
+
+    if (!response.ok) {
+      throw new Error(`Feed fetch ${response.status} for ${source.feedUrl}`);
+    }
+
+    const xml = await response.text();
+    if (!xml.trim()) {
+      throw new Error(`Feed fetch empty body for ${source.feedUrl}`);
+    }
+
+    const feed = await parser.parseString(xml);
+    return (feed.items || []).map((entry) => normalizeFeedEntry(source, entry));
   }
 
-  const xml = await response.text();
-  const feed = await parser.parseString(xml);
-  return (feed.items || []).map((entry) => normalizeFeedEntry(source, entry));
+  throw new Error(`Feed fetch exhausted retries for ${source.feedUrl}`);
 }
 
 async function ingestFeedSources() {

@@ -8,7 +8,7 @@ export const SECTION_TOOLTIPS = {
   issues: 'Bug reports, tracking, and known problems',
   community: 'User-generated content and community hubs',
   discussion: 'General conversations and threads',
-  social: 'Posts from social platforms (X, Reddit, etc.)',
+  social: 'Posts from Cursor on X (Twitter)',
   videos: 'Video content (YouTube, Twitch clips, etc.)',
   tutorials: 'Instructional guides and how-to content',
 };

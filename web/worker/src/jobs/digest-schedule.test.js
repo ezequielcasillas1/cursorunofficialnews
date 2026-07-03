@@ -34,6 +34,13 @@ test('getCurrentDigestSlot matches 1pm Central', () => {
   assert.equal(isScheduledDigestHour(env, onePmCt), true);
 });
 
+test('getCurrentDigestSlot returns null at former 5pm slot', () => {
+  const env = { DIGEST_TIMEZONE: 'America/Chicago', DIGEST_HOURS: '13' };
+  const fivePmCt = new Date('2026-07-03T22:00:00.000Z'); // 17:00 CDT
+  assert.equal(getCurrentDigestSlot(env, fivePmCt), null);
+  assert.equal(isScheduledDigestHour(env, fivePmCt), false);
+});
+
 test('getCurrentDigestSlot returns null at former 10pm slot', () => {
   const env = { DIGEST_TIMEZONE: 'America/Chicago', DIGEST_HOURS: '13' };
   const tenPmCt = new Date('2026-07-04T03:00:00.000Z'); // 22:00 CDT

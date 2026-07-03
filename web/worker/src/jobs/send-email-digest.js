@@ -32,7 +32,9 @@ export async function notifyEmailSubscribers(db, newItems, { digestSlot, ingestA
   if (env?.EMAIL_NOTIFICATIONS === 'false') {
     return { skipped: true, reason: 'EMAIL_NOTIFICATIONS=false' };
   }
-  if (!newItems?.length) return { sent: 0, items: 0 };
+  if (!newItems?.length) {
+    return { skipped: true, reason: 'no_new_items', sent: 0, items: 0 };
+  }
 
   const cycleKey = digestSlot || ingestAt || new Date().toISOString().slice(0, 13);
 

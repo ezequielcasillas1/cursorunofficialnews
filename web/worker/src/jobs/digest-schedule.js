@@ -39,7 +39,7 @@ export function getLocalDateTimeParts(date, timezone) {
   };
 }
 
-/** Stable slot id for idempotency — e.g. 2026-07-03-10 in America/Chicago. */
+/** Stable slot id for idempotency — e.g. 2026-07-03-13 in America/Chicago. */
 export function getCurrentDigestSlot(env, now = new Date()) {
   const { timezone, hours } = getDigestScheduleConfig(env);
   const { dateKey, hour } = getLocalDateTimeParts(now, timezone);
