@@ -230,7 +230,7 @@ export function useNewsletter(membership = {}) {
         if (normalized.pendingVerification) {
           setStatusMessage('Check your email to confirm your subscription.');
         } else if (!normalized.enabled) {
-          setStatusMessage('Email digest paused.');
+          setStatusMessage('Digest emails paused.');
         }
         return normalized;
       }
@@ -261,8 +261,8 @@ export function useNewsletter(membership = {}) {
         } else {
           setStatusMessage(
             synced.enabled
-              ? 'Subscribed — one digest email when new headlines arrive.'
-              : 'Email digest paused.',
+              ? 'Digest emails on — you will receive digests when new headlines match your topics.'
+              : 'Digest emails paused.',
           );
         }
         return synced;

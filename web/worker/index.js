@@ -1,5 +1,6 @@
 import { createApp } from './src/app.js';
 import { bootstrapIngestIfEmpty, runIngestWithLock } from './src/ingest/run-ingest.js';
+import { runScheduledDigest } from './src/jobs/run-scheduled-digest.js';
 
 /** @param {string} pathname */
 function resolveExplicitAssetContentType(pathname) {
@@ -60,21 +61,42 @@ export default {
     return env.ASSETS.fetch(request);
   },
 
-  /** Cron Trigger — replaces node-cron's 30-min INGEST_CRON_SCHEDULE. */
+  /** Cron Trigger — ingest every 30 min; digest batch at top of each hour (CT windows). */
   async scheduled(controller, env, ctx) {
+    const cron = controller.cron;
+
+    if (cron === '*/30 * * * *') {
+      ctx.waitUntil(
+        runIngestWithLock(env.DB, env)
+          .then((result) => {
+            console.log(
+              JSON.stringify({
+                event: 'ingest_cron',
+                cron,
+                ...result,
+              }),
+            );
+          })
+          .catch((err) => {
+            console.error('[cron] ingest', err.message || err);
+          }),
+      );
+      return;
+    }
+
     ctx.waitUntil(
-      runIngestWithLock(env.DB, env)
+      runScheduledDigest(env.DB, env)
         .then((result) => {
           console.log(
             JSON.stringify({
-              event: 'ingest_cron',
-              cron: controller.cron,
+              event: 'digest_cron',
+              cron,
               ...result,
             }),
           );
         })
         .catch((err) => {
-          console.error('[cron]', err.message || err);
+          console.error('[cron] digest', err.message || err);
         }),
     );
   },

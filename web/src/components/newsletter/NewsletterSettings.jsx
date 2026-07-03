@@ -9,9 +9,21 @@ import { useNewsletter } from '../../newsletter/useNewsletter.js';
 import { CollapsiblePanel } from '../ui/CollapsiblePanel.jsx';
 import { Tooltip } from '../Tooltip.jsx';
 
+function digestStateStrong(prefs) {
+  if (prefs.pendingVerification) return 'Pending confirmation';
+  return prefs.enabled ? 'Receiving emails' : 'Paused';
+}
+
+function digestStateHint(prefs) {
+  if (prefs.pendingVerification) return 'Check your email to confirm your subscription';
+  return prefs.enabled
+    ? 'Digests will arrive when new headlines match your topics'
+    : 'No digest emails until you turn this back on';
+}
+
 function digestStateLabel(prefs) {
   if (prefs.pendingVerification) return 'Pending — check your email';
-  return prefs.enabled ? 'Subscribed · Digest mode' : 'Off — no emails sent';
+  return prefs.enabled ? 'Receiving emails' : 'Paused';
 }
 
 function collapsedSummary(prefs) {
@@ -111,7 +123,7 @@ export function NewsletterSettings({ membership }) {
         </div>
 
         <label className="newsletter-toggle">
-          <span className="newsletter-field-label">Enable email digest</span>
+          <span className="newsletter-field-label">Digest emails</span>
           <span className="newsletter-toggle-row">
             <input
               type="checkbox"
@@ -120,10 +132,15 @@ export function NewsletterSettings({ membership }) {
                 void setEnabled(event.target.checked);
               }}
               disabled={syncing}
+              aria-label={
+                prefs.enabled
+                  ? 'Digest emails on — receiving emails'
+                  : 'Digest emails off — paused'
+              }
             />
             <span className="newsletter-toggle-copy">
-              <strong>{prefs.enabled ? 'On' : 'Off'}</strong>
-              <small>{digestStateLabel(prefs)}</small>
+              <strong>{digestStateStrong(prefs)}</strong>
+              <small>{digestStateHint(prefs)}</small>
             </span>
           </span>
         </label>

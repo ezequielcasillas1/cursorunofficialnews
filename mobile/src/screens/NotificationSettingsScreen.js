@@ -218,11 +218,11 @@ export function NotificationSettingsScreen({ onBack, previewItem }) {
           syncedPrefs.pendingVerification
             ? 'Check your email to confirm your subscription.'
             : nextEmailPrefs.enabled
-              ? 'Subscribed — one digest email when new headlines arrive.'
-              : 'Email digest paused.',
+              ? 'Digest emails on — you will receive digests when new headlines match your topics.'
+              : 'Digest emails paused.',
         );
       } else if (!nextEmailPrefs.enabled) {
-        setEmailStatus('Email digest paused.');
+        setEmailStatus('Digest emails paused.');
       }
     } catch (err) {
       setEmailError(err.message || 'Failed to save email settings.');
@@ -450,19 +450,24 @@ export function NotificationSettingsScreen({ onBack, previewItem }) {
 
       <View style={styles.masterRow}>
         <View style={styles.masterText}>
-          <Text style={styles.masterLabel}>Enable email digest</Text>
+          <Text style={styles.masterLabel}>Digest emails</Text>
           <Text style={styles.masterHint}>
             {emailPrefs.pendingVerification
-              ? 'Waiting for email confirmation'
+              ? 'Check your email to confirm your subscription'
               : emailPrefs.enabled
-                ? 'Subscribed · Digest mode'
-                : 'Off — no emails sent'}
+                ? 'Receiving emails — digests arrive when new headlines match your topics'
+                : 'Paused — no digest emails until you turn this back on'}
           </Text>
         </View>
         <Switch
           value={emailPrefs.enabled}
           onValueChange={handleEmailMasterToggle}
           disabled={emailSyncing}
+          accessibilityLabel={
+            emailPrefs.enabled
+              ? 'Digest emails on — receiving emails'
+              : 'Digest emails off — paused'
+          }
           trackColor={{ false: colors.border, true: colors.navySoft }}
           thumbColor={emailPrefs.enabled ? colors.gold : colors.accentSoft}
         />

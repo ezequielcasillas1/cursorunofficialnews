@@ -1,4 +1,6 @@
+import { flattenDigestSections } from '../shared/notifications/category-limits.js';
 import { assembleEmailDigest } from '../notifications/assemble-email.js';
+import { polishEmailHeadline } from '../llm/rewrite-email-title.js';
 import {
   getResendClient,
   getTransactionalFromAddress,
@@ -23,18 +25,35 @@ function getItemsForSubscriber(subscriber, newItems) {
   return buildSubscriberDigestSections(newItems, subscriber);
 }
 
+async function polishSingleHeadlineSections(sections, env) {
+  const flat = flattenDigestSections(sections);
+  if (flat.length !== 1) return sections;
+
+  const polishedTitle = await polishEmailHeadline(flat[0].title, env);
+  if (!polishedTitle || polishedTitle === flat[0].title) return sections;
+
+  return sections.map((section) => ({
+    ...section,
+    items: section.items.map((item) =>
+      item.id === flat[0].id ? { ...item, title: polishedTitle } : item,
+    ),
+  }));
+}
+
 /**
- * Send one digest email per subscriber when new items match their category prefs.
+ * Send one digest email per subscriber for queued/batched new items.
  * Skips when EMAIL_NOTIFICATIONS=false or RESEND_API_KEY is unset.
  */
-export async function notifyEmailSubscribers(db, newItems, { ingestAt } = {}, env) {
+export async function notifyEmailSubscribers(db, newItems, { digestSlot, ingestAt } = {}, env) {
   if (env?.EMAIL_NOTIFICATIONS === 'false') {
     return { skipped: true, reason: 'EMAIL_NOTIFICATIONS=false' };
   }
   if (!newItems?.length) return { sent: 0, items: 0 };
 
+  const cycleKey = digestSlot || ingestAt || new Date().toISOString().slice(0, 13);
+
   const n8nPromise = isN8nNewsletterConfigured(env)
-    ? triggerN8nNewsletter({ newItems, ingestAt }, env)
+    ? triggerN8nNewsletter({ newItems, ingestAt: cycleKey }, env)
     : Promise.resolve({ skipped: true, reason: 'n8n_not_configured' });
 
   const subscribers = await listSubscribers(db);
@@ -65,14 +84,15 @@ export async function notifyEmailSubscribers(db, newItems, { ingestAt } = {}, en
 
   const resend = getResendClient(env);
   const from = getTransactionalFromAddress(env);
-  const cycleKey = ingestAt || new Date().toISOString().slice(0, 13);
   let sent = 0;
   let failed = 0;
   const errors = [];
 
   for (const subscriber of subscribers) {
-    const sections = getItemsForSubscriber(subscriber, newItems);
+    let sections = getItemsForSubscriber(subscriber, newItems);
     if (sections.length === 0) continue;
+
+    sections = await polishSingleHeadlineSections(sections, env);
 
     const unsubscribeUrl = getUnsubscribeUrl(subscriber, env);
     const { subject, html, text } = assembleEmailDigest({ sections }, { unsubscribeUrl });
@@ -116,6 +136,7 @@ export async function notifyEmailSubscribers(db, newItems, { ingestAt } = {}, en
       skipped: false,
       items: newItems.length,
       subscribers: subscribers.length,
+      digestSlot: cycleKey,
       n8nTriggered: Boolean(n8nResult?.triggered),
     }),
   );
@@ -125,6 +146,7 @@ export async function notifyEmailSubscribers(db, newItems, { ingestAt } = {}, en
     failed,
     items: newItems.length,
     subscribers: subscribers.length,
+    digestSlot: cycleKey,
     errors: errors.length ? errors : undefined,
     n8n: n8nResult,
   };

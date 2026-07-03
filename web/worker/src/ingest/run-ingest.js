@@ -1,7 +1,7 @@
 import { ingestAllSources } from './feeds.js';
 import { diffNewItems } from '../jobs/diff-new-items.js';
-import { notifyEmailSubscribers } from '../jobs/send-email-digest.js';
 import { notifySubscribers } from '../jobs/send-push.js';
+import { enqueueDigestItems } from '../store/digest-queue.js';
 import {
   acquireIngestLock,
   getLastIngestAt,
@@ -25,7 +25,7 @@ async function applyIngestResult(db, items, env) {
   if (newItems.length > 0) {
     await Promise.all([
       notifySubscribers(db, newItems, env),
-      notifyEmailSubscribers(db, newItems, { ingestAt: ingestedAt }, env),
+      enqueueDigestItems(db, newItems),
     ]);
   }
 

@@ -146,9 +146,26 @@ CREATE TABLE IF NOT EXISTS ingest_state (
   id INTEGER PRIMARY KEY CHECK (id = 1),
   running INTEGER NOT NULL DEFAULT 0,
   started_at TEXT,
-  last_ingest_at TEXT
+  last_ingest_at TEXT,
+  last_digest_slot TEXT
 );
-INSERT OR IGNORE INTO ingest_state (id, running, started_at, last_ingest_at) VALUES (1, 0, NULL, NULL);
+INSERT OR IGNORE INTO ingest_state (id, running, started_at, last_ingest_at, last_digest_slot) VALUES (1, 0, NULL, NULL, NULL);
+
+-- Items queued between scheduled digest sends (default 10am / 5pm / 10pm America/Chicago).
+CREATE TABLE IF NOT EXISTS digest_queue (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  excerpt TEXT NOT NULL DEFAULT '',
+  canonical_url TEXT NOT NULL DEFAULT '',
+  published_at TEXT,
+  category TEXT NOT NULL,
+  source_id TEXT NOT NULL,
+  source_name TEXT,
+  attribution_label TEXT,
+  queued_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_digest_queue_queued_at ON digest_queue (queued_at);
+CREATE INDEX IF NOT EXISTS idx_digest_queue_category ON digest_queue (category);
 
 -- Live visitor presence — heartbeat rows expire after ~2 min (see store/site-views.js).
 CREATE TABLE IF NOT EXISTS site_presence (

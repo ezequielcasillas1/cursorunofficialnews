@@ -11,7 +11,9 @@
     "RESEND_FROM_EMAIL": "Unofficial Cursor News <onboarding@resend.dev>",
     "EMAIL_NOTIFICATIONS": "true",
     "PUSH_NOTIFICATIONS": "true",
-    "N8N_NEWSLETTER_MODE": "parallel"
+    "N8N_NEWSLETTER_MODE": "parallel",
+    "DIGEST_TIMEZONE": "America/Chicago",
+    "DIGEST_HOURS": "10,17,22"
   },
   "assets": {
     "directory": "./web/dist",
@@ -29,7 +31,7 @@
     "binding": "AI"
   },
   "triggers": {
-    "crons": ["*/30 * * * *"]
+    "crons": ["*/30 * * * *", "0 * * * *"]
   }
   // Custom domains (cursorunofficial.news, www) are attached in the Cloudflare
   // dashboard under Workers → cursorunofficialnews → Domains & Routes.
