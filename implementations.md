@@ -1,3 +1,8 @@
+### [2026-07-02] - Prod newsletter whitelist fix (D1 + claim UI)
+**Status:** PENDING USER VERIFY
+**Files:** prod D1 `cursorunofficialnews` (memberships, membership_refunds tables); web/src/monetization/useMembership.js; web/worker/src/lib/membership-entitlement.test.js
+**Result:** Root cause: prod D1 missing `memberships` table — claim returned SQLITE_ERROR despite `NEWSLETTER_FREE_EMAILS` secret. Applied CREATE TABLE via Cloudflare MCP. Frontend `claimAdFree` now applies entitlement when `newsletterUnlocked` (not only `adFree`). Prod claim for 72afterda@gmail.com returns token immediately.
+
 ### [2026-07-02] - Membership copy: newsletter now, ad-free pending AdSense
 **Status:** PENDING USER VERIFY
 **Files:** web/src/components/{monetization/MembershipPanel.jsx,monetization/MonetizationSection.jsx,SupporterSlot.jsx,newsletter/NewsletterSettings.jsx}, mobile/src/screens/NotificationSettingsScreen.js

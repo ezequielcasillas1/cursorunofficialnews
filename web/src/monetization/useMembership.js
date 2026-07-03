@@ -219,8 +219,14 @@ export function useMembership() {
         if (data.token) {
           setStoredMembershipToken(data.token);
         }
-        if (data.adFree) {
+        const unlocked = Boolean(data.adFree || data.newsletterUnlocked);
+        if (unlocked && data.token) {
           applyEntitlement(data.token, data);
+          setClaimNotice(
+            data.newsletterUnlocked && !data.adFree
+              ? 'Newsletter access unlocked on this device.'
+              : 'Membership verified on this device.',
+          );
           return true;
         }
 
