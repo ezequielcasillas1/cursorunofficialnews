@@ -14,6 +14,9 @@
     },
     "cloudflare-docs": {
       "url": "https://docs.mcp.cloudflare.com/mcp"
+    },
+    "n8n-mcp": {
+      "url": "https://api.n8n-mcp.com/mcp"
     }
   }
 }
