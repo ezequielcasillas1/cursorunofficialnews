@@ -8,6 +8,15 @@ const SOCIAL_LINKS = [
   { label: 'Reddit', href: 'https://reddit.com/user/Ok-Address3409' },
 ];
 
+const HEADER_NAV = [
+  { href: '/updates', label: 'Updates' },
+  { href: '/news', label: 'News' },
+  { href: '/tutorials', label: 'Tutorials' },
+  { href: '/newsletter', label: 'Newsletter' },
+  { href: '/about', label: 'About' },
+  { href: '/sources', label: 'Sources' },
+];
+
 export function Header({ onRefresh, refreshing }) {
   const onlineCount = useSiteViews();
   const today = new Date().toLocaleDateString(undefined, {
@@ -47,7 +56,7 @@ export function Header({ onRefresh, refreshing }) {
             ))}
           </nav>
         </div>
-        <div className="masthead-brand">
+        <a href="/" className="masthead-brand masthead-brand-link">
           <img
             className="masthead-logo masthead-logo-default"
             src="/brand/logo-icon.svg"
@@ -80,12 +89,21 @@ export function Header({ onRefresh, refreshing }) {
               Your morning briefing on Cursor — changelog, releases, and community
             </p>
           </div>
-        </div>
+        </a>
+        <nav className="masthead-nav" aria-label="Site sections">
+          {HEADER_NAV.map((link) => (
+            <a key={link.href} href={link.href}>
+              {link.label}
+            </a>
+          ))}
+        </nav>
         <div className="masthead-actions">
           <ThemeToggle />
-          <button type="button" className="btn" onClick={onRefresh} disabled={refreshing}>
-            {refreshing ? 'Refreshing…' : import.meta.env.PROD ? 'Reload feed' : 'Refresh feed'}
-          </button>
+          {onRefresh ? (
+            <button type="button" className="btn" onClick={onRefresh} disabled={refreshing}>
+              {refreshing ? 'Refreshing…' : import.meta.env.PROD ? 'Reload feed' : 'Refresh feed'}
+            </button>
+          ) : null}
           <SupporterSlot variant="inline" />
         </div>
       </div>

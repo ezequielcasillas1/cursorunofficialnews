@@ -1,4 +1,6 @@
+import { NavLink } from 'react-router-dom';
 import { FEED_CATEGORIES } from '../config/feedCategories.js';
+import { getPathForCategory } from '../routes/feedRoutes.js';
 import { Tooltip } from './Tooltip.jsx';
 import { CategoryFilterPanel } from './CategoryFilterPanel.jsx';
 
@@ -6,7 +8,6 @@ export function CategoryFilter({
   selectedCategory,
   categoryFilter,
   sources,
-  onCategoryChange,
   onCategoryFilterChange,
 }) {
   return (
@@ -15,13 +16,15 @@ export function CategoryFilter({
       <nav className="category-filter" aria-label="Filter by section">
         {FEED_CATEGORIES.map((cat) => (
           <Tooltip key={cat.id} text={cat.tooltip}>
-            <button
-              type="button"
-              className={selectedCategory === cat.id ? 'chip chip-active' : 'chip'}
-              onClick={() => onCategoryChange(cat.id)}
+            <NavLink
+              to={getPathForCategory(cat.id)}
+              end={cat.id === 'all'}
+              className={({ isActive }) =>
+                isActive || selectedCategory === cat.id ? 'chip chip-active chip-link' : 'chip chip-link'
+              }
             >
               {cat.label}
-            </button>
+            </NavLink>
           </Tooltip>
         ))}
       </nav>
