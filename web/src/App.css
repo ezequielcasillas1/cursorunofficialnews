@@ -1575,6 +1575,10 @@ html[data-theme='light'] .masthead-logo-light {
   filter: brightness(1.03);
 }
 
+html[data-theme='dark'] .taco-tier-btn {
+  color: var(--color-gold);
+}
+
 .taco-tier-btn:disabled {
   opacity: 0.55;
   cursor: not-allowed;
