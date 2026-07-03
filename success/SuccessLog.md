@@ -1,6 +1,6 @@
 ﻿### [July 3, 2026] - Privacy, terms, unsubscribe pages, nav tooltips
 **Status:** SUCCESS
-**Commit:** 597f0fd
+**Commit:** 7bfde1d
 **Files:** web/src legal pages, unsubscribe pages, siteNav tooltips, worker membership/email routes, docs/n8n workflow
 **Result:** `/privacy` + `/terms`, newsletter/membership unsubscribe SPAs, shared footer/header tooltips, Stripe cancel-at-period-end API, n8n node rename sync.
 
