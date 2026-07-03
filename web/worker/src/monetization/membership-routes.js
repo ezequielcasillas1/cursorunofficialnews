@@ -1,10 +1,9 @@
 import {
   activateMember,
   buildMembershipActivationUrl,
-  claimMembershipAccess,
-  getMember,
   listMembers,
 } from '../store/memberships.js';
+import { resolveActiveMemberForClaim } from './stripe-membership-sync.js';
 import {
   getEntitlementByToken,
   isDevMemberEmail,
@@ -162,10 +161,12 @@ export function registerMembershipRoutes(app) {
         );
       }
 
-      const member = await getMember(db, email);
+      const member = await resolveActiveMemberForClaim(db, email, c.env);
       if (member?.active) {
         const request = await createMembershipClaimRequest(db, email, c.env);
         await sendMembershipClaimEmail({ email, claimToken: request.token }, c.env);
+      } else {
+        console.info('[membership/claim] no active membership resolved; skipping verification email');
       }
 
       return c.json({ ok: true, pending: true, message: CLAIM_PENDING_MESSAGE });
@@ -190,8 +191,8 @@ export function registerMembershipRoutes(app) {
       return c.json({ error: 'This verification link is invalid or has expired.' }, 410);
     }
 
-    const claim = await claimMembershipAccess(db, request.email);
-    if (!claim) {
+    const member = await resolveActiveMemberForClaim(db, request.email, c.env);
+    if (!member?.active) {
       return c.json(
         { error: 'Your membership could not be verified. Please request a new verification link.' },
         410,
@@ -202,9 +203,9 @@ export function registerMembershipRoutes(app) {
       ok: true,
       adFree: true,
       newsletterUnlocked: true,
-      email: claim.email,
-      token: claim.membershipToken,
-      activationUrl: buildMembershipActivationUrl(claim.membershipToken, c.env),
+      email: member.email,
+      token: member.membershipToken,
+      activationUrl: buildMembershipActivationUrl(member.membershipToken, c.env),
     });
   });
 
