@@ -33,33 +33,6 @@ function collapsedSummary(prefs) {
   return digestStateLabel(prefs);
 }
 
-function scrollToMembershipSection(event) {
-  event.preventDefault();
-  document.getElementById('membership-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
-function MembershipRequiredNotice() {
-  return (
-    <CollapsiblePanel
-      id="newsletter-settings"
-      className="newsletter-panel"
-      eyebrow="Email digest · Members only"
-      title="Newsletter options"
-      subtitle="Become a member to unlock the email newsletter."
-      summary="Members only"
-      defaultExpanded={NEWSLETTER_PANEL_DEFAULT_EXPANDED}
-    >
-      <p className="hint">
-        The email newsletter is a membership benefit today. Ad-free browsing will follow once AdSense
-        is enabled. Join for $1–$5/mo to unlock the newsletter.
-      </p>
-      <a className="btn" href="#membership-section" onClick={scrollToMembershipSection}>
-        Become a member
-      </a>
-    </CollapsiblePanel>
-  );
-}
-
 export function NewsletterSettings({ membership }) {
   const { newsletterUnlocked, checking: membershipChecking, memberEmail } = membership || {};
 
@@ -77,16 +50,8 @@ export function NewsletterSettings({ membership }) {
     unsubscribe,
   } = useNewsletter(membership);
 
-  if (membershipChecking) {
-    return (
-      <section className="monetization-section" aria-busy="true">
-        <p className="hint">Checking membership status…</p>
-      </section>
-    );
-  }
-
-  if (!newsletterUnlocked) {
-    return <MembershipRequiredNotice />;
+  if (membershipChecking || !newsletterUnlocked) {
+    return null;
   }
 
   return (
