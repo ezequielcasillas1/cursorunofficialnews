@@ -84,3 +84,9 @@
 **Status:** SUCCESS
 **Files:** web/worker/src/sources/registry.js, web/worker/src/classify/classify-news-item.js, web/worker/src/store/news-store.js, env/web/.env (local only — DO NOT commit .env)
 **Result:** Tutorial sources fixed (cursorai URL, classify defaults, classify-on-read filter); local ingest verified; deploy to Cloudflare.
+
+### [2026-07-17] - Community tab feed restore
+**Status:** SUCCESS
+**Files:** web/worker/src/sources/registry.js, web/worker/src/ingest/feeds.js, web/worker/src/ingest/run-ingest.js, web/worker/src/store/news-store.js, web/worker/src/classify/classify-news-item.js, web/worker/src/classify/content-signals.js
+**Result:** Reddit/Stack Overflow community sources and ingest/classify paths restored; user confirmed SUCCESS.
+

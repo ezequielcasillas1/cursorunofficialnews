@@ -202,6 +202,19 @@ export async function getCommentaryMap(db) {
   }
 }
 
+/** Prior rows for sources that failed this ingest — keeps Reddit etc. from wiping on 429. */
+export async function getItemsForSourceIds(db, sourceIds) {
+  const ids = [...new Set((sourceIds || []).filter(Boolean))];
+  if (ids.length === 0) return [];
+
+  const { results } = await db.prepare('SELECT * FROM news_items ORDER BY published_at DESC').all();
+  const allowed = new Set(ids);
+  return (results || [])
+    .filter((row) => allowed.has(row.source_id))
+    .map(rowToItem)
+    .filter(Boolean);
+}
+
 /** Full replace — mirrors the old replaceItems()/saveToDisk() semantics. */
 export async function replaceItems(db, nextItems) {
   const sanitized = sanitizeNewsItems(nextItems);

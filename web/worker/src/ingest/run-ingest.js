@@ -2,10 +2,13 @@ import { ingestAllSources } from './feeds.js';
 import { diffNewItems } from '../jobs/diff-new-items.js';
 import { notifySubscribers } from '../jobs/send-push.js';
 import { attachCommentaries } from '../llm/news-commentary.js';
+import { dedupeNewsItems } from '../normalize/news-item.js';
+import { getSourceMeta } from '../sources/registry.js';
 import { enqueueDigestItems } from '../store/digest-queue.js';
 import {
   acquireIngestLock,
   getCommentaryMap,
+  getItemsForSourceIds,
   getLastIngestAt,
   getStatus,
   releaseIngestLock,
@@ -13,15 +16,29 @@ import {
   setLastIngestAt,
 } from '../store/news-store.js';
 
-async function applyIngestResult(db, items, env) {
-  if (items.length === 0) {
+async function mergePreservedFailedSources(db, items, failedSourceIds) {
+  if (!failedSourceIds?.length) return items;
+
+  const preserved = await getItemsForSourceIds(db, failedSourceIds);
+  if (preserved.length === 0) return items;
+
+  console.warn(
+    `[ingest] Preserving ${preserved.length} cached item(s) for failed sources: ${failedSourceIds.join(', ')}`,
+  );
+  return dedupeNewsItems([...items, ...preserved], { getSourceMeta });
+}
+
+async function applyIngestResult(db, items, env, failedSourceIds = []) {
+  const mergedItems = await mergePreservedFailedSources(db, items, failedSourceIds);
+
+  if (mergedItems.length === 0) {
     console.warn('[ingest] No items returned — keeping existing cache');
     return { lastIngestAt: await getLastIngestAt(db), newCount: 0, count: 0 };
   }
 
-  const newItems = await diffNewItems(db, items);
+  const newItems = await diffNewItems(db, mergedItems);
   const existingCommentary = await getCommentaryMap(db);
-  const itemsWithCommentary = await attachCommentaries(items, existingCommentary, env);
+  const itemsWithCommentary = await attachCommentaries(mergedItems, existingCommentary, env);
   await replaceItems(db, itemsWithCommentary);
   const ingestedAt = new Date().toISOString();
   await setLastIngestAt(db, ingestedAt);
@@ -33,7 +50,7 @@ async function applyIngestResult(db, items, env) {
     ]);
   }
 
-  return { lastIngestAt: ingestedAt, newCount: newItems.length, count: items.length };
+  return { lastIngestAt: ingestedAt, newCount: newItems.length, count: mergedItems.length };
 }
 
 /**
@@ -49,8 +66,8 @@ export async function runIngestWithLock(db, env) {
   }
 
   try {
-    const items = await ingestAllSources(env);
-    return await applyIngestResult(db, items, env);
+    const { items, failedSourceIds } = await ingestAllSources(env);
+    return await applyIngestResult(db, items, env, failedSourceIds);
   } finally {
     await releaseIngestLock(db);
   }

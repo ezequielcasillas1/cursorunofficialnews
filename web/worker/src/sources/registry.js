@@ -240,11 +240,14 @@ export const SOURCES = [
   },
   {
     id: 'stackoverflow-cursor-ai',
-    name: 'Stack Overflow — Cursor AI',
+    name: 'Stack Overflow — Cursor',
     category: 'community',
-    feedUrl: 'https://stackoverflow.com/feeds/tag?tagnames=cursor-ai&sort=newest',
+    // No live Cursor-product SO tag beyond `cursor-ide`. Slugs `cursor-ai` /
+    // `cursorai` 404; bare `cursor` is mouse/SQL cursor noise (wrong product).
+    // Keep disabled so Community chips stay honest; use stackoverflow-cursor-ide.
+    feedUrl: 'https://stackoverflow.com/feeds/tag?tagnames=cursor-ide&sort=newest',
     ingestMethod: 'atom',
-    enabled: true,
+    enabled: false,
     priority: 28,
     isOfficial: false,
     maxExcerptChars: 300,
@@ -254,9 +257,11 @@ export const SOURCES = [
     id: 'github-cursor-discussions',
     name: 'GitHub — Cursor Discussions',
     category: 'community',
+    // getcursor/cursor has no Discussions (atom 404). Keep disabled until a
+    // real discussions host exists; forum.cursor.com covers this surface.
     feedUrl: 'https://github.com/getcursor/cursor/discussions.atom',
     ingestMethod: 'atom',
-    enabled: true,
+    enabled: false,
     priority: 29,
     isOfficial: false,
     maxExcerptChars: 300,
@@ -288,9 +293,10 @@ export const SOURCES = [
   },
   {
     id: 'medium-cursor-ai-editor',
-    name: 'Medium — Cursor AI Editor',
+    name: 'Medium — Cursor AI',
     category: 'tutorial',
-    feedUrl: 'https://medium.com/feed/tag/cursor-ai-editor',
+    // Medium tag `cursor-ai-editor` is empty; live tag is `cursor-ai`.
+    feedUrl: 'https://medium.com/feed/tag/cursor-ai',
     ingestMethod: 'rss',
     enabled: true,
     priority: 32,
@@ -358,7 +364,8 @@ export const SOURCES = [
     id: 'reddit-cursor-ai',
     name: 'Reddit — r/CursorAI',
     category: 'community',
-    feedUrl: 'https://www.reddit.com/r/CursorAI/.rss',
+    // old.reddit.com RSS is less aggressively rate-limited than www for bots.
+    feedUrl: 'https://old.reddit.com/r/CursorAI/.rss',
     ingestMethod: 'rss',
     enabled: true,
     priority: 30,
@@ -370,7 +377,7 @@ export const SOURCES = [
     id: 'reddit-cursor',
     name: 'Reddit — r/cursor',
     category: 'community',
-    feedUrl: 'https://www.reddit.com/r/cursor/.rss',
+    feedUrl: 'https://old.reddit.com/r/cursor/.rss',
     ingestMethod: 'rss',
     enabled: true,
     priority: 31,
@@ -382,7 +389,7 @@ export const SOURCES = [
     id: 'reddit-cursorrules',
     name: 'Reddit — r/cursorrules',
     category: 'community',
-    feedUrl: 'https://www.reddit.com/r/cursorrules/.rss',
+    feedUrl: 'https://old.reddit.com/r/cursorrules/.rss',
     ingestMethod: 'rss',
     enabled: true,
     priority: 32,
@@ -394,7 +401,7 @@ export const SOURCES = [
     id: 'reddit-chatgpt-coding',
     name: 'Reddit — r/ChatGPTCoding',
     category: 'community',
-    feedUrl: 'https://www.reddit.com/r/ChatGPTCoding/.rss',
+    feedUrl: 'https://old.reddit.com/r/ChatGPTCoding/.rss',
     ingestMethod: 'rss',
     enabled: true,
     priority: 33,

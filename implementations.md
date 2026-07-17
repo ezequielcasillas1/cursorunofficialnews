@@ -214,3 +214,9 @@ Prod: `npx wrangler secret put N8N_NEWSLETTER_WEBHOOK_URL` with live `/webhook/`
 **Status:** SUCCESS
 **Files:** web/worker/src/sources/registry.js, web/worker/src/classify/classify-news-item.js, web/worker/src/store/news-store.js
 **Result:** Dev.to cursorai RSS URL, tutorial-source classification defaults, classify-on-read filter for Tutorials tab.
+
+### [2026-07-17] - Community tab feed restore
+**Status:** SUCCESS
+**Files:** web/worker/src/sources/registry.js, web/worker/src/ingest/feeds.js, web/worker/src/ingest/run-ingest.js, web/worker/src/store/news-store.js, web/worker/src/classify/classify-news-item.js, web/worker/src/classify/content-signals.js
+**Result:** Community Reddit/SO feeds ingest and classification fixes; deploy to Cloudflare.
+

@@ -34,9 +34,11 @@ function baseCategory(item, resolvedSource) {
       sourceCategory: registryCategory,
     });
     if (contentCategory) return contentCategory;
-    // Keep tutorial-registry feeds on the Tutorials tab unless content rules
-    // explicitly reclassified them (question/support → community, etc.).
-    if (registryCategory === 'tutorial') return 'tutorial';
+    // Keep tutorial/community registry feeds on their tabs unless content
+    // rules explicitly reclassified them (question → community, how-to → tutorial).
+    if (registryCategory === 'tutorial' || registryCategory === 'community') {
+      return registryCategory;
+    }
   }
 
   return registryCategory;
@@ -52,6 +54,12 @@ export function classifyNewsItem(item, source = null) {
   const resolvedSource = source || (item.sourceId ? getSourceById(item.sourceId) : null);
   const base = baseCategory(item, resolvedSource);
   const { title, excerpt } = item;
+
+  // Community registry feeds stay on the Community tab (chips filter by
+  // category=community). Issue/discussion promotion still applies elsewhere.
+  if (resolvedSource?.category === 'community') {
+    return 'community';
+  }
 
   if (ISSUE_PROMOTABLE_BASES.has(base)) {
     if (issueScore(title, excerpt) >= ISSUE_PROMOTE_THRESHOLD) return 'issue';
