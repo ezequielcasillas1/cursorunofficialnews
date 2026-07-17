@@ -3,19 +3,27 @@ import {
   useCallback,
   useEffect,
   useId,
+  useLayoutEffect,
   useRef,
   useState,
   isValidElement,
 } from 'react';
 import { createPortal } from 'react-dom';
 
+const GAP = 8;
+/** Fallback when the bubble has not been measured yet. */
+const ESTIMATED_HEIGHT = 52;
+const VIEWPORT_PAD = 8;
+
 /**
  * Styled tooltip for hover (pointer) and keyboard focus.
  * Renders the bubble in a portal so parent overflow does not clip it.
+ * Flips below the anchor when there is not enough space above (e.g. top nav).
  */
 export function Tooltip({ text, children }) {
   const id = useId();
   const anchorRef = useRef(null);
+  const bubbleRef = useRef(null);
   const [open, setOpen] = useState(false);
   const [coords, setCoords] = useState(null);
 
@@ -24,9 +32,26 @@ export function Tooltip({ text, children }) {
     if (!anchor) return;
 
     const rect = anchor.getBoundingClientRect();
+    const bubble = bubbleRef.current;
+    const bubbleHeight = bubble?.offsetHeight ?? ESTIMATED_HEIGHT;
+    const bubbleWidth = bubble?.offsetWidth ?? 0;
+
+    const spaceAbove = rect.top - VIEWPORT_PAD;
+    const placeBelow = spaceAbove < bubbleHeight + GAP;
+
+    let left = rect.left + rect.width / 2;
+    if (bubbleWidth > 0) {
+      const half = bubbleWidth / 2;
+      left = Math.min(
+        Math.max(left, VIEWPORT_PAD + half),
+        window.innerWidth - VIEWPORT_PAD - half,
+      );
+    }
+
     setCoords({
-      top: rect.top - 8,
-      left: rect.left + rect.width / 2,
+      top: placeBelow ? rect.bottom + GAP : rect.top - GAP,
+      left,
+      placement: placeBelow ? 'below' : 'above',
     });
   }, []);
 
@@ -38,6 +63,12 @@ export function Tooltip({ text, children }) {
   const hide = useCallback(() => {
     setOpen(false);
   }, []);
+
+  useLayoutEffect(() => {
+    if (!open) return undefined;
+    syncPosition();
+    return undefined;
+  }, [open, syncPosition, text]);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -52,6 +83,9 @@ export function Tooltip({ text, children }) {
   }, [open, syncPosition]);
 
   if (!text || !isValidElement(children)) return children;
+
+  const placementClass =
+    coords?.placement === 'below' ? ' tooltip-bubble--below' : ' tooltip-bubble--above';
 
   return (
     <>
@@ -72,9 +106,10 @@ export function Tooltip({ text, children }) {
       {open && coords
         ? createPortal(
             <span
+              ref={bubbleRef}
               id={id}
               role="tooltip"
-              className="tooltip-bubble tooltip-bubble--open"
+              className={`tooltip-bubble tooltip-bubble--open${placementClass}`}
               style={{
                 top: coords.top,
                 left: coords.left,
