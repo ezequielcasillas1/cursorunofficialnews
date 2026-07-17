@@ -1,36 +1,37 @@
-/** Modern editorial system — distinct from the prior broadsheet chrome */
+/** Brand palette from CN hex logo — navy + cream + muted gold accents */
 
 :root,
 :root[data-theme='dark'] {
-  --color-ink: #f2f4f7;
-  --color-ink-soft: #c8d0dc;
-  --color-ink-muted: #8b95a8;
-  --color-ink-light: #6a7386;
-  --color-paper: #0b0f14;
-  --color-paper-deep: #070a0e;
-  --color-paper-warm: #10161e;
-  --color-card: #141b24;
+  --color-ink: #f2f2eb;
+  --color-ink-soft: #d8d4c8;
+  --color-ink-muted: #9a9488;
+  --color-ink-light: #7a7468;
+  --color-paper: #0a0e14;
+  --color-paper-deep: #070a0f;
+  --color-paper-warm: #10161f;
+  --color-card: #141b26;
   --color-card-elevated: #1a2330;
-  --color-border: #243041;
-  --color-border-strong: #334155;
-  --color-border-subtle: rgba(148, 163, 184, 0.16);
-  --color-navy: #0e1a28;
-  --color-navy-soft: #172636;
-  --color-gold: #5eead4;
-  --color-gold-muted: #2dd4bf;
-  --color-gold-light: #134e4a;
-  --color-accent-soft: #15202b;
-  --color-link: #5eead4;
-  --color-link-hover: #99f6e4;
+  --color-border: #2a3344;
+  --color-border-strong: #3d4a5c;
+  --color-border-subtle: rgba(197, 169, 119, 0.14);
+  --color-navy: #0f172a;
+  --color-navy-soft: #1b263b;
+  /* Logo gold / brass */
+  --color-gold: #c5a977;
+  --color-gold-muted: #b8965e;
+  --color-gold-light: #3d3528;
+  --color-accent-soft: #1a2018;
+  --color-link: #d4b87a;
+  --color-link-hover: #e8d4a8;
   --color-error: #f87171;
   --color-error-soft: #3f1d1d;
   --color-success: #34d399;
   --color-success-soft: #0f2e22;
   --color-disclaimer-bg: #15202b;
-  --color-disclaimer-text: #c8d0dc;
+  --color-disclaimer-text: #d8d4c8;
   --color-chip-bg: transparent;
-  --color-chip-active-bg: #5eead4;
-  --color-chip-active-text: #042f2e;
+  --color-chip-active-bg: #c5a977;
+  --color-chip-active-text: #0f172a;
 
   --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
   --font-body: 'Source Serif 4', Georgia, serif;
@@ -55,41 +56,41 @@
 
   --rule-color: var(--color-border);
   --masthead-rule: 1px solid var(--color-border);
-  --hero-glow: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(45, 212, 191, 0.22), transparent 55%),
-    radial-gradient(ellipse 50% 40% at 100% 0%, rgba(56, 189, 248, 0.12), transparent 50%),
-    linear-gradient(180deg, #101820 0%, var(--color-paper) 72%);
+  --hero-glow: radial-gradient(ellipse 70% 80% at 18% 25%, rgba(197, 169, 119, 0.32), transparent 55%),
+    radial-gradient(ellipse 55% 55% at 92% 8%, rgba(184, 150, 94, 0.18), transparent 50%),
+    linear-gradient(165deg, #070a0f 0%, #0f172a 45%, #1a2330 100%);
 }
 
 :root[data-theme='light'] {
   --color-ink: #0f172a;
-  --color-ink-soft: #1e293b;
-  --color-ink-muted: #64748b;
-  --color-ink-light: #94a3b8;
-  --color-paper: #f1f5f9;
-  --color-paper-deep: #e2e8f0;
-  --color-paper-warm: #ffffff;
-  --color-card: #ffffff;
+  --color-ink-soft: #1b263b;
+  --color-ink-muted: #5c6470;
+  --color-ink-light: #8a919c;
+  --color-paper: #f4f2ec;
+  --color-paper-deep: #e8e4dc;
+  --color-paper-warm: #fbfaf7;
+  --color-card: #fbfaf7;
   --color-card-elevated: #ffffff;
-  --color-border: #d7dee8;
-  --color-border-strong: #b6c2d1;
+  --color-border: #ddd6c8;
+  --color-border-strong: #c9c0ae;
   --color-border-subtle: rgba(15, 23, 42, 0.08);
   --color-navy: #0f172a;
-  --color-navy-soft: #1e293b;
-  --color-gold: #0f766e;
-  --color-gold-muted: #0d9488;
-  --color-gold-light: #ccfbf1;
-  --color-accent-soft: #eef2f7;
-  --color-link: #0f766e;
-  --color-link-hover: #115e59;
+  --color-navy-soft: #1b263b;
+  --color-gold: #a8894a;
+  --color-gold-muted: #c5a977;
+  --color-gold-light: #e8dcc0;
+  --color-accent-soft: #efe9dc;
+  --color-link: #8a6f35;
+  --color-link-hover: #6b5528;
   --color-error: #dc2626;
   --color-error-soft: #fee2e2;
   --color-success: #059669;
   --color-success-soft: #d1fae5;
   --color-disclaimer-bg: #0f172a;
-  --color-disclaimer-text: #e2e8f0;
+  --color-disclaimer-text: #f2f2eb;
   --color-chip-bg: transparent;
-  --color-chip-active-bg: #0f766e;
-  --color-chip-active-text: #f8fafc;
+  --color-chip-active-bg: #c5a977;
+  --color-chip-active-text: #0f172a;
 
   --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
   --font-body: 'Source Serif 4', Georgia, serif;
@@ -99,7 +100,7 @@
   --shadow-elevated: 0 16px 40px rgba(15, 23, 42, 0.08);
   --rule-color: var(--color-border);
   --masthead-rule: 1px solid var(--color-border);
-  --hero-glow: radial-gradient(ellipse 80% 55% at 50% -10%, rgba(13, 148, 136, 0.16), transparent 55%),
-    radial-gradient(ellipse 45% 35% at 90% 0%, rgba(14, 165, 233, 0.1), transparent 50%),
-    linear-gradient(180deg, #ffffff 0%, var(--color-paper) 70%);
+  --hero-glow: radial-gradient(ellipse 70% 80% at 18% 25%, rgba(197, 169, 119, 0.35), transparent 55%),
+    radial-gradient(ellipse 55% 55% at 92% 8%, rgba(184, 150, 94, 0.2), transparent 50%),
+    linear-gradient(165deg, #070a0f 0%, #0f172a 45%, #1a2330 100%);
 }

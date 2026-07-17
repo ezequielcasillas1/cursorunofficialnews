@@ -113,14 +113,11 @@ html[data-theme='light'] .site-topbar-logo-light {
 
 .site-hero {
   width: 100%;
-  /* Always a dark full-bleed plane so the redesign reads immediately in either theme */
-  background:
-    radial-gradient(ellipse 70% 80% at 15% 20%, rgba(45, 212, 191, 0.28), transparent 55%),
-    radial-gradient(ellipse 50% 60% at 90% 10%, rgba(56, 189, 248, 0.18), transparent 50%),
-    linear-gradient(165deg, #071018 0%, #0f1a26 48%, #122033 100%);
-  border-bottom: 1px solid rgba(94, 234, 212, 0.2);
+  /* Logo navy + gold glow — always dark so brand reads in either theme */
+  background: var(--hero-glow);
+  border-bottom: 1px solid rgba(197, 169, 119, 0.28);
   padding: clamp(3rem, 8vw, 5.5rem) var(--space-lg) clamp(2.75rem, 6vw, 4rem);
-  color: #f2f4f7;
+  color: #f2f2eb;
 }
 
 .site-hero-inner {
@@ -168,12 +165,12 @@ html[data-theme='light'] .site-topbar-logo-light {
 }
 
 .site-hero-social a {
-  color: #5eead4;
+  color: #c5a977;
   text-decoration: none;
 }
 
 .site-hero-social a:hover {
-  color: #99f6e4;
+  color: #e8d4a8;
 }
 
 .site-hero-title {
@@ -184,7 +181,7 @@ html[data-theme='light'] .site-topbar-logo-light {
   font-weight: 800;
   letter-spacing: -0.04em;
   line-height: 0.92;
-  color: #f8fafc;
+  color: #f2f2eb;
   text-wrap: balance;
 }
 
@@ -194,7 +191,7 @@ html[data-theme='light'] .site-topbar-logo-light {
   font-family: var(--font-body);
   font-size: clamp(1.15rem, 2.3vw, 1.4rem);
   line-height: 1.55;
-  color: rgba(226, 232, 240, 0.9);
+  color: rgba(232, 220, 192, 0.88);
 }
 
 .site-hero-cta {
@@ -204,19 +201,19 @@ html[data-theme='light'] .site-topbar-logo-light {
 }
 
 .site-hero .btn-primary {
-  background: #5eead4;
-  color: #042f2e;
+  background: #c5a977;
+  color: #0f172a;
 }
 
 .site-hero .btn-ghost {
-  color: #f8fafc;
-  border-color: rgba(248, 250, 252, 0.35);
+  color: #f2f2eb;
+  border-color: rgba(197, 169, 119, 0.45);
 }
 
 .site-hero .btn-ghost:hover:not(:disabled) {
-  background: rgba(248, 250, 252, 0.08);
-  color: #5eead4;
-  border-color: #5eead4;
+  background: rgba(197, 169, 119, 0.12);
+  color: #e8d4a8;
+  border-color: #c5a977;
 }
 
 .theme-toggle {
@@ -1940,8 +1937,8 @@ html[data-theme='dark'] .btn-danger:hover:not(:disabled) {
 }
 
 .taco-panel--supporter {
-  border-color: var(--color-success);
-  background: var(--color-success-soft);
+  border-color: var(--color-gold-muted);
+  background: var(--color-gold-light);
 }
 
 .taco-panel-header {
@@ -2131,7 +2128,11 @@ html[data-theme='dark'] .taco-tier-btn {
   margin: 0 0 var(--space-sm);
   font-family: var(--font-ui);
   font-size: 0.85rem;
-  color: var(--color-success);
+  color: var(--color-ink-soft);
+}
+
+.taco-panel--supporter .taco-supporter-msg a {
+  color: var(--color-link);
 }
 
 .membership-unsubscribe-panel {
