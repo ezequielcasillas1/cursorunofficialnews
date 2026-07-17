@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { sanitizeExternalUrl } from '../../../mobile/shared/url/safe-external-url.js';
 import { formatCategoryLabel } from '../utils/articleMedia.js';
 import { ArticleMedia } from './media/ArticleMedia.jsx';
@@ -16,6 +17,7 @@ function formatDate(iso) {
 export function NewsCard({ item, isOfficial = false, featured = false }) {
   const cardClass = featured ? 'news-card news-card-featured' : 'news-card';
   const safeUrl = sanitizeExternalUrl(item?.canonicalUrl);
+  const articlePath = item?.id ? `/item/${encodeURIComponent(item.id)}` : null;
 
   return (
     <article className={cardClass}>
@@ -27,10 +29,8 @@ export function NewsCard({ item, isOfficial = false, featured = false }) {
         <time dateTime={item.publishedAt || undefined}>{formatDate(item.publishedAt)}</time>
       </div>
       <h2>
-        {safeUrl ? (
-          <a href={safeUrl} target="_blank" rel="noopener noreferrer">
-            {item.title}
-          </a>
+        {articlePath ? (
+          <Link to={articlePath}>{item.title}</Link>
         ) : (
           item.title
         )}
@@ -47,4 +47,3 @@ export function NewsCard({ item, isOfficial = false, featured = false }) {
     </article>
   );
 }
-

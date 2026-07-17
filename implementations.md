@@ -1,3 +1,8 @@
+### [2026-07-17] - Website AdSense content + visual redesign
+**Status:** PENDING USER VERIFY
+**Files:** web/worker (commentary migration, news-store, news-commentary, sitemap, core-routes, run-ingest, index.js), wrangler.jsonc, web/src (ArticlePage, EditorialPolicy, NewsCard, About, seo, theme, App.css)
+**Result:** Per-item `/item/:id` pages + Workers AI commentary on ingest; editorial policy; dynamic sitemap (479 item URLs locally); New Yorker/WaPo type polish. Local verify OK. Needs remote `007_news_commentary.sql` + deploy after SUCCESS.
+
 ### [2026-07-03] - Privacy Policy and Terms of Use pages
 **Status:** SUCCESS
 **Files:** web/src/{legal/privacyContent.js,legal/termsContent.js,components/legal/LegalDocument.jsx,pages/PrivacyPage.jsx,pages/TermsPage.jsx,App.jsx,App.css,components/Footer.jsx,config/siteNav.js,pages/NewsletterPage.jsx,routes/feedRoutes.js,seo/pageMeta.js}, web/public/sitemap.xml

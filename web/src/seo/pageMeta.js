@@ -70,9 +70,16 @@ export function getStaticPageMeta(pageId) {
     about: {
       title: 'About — Unofficial Cursor News',
       description:
-        'About Unofficial Cursor News — a free fan feed of Cursor changelog, releases, and community sources.',
+        'About Unofficial Cursor News — an independent fan publication covering Cursor changelogs, releases, and community sources with original notes.',
       path: '/about',
       breadcrumbLabel: 'About',
+    },
+    editorialPolicy: {
+      title: 'Editorial Policy — Unofficial Cursor News',
+      description:
+        'How Unofficial Cursor News sources stories, writes original commentary, attributes publishers, and links out — never full-article republishing.',
+      path: '/editorial-policy',
+      breadcrumbLabel: 'Editorial Policy',
     },
     sources: {
       title: 'Sources — Unofficial Cursor News',
@@ -102,6 +109,30 @@ export function getStaticPageMeta(pageId) {
     description: DEFAULT_DESCRIPTION,
     path: '/',
     breadcrumbLabel: null,
+  };
+}
+
+export function getArticlePageMeta(item) {
+  if (!item?.id) {
+    return {
+      title: `Story — ${DEFAULT_SITE_TITLE}`,
+      description: DEFAULT_DESCRIPTION,
+      path: '/',
+      breadcrumbLabel: 'Story',
+    };
+  }
+
+  const path = `/item/${encodeURIComponent(item.id)}`;
+  const description =
+    (item.commentary && String(item.commentary).replace(/\s+/g, ' ').trim().slice(0, 160)) ||
+    (item.excerpt && String(item.excerpt).trim().slice(0, 160)) ||
+    DEFAULT_DESCRIPTION;
+
+  return {
+    title: `${item.title} — Unofficial Cursor News`,
+    description,
+    path,
+    breadcrumbLabel: item.title,
   };
 }
 

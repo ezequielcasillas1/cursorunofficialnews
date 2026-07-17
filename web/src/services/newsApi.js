@@ -73,6 +73,15 @@ export function fetchNews({
   return fetchJson(`/v1/news${qs ? `?${qs}` : ''}`);
 }
 
+/** Single feed item for article pages. */
+export function fetchNewsItem(id) {
+  const safeId = String(id || '').trim();
+  if (!safeId) {
+    return Promise.reject(new Error('Item id is required'));
+  }
+  return fetchJson(`/v1/news/${encodeURIComponent(safeId)}`);
+}
+
 export function fetchSources() {
   return fetchJson('/v1/sources');
 }

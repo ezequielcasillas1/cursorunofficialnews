@@ -50,6 +50,11 @@ export const FOOTER_NAV = [
 
 export const LEGAL_NAV = [
   {
+    href: '/editorial-policy',
+    label: 'Editorial Policy',
+    tooltip: 'How we source, attribute, and write original notes',
+  },
+  {
     href: '/privacy',
     label: 'Privacy',
     tooltip: 'Privacy policy',

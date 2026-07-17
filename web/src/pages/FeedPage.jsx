@@ -186,7 +186,7 @@ export function FeedPage({ categoryId = 'all' }) {
       />
       <MonetizationSection membership={membership} />
       <NewsletterSettings membership={membership} />
-      <main className="app-main">
+      <main className="app-main" id="feed">
         <NewsFeed
           items={filteredItems}
           loading={loading}

@@ -2,7 +2,7 @@ import { getCookie, setCookie } from 'hono/cookie';
 import { FEED_PUBLISHED_AFTER_ISO } from '../shared/feed/feedPolicy.js';
 import { buildFeedPaginationMeta, parseFeedPaginationQuery } from '../shared/feed/feedPagination.js';
 import { listSourcesForApi } from '../sources/registry.js';
-import { getLastIngestAt, getNews, getStatus } from '../store/news-store.js';
+import { getLastIngestAt, getNews, getNewsItem, getStatus } from '../store/news-store.js';
 import {
   createSessionId,
   getActiveVisitorCount,
@@ -114,6 +114,21 @@ export function registerCoreRoutes(app) {
       ...buildFeedPaginationMeta({ total, limit, page, offset, itemCount: items.length }),
       lastIngestAt: await getLastIngestAt(db),
     });
+  });
+
+  app.get('/v1/news/:id', async (c) => {
+    const db = c.env.DB;
+    let rawId = c.req.param('id');
+    try {
+      rawId = decodeURIComponent(rawId);
+    } catch {
+      return c.json({ error: 'Invalid item id' }, 400);
+    }
+    const item = await getNewsItem(db, rawId);
+    if (!item) {
+      return c.json({ error: 'Item not found' }, 404);
+    }
+    return c.json({ item });
   });
 
   app.post('/v1/devices/register', optionalRegisterSecret, async (c) => {

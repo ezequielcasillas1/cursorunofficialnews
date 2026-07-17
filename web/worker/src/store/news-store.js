@@ -28,11 +28,14 @@ function sanitizeNewsItems(nextItems) {
   return filterItemsByFeedPolicy(nextItems.map(sanitizeNewsItem).filter(Boolean));
 }
 
+const MAX_NEWS_ID_LENGTH = 256;
+
 function rowToItem(row) {
   return {
     id: row.id,
     title: row.title,
     excerpt: row.excerpt,
+    commentary: row.commentary || '',
     canonicalUrl: row.canonical_url,
     publishedAt: row.published_at,
     category: row.category,
@@ -40,6 +43,12 @@ function rowToItem(row) {
     sourceName: row.source_name,
     attributionLabel: row.attribution_label,
   };
+}
+
+function normalizeNewsId(id) {
+  const safeId = String(id || '').trim();
+  if (!safeId || safeId.length > MAX_NEWS_ID_LENGTH) return null;
+  return safeId;
 }
 
 function parseCategories({ category, categories } = {}) {
@@ -160,6 +169,42 @@ export async function getNews(
   return { items: pageItems, total };
 }
 
+/** Single item for article pages — validated id, null if missing. */
+export async function getNewsItem(db, id) {
+  const safeId = normalizeNewsId(id);
+  if (!safeId) return null;
+  const row = await db.prepare('SELECT * FROM news_items WHERE id = ?').bind(safeId).first();
+  return row ? rowToItem(row) : null;
+}
+
+/** Recent ids for dynamic sitemap generation. */
+export async function listRecentNewsIds(db, limit = 500) {
+  const safeLimit = Math.min(Math.max(1, Math.floor(limit) || 500), 1000);
+  const { results } = await db
+    .prepare(
+      'SELECT id, published_at FROM news_items ORDER BY published_at DESC LIMIT ?',
+    )
+    .bind(safeLimit)
+    .all();
+  return results || [];
+}
+
+/** Map of id → commentary for preserving notes across full replace. */
+export async function getCommentaryMap(db) {
+  try {
+    const { results } = await db
+      .prepare(
+        `SELECT id, commentary FROM news_items
+         WHERE commentary IS NOT NULL AND TRIM(commentary) != ''`,
+      )
+      .all();
+    return new Map((results || []).map((row) => [row.id, row.commentary || '']));
+  } catch (err) {
+    console.warn('[news-store] commentary map unavailable:', err?.message || err);
+    return new Map();
+  }
+}
+
 /** Full replace — mirrors the old replaceItems()/saveToDisk() semantics. */
 export async function replaceItems(db, nextItems) {
   const sanitized = sanitizeNewsItems(nextItems);
@@ -167,8 +212,8 @@ export async function replaceItems(db, nextItems) {
 
   const insertStmt = db.prepare(
     `INSERT INTO news_items
-       (id, title, excerpt, canonical_url, published_at, category, source_id, source_name, attribution_label, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       (id, title, excerpt, commentary, canonical_url, published_at, category, source_id, source_name, attribution_label, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   );
 
   const statements = [
@@ -178,6 +223,7 @@ export async function replaceItems(db, nextItems) {
         item.id,
         item.title,
         item.excerpt,
+        item.commentary || '',
         item.canonicalUrl,
         item.publishedAt,
         item.category,

@@ -1,6 +1,7 @@
 import { createApp } from './src/app.js';
 import { bootstrapIngestIfEmpty, runIngestWithLock } from './src/ingest/run-ingest.js';
 import { runScheduledDigest } from './src/jobs/run-scheduled-digest.js';
+import { sitemapResponse } from './src/seo/sitemap.js';
 
 /** @param {string} pathname */
 function resolveExplicitAssetContentType(pathname) {
@@ -42,6 +43,11 @@ export default {
       // call in the Express app.listen() callback.
       ctx.waitUntil(bootstrapIngestIfEmpty(env.DB, env).catch(() => {}));
       return response;
+    }
+
+    // Dynamic sitemap (section pages + recent /item/:id URLs from D1).
+    if (url.pathname === '/sitemap.xml') {
+      return sitemapResponse(env.DB, env);
     }
 
     // Static files that must never hit SPA fallback — explicit Content-Type.

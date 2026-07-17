@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS news_items (
   id TEXT PRIMARY KEY,
   title TEXT NOT NULL,
   excerpt TEXT NOT NULL DEFAULT '',
+  commentary TEXT NOT NULL DEFAULT '',
   canonical_url TEXT NOT NULL DEFAULT '',
   published_at TEXT,
   category TEXT NOT NULL,

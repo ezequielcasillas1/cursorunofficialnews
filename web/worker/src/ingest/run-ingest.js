@@ -1,9 +1,11 @@
 import { ingestAllSources } from './feeds.js';
 import { diffNewItems } from '../jobs/diff-new-items.js';
 import { notifySubscribers } from '../jobs/send-push.js';
+import { attachCommentaries } from '../llm/news-commentary.js';
 import { enqueueDigestItems } from '../store/digest-queue.js';
 import {
   acquireIngestLock,
+  getCommentaryMap,
   getLastIngestAt,
   getStatus,
   releaseIngestLock,
@@ -18,7 +20,9 @@ async function applyIngestResult(db, items, env) {
   }
 
   const newItems = await diffNewItems(db, items);
-  await replaceItems(db, items);
+  const existingCommentary = await getCommentaryMap(db);
+  const itemsWithCommentary = await attachCommentaries(items, existingCommentary, env);
+  await replaceItems(db, itemsWithCommentary);
   const ingestedAt = new Date().toISOString();
   await setLastIngestAt(db, ingestedAt);
 
