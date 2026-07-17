@@ -79,3 +79,8 @@
 **Status:** SUCCESS
 **Files:** web/public/_headers, web/src/hooks/useSiteViews.js, web/src/monetization/useMembership.js, web/worker migrations, membership/site-views store files, tests
 **Result:** Commit 3348f58 on main. After wrangler deploy, membership email link works; CSP and /api/v1/views 500 fixed; claim 429 eased; prod D1 blocked column fallback; ezequielcasillas1@gmail.com bypass.
+
+### [2026-07-17] - Tutorials Dev.to/Medium feed fix
+**Status:** SUCCESS
+**Files:** web/worker/src/sources/registry.js, web/worker/src/classify/classify-news-item.js, web/worker/src/store/news-store.js, env/web/.env (local only — DO NOT commit .env)
+**Result:** Tutorial sources fixed (cursorai URL, classify defaults, classify-on-read filter); local ingest verified; deploy to Cloudflare.

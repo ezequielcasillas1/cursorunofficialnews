@@ -217,7 +217,8 @@ export const SOURCES = [
     id: 'devto-cursor-ai-tutorials',
     name: 'Dev.to — Cursor AI',
     category: 'tutorial',
-    feedUrl: 'https://dev.to/feed/tag/cursor-ai',
+    // Dev.to tag slug is `cursorai` (hyphenated `cursor-ai` 404s on /feed/tag/).
+    feedUrl: 'https://dev.to/feed/tag/cursorai',
     ingestMethod: 'rss',
     enabled: true,
     priority: 27,

@@ -34,7 +34,9 @@ function baseCategory(item, resolvedSource) {
       sourceCategory: registryCategory,
     });
     if (contentCategory) return contentCategory;
-    if (registryCategory === 'tutorial') return 'community';
+    // Keep tutorial-registry feeds on the Tutorials tab unless content rules
+    // explicitly reclassified them (question/support → community, etc.).
+    if (registryCategory === 'tutorial') return 'tutorial';
   }
 
   return registryCategory;

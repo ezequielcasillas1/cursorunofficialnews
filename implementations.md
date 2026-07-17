@@ -209,3 +209,8 @@ Prod: `npx wrangler secret put N8N_NEWSLETTER_WEBHOOK_URL` with live `/webhook/`
 **Files:** web/public/_headers, useSiteViews.js, useMembership.js, worker migrations, membership/site-views stores, tests
 **Result:** Commit 3348f58. User confirmed post-deploy: membership email link OK; CSP and views errors fixed; claim rate limit + prod D1 blocked column fallback; ezequielcasillas1@gmail.com bypass.
 
+
+### [2026-07-17] - Tutorials Dev.to/Medium feed fix
+**Status:** SUCCESS
+**Files:** web/worker/src/sources/registry.js, web/worker/src/classify/classify-news-item.js, web/worker/src/store/news-store.js
+**Result:** Dev.to cursorai RSS URL, tutorial-source classification defaults, classify-on-read filter for Tutorials tab.

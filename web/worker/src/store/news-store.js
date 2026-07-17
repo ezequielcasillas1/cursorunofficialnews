@@ -31,7 +31,7 @@ function sanitizeNewsItems(nextItems) {
 const MAX_NEWS_ID_LENGTH = 256;
 
 function rowToItem(row) {
-  return {
+  const item = {
     id: row.id,
     title: row.title,
     excerpt: row.excerpt,
@@ -43,6 +43,7 @@ function rowToItem(row) {
     sourceName: row.source_name,
     attributionLabel: row.attribution_label,
   };
+  return applyCategoryClassification(item);
 }
 
 function normalizeNewsId(id) {
@@ -139,16 +140,12 @@ export async function getNews(
   const categoryList = parseCategories({ category, categories });
   const sourceIdList = parseSourceIds({ sources, sourceIds });
 
-  let query = 'SELECT * FROM news_items';
-  const params = [];
-  if (categoryList.length > 0) {
-    query += ` WHERE category IN (${categoryList.map(() => '?').join(',')})`;
-    params.push(...categoryList);
-  }
-  query += ' ORDER BY published_at DESC';
-
-  const { results } = await db.prepare(query).bind(...params).all();
+  const { results } = await db.prepare('SELECT * FROM news_items ORDER BY published_at DESC').all();
   let list = results.map(rowToItem);
+
+  if (categoryList.length > 0) {
+    list = list.filter((item) => categoryList.includes(item.category));
+  }
 
   const officialOnly = official === true || official === 'true';
   if (officialOnly) {
