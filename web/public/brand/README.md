@@ -49,8 +49,8 @@ Panels (numbered on sheet):
 | Favicon / apple-touch | `web/index.html` `<link rel="icon">`, `apple-touch-icon` |
 | og:image / twitter | `web/index.html` `og:image`, `twitter:card` meta |
 | Header icon | `web/src/components/Header.jsx` — hex icon left of HTML masthead (`h1`, rules, tagline); `alt=""` (decorative; title is adjacent) |
-| Email dark lockup | `web/worker/src/notifications/assemble-email.js` masthead `<td>` |
-| Email light lockup | `web/worker/src/notifications/send-subscription-verification-email.js` header |
+| Email dark logo | `web/worker/src/notifications/assemble-email.js` masthead (`logo-icon.png`) |
+| Email light lockup | `web/worker/src/notifications/send-subscription-verification-email.js` header (optional lockup) |
 | AI newsletter prompt | `web/worker/src/notifications/newsletter-prompt.js` — add hosted lockup URL |
 | Public URL in emails | `PUBLIC_WEB_BASE` + `/brand/email-lockup-dark.png` (absolute URL required) |
 
@@ -64,6 +64,6 @@ Panels (numbered on sheet):
 ## Status
 
 - [ ] Master sheet copied to `assets/brand/source/` (optional)
-- [ ] Web icon + favicons in `web/public/brand/`
-- [ ] Email lockups in `web/public/brand/`
-- [ ] Code wired (Header, index.html, assemble-email)
+- [x] Web icon + favicons in `web/public/brand/`
+- [ ] Email lockups in `web/public/brand/` (optional; digest currently uses `logo-icon.png`)
+- [x] Code wired (Header, index.html, assemble-email masthead logo)

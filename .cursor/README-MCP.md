@@ -6,6 +6,7 @@
 | cloudflare-api / cloudflare-docs | `https://mcp.cloudflare.com/mcp`, `https://docs.mcp.cloudflare.com/mcp` | OAuth on first use in Cursor; **restart Cursor** after editing `mcp.json` |
 | pipedream | `https://mcp.pipedream.net/v2` | Cursor prompts for **access_token** from [mcp.pipedream.com](https://mcp.pipedream.com) |
 | n8n-mcp | `https://api.n8n-mcp.com/mcp` | Instance at [dashboard.n8n-mcp.com/instances](https://dashboard.n8n-mcp.com/dashboard/instances): `n8nApiUrl` (e.g. `https://casiezeq.app.n8n.cloud`) + API key from n8n **Settings → API** |
+| emergent | `mcp-remote` → `https://mcp.emergent.sh/` | Native `url` OAuth fails (`redirect_uri must use https`); use `mcp-remote` on port **7890**. On Windows use full path `C:\\Program Files\\nodejs\\npx.cmd` (Cursor PATH often lacks `npx`). Reload Cursor, approve OAuth in browser. |
 
 REST API OAuth (`PIPEDREAM_CLIENT_ID` / `SECRET`) lives in `env/api.local.env` - see [docs/PIPEDREAM-MCP.md](../docs/PIPEDREAM-MCP.md).
 

@@ -389,9 +389,13 @@ export const SOURCES = [
     id: 'reddit-cursorrules',
     name: 'Reddit — r/cursorrules',
     category: 'community',
+    // Subreddit exists (public, created 2025-03-01) but has never had posts:
+    // old.reddit HTML shows "there doesn't seem to be anything here" and
+    // Atom/RSS returns a valid empty feed (0 entries). Keep disabled so
+    // Community chips stay honest; re-enable if the community becomes active.
     feedUrl: 'https://old.reddit.com/r/cursorrules/.rss',
     ingestMethod: 'rss',
-    enabled: true,
+    enabled: false,
     priority: 32,
     isOfficial: false,
     maxExcerptChars: 300,

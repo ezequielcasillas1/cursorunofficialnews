@@ -7,7 +7,8 @@ import {
   buildNewsletterHtmlPrompt,
   stripMarkdownHtmlFences,
 } from '../notifications/newsletter-prompt.js';
-import { assembleEmailSubject } from '../notifications/assemble-email.js';
+import { assembleEmailSubject, resolveBrandLogoUrl } from '../notifications/assemble-email.js';
+import { getPublicWebBase } from '../lib/env.js';
 import { flattenDigestSections } from '../shared/notifications/category-limits.js';
 import { polishSingleHeadlineSections } from './rewrite-email-title.js';
 
@@ -148,6 +149,7 @@ export async function generateNewsletterHtml(
       digestSections: sections || [],
       officialOnly,
       subscriber,
+      logoUrl: resolveBrandLogoUrl(getPublicWebBase(env)),
     });
 
   const result = await runCursorPrompt({ promptText: text, modelId }, env);

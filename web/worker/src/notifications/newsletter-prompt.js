@@ -6,6 +6,7 @@ export function buildNewsletterHtmlPrompt({
   digestSections = [],
   officialOnly,
   subscriber,
+  logoUrl = 'https://cursorunofficial.news/brand/logo-icon.png',
 } = {}) {
   const sections =
     digestSections.length > 0
@@ -19,14 +20,16 @@ export function buildNewsletterHtmlPrompt({
     categoryLimits: subscriber?.categoryLimits || {},
   };
 
-  return `You write HTML email newsletters for Cursor AI News (unofficial fan digest, not affiliated with Anysphere). Output ONLY valid HTML for the email body — no markdown fences.
+  return `You write HTML email newsletters for Unofficial Cursor News (unofficial fan digest, not affiliated with Anysphere). Output ONLY valid HTML for the email body — no markdown fences.
 
-Brand (match cursorunofficial.news dark editorial theme):
-- Background #0a0a0f / card #121218, text #f0ebe3, muted #9a9488, gold accent #d4b87a / border #b89a5c
-- Fonts: Bodoni Moda (masthead/titles), Libre Caslon Text (body/tagline italic), Libre Franklin (labels, all-caps UI)
-- Masthead: "Unofficial · Independent" eyebrow, double rule (thick cream + thin gold), italic tagline "Your morning briefing on Cursor — changelog, releases, and community"
-- Category pills: gold-bordered uppercase labels; "Official only" gold-bordered badge when subscriber filters official sources
-- Table layout, inline CSS, web-safe font fallbacks
+Brand (match cursorunofficial.news — navy hero + cream/gold editorial):
+- Background #070a0f / shell #0a0e14, cards #141b26, elevated #1a2330, text #f2f2eb, muted #9a9488, gold #c5a977 / #b8965e, navy #0f172a
+- Fonts: Fraunces (masthead/titles), Source Serif 4 (body/tagline italic), Outfit (labels, all-caps UI)
+- Masthead: centered logo img (${logoUrl}, 56×56), "Unofficial · Independent" eyebrow, title "Unofficial Cursor News", double rule (cream + gold), italic tagline "Your morning briefing on Cursor — changelog, releases, and community"
+- Category pills: gold-bordered uppercase rounded labels; "Official only" badge when subscriber filters official sources
+- Story cards: rounded #141b26 panels with title link, source, one-line summary, gold "Read source →" button
+- Footer: small logo + brand name, disclaimer, unsubscribe
+- Table layout, inline CSS, web-safe font fallbacks; absolute image URLs only
 
 Structure rules:
 - Group headlines by topic category in the same order as the subscriber settings (changelog, releases, blog, forum, community, social, videos, tutorials).
@@ -34,10 +37,11 @@ Structure rules:
 - When subscriber.officialOnly is true, only include headlines from verified/primary (official) sources — same as the feed "Official only" filter.
 - Insert an editorial divider BETWEEN category groups only. If N categories have content, use exactly N-1 dividers — never after the final category.
 
-Include: greeting, grouped headline cards (title as link, source, one-line summary), footer with unsubscribe link.
+Include: greeting, grouped headline cards (title as link, source, one-line summary), CTA to open the feed, footer with unsubscribe link.
 
 Subscriber: ${JSON.stringify(subscriberMeta)}
 Unsubscribe: ${unsubscribeUrl || ''}
+Logo: ${logoUrl}
 Digest sections: ${JSON.stringify(sections)}`;
 }
 

@@ -5,6 +5,7 @@ import {
 import { buildSubscriberDigestSections } from '../shared/notifications/subscriber-digest.js';
 import { CATEGORY_LABELS } from '../shared/notifications/constants.js';
 import { assembleEmailDigest } from './assemble-email.js';
+import { getPublicWebBase } from '../lib/env.js';
 import { getNews } from '../store/news-store.js';
 import { getUnsubscribeUrl } from '../store/email-subscribers.js';
 
@@ -64,7 +65,14 @@ export async function buildSubscriberDigest(
   const sections = buildSubscriberDigestSections(sourceItems, subscriber);
   const items = flattenDigestSections(sections);
   const unsubscribeUrl = getUnsubscribeUrl(subscriber, env);
-  const digest = assembleEmailDigest({ sections }, { unsubscribeUrl });
+  const digest = assembleEmailDigest(
+    { sections },
+    {
+      unsubscribeUrl,
+      subscriber,
+      publicWebBase: getPublicWebBase(env),
+    },
+  );
 
   return {
     sections: sections.map(serializeSection),
