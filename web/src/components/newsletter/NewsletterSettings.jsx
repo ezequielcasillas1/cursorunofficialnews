@@ -229,7 +229,7 @@ export function NewsletterSettings({ membership }) {
       <div className="newsletter-actions">
         <button
           type="button"
-          className="btn"
+          className="btn btn-primary"
           onClick={() => {
             void subscribe();
           }}

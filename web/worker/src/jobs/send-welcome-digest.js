@@ -1,6 +1,7 @@
 import { buildSubscriberDigestSections } from '../shared/notifications/subscriber-digest.js';
 import { assembleEmailDigest } from '../notifications/assemble-email.js';
 import { fetchRecentItemsForSubscriber } from '../notifications/newsletter-digest.js';
+import { getPublicWebBase } from '../lib/env.js';
 import {
   getResendClient,
   getTransactionalFromAddress,
@@ -40,7 +41,14 @@ export async function sendWelcomeDigest(db, subscriber, env) {
   const from = getTransactionalFromAddress(env);
   const unsubscribeUrl = getUnsubscribeUrl(subscriber, env);
   const itemCount = sections.reduce((sum, section) => sum + section.items.length, 0);
-  const { subject, html, text } = assembleEmailDigest({ sections }, { unsubscribeUrl });
+  const { subject, html, text } = assembleEmailDigest(
+    { sections },
+    {
+      unsubscribeUrl,
+      subscriber,
+      publicWebBase: getPublicWebBase(env),
+    },
+  );
   const welcomeSubject = subject.startsWith('Unofficial Cursor News')
     ? `Welcome · ${subject}`
     : `Welcome · Unofficial Cursor News · ${itemCount} recent headline${itemCount === 1 ? '' : 's'}`;

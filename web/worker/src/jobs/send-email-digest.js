@@ -1,5 +1,6 @@
 import { assembleEmailDigest } from '../notifications/assemble-email.js';
 import { polishSingleHeadlineSections } from '../llm/rewrite-email-title.js';
+import { getPublicWebBase } from '../lib/env.js';
 import {
   getResendClient,
   getTransactionalFromAddress,
@@ -81,7 +82,14 @@ export async function notifyEmailSubscribers(db, newItems, { digestSlot, ingestA
     sections = await polishSingleHeadlineSections(sections, env);
 
     const unsubscribeUrl = getUnsubscribeUrl(subscriber, env);
-    const { subject, html, text } = assembleEmailDigest({ sections }, { unsubscribeUrl });
+    const { subject, html, text } = assembleEmailDigest(
+      { sections },
+      {
+        unsubscribeUrl,
+        subscriber,
+        publicWebBase: getPublicWebBase(env),
+      },
+    );
     const idempotencyKey = `digest/${cycleKey}/${subscriber.email}`;
 
     const headers = {};
