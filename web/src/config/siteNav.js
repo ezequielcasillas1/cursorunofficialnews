@@ -17,6 +17,11 @@ export const HEADER_NAV = [
     tooltip: 'How-to guides and step-by-step tutorials',
   },
   {
+    href: '/games',
+    label: 'Games',
+    tooltip: 'Cursor-themed board games — puns, commits, and diffs',
+  },
+  {
     href: '/newsletter',
     label: 'Newsletter',
     tooltip: 'Subscribe to or manage your email newsletter',

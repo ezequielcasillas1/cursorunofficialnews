@@ -6,6 +6,8 @@ import { EditorialPolicyPage } from './pages/EditorialPolicyPage.jsx';
 import { NewsletterPage } from './pages/NewsletterPage.jsx';
 import { UnsubscribePage } from './pages/UnsubscribePage.jsx';
 import { MembershipUnsubscribePage } from './pages/MembershipUnsubscribePage.jsx';
+import { GamesHubPage } from './pages/GamesHubPage.jsx';
+import { GamePlayPage } from './pages/GamePlayPage.jsx';
 import { SourcesPage } from './pages/SourcesPage.jsx';
 import { PrivacyPage } from './pages/PrivacyPage.jsx';
 import { TermsPage } from './pages/TermsPage.jsx';
@@ -23,6 +25,8 @@ export default function App() {
       <Route path="/newsletter" element={<NewsletterPage />} />
       <Route path="/newsletter/unsubscribe" element={<UnsubscribePage />} />
       <Route path="/membership/unsubscribe" element={<MembershipUnsubscribePage />} />
+      <Route path="/games" element={<GamesHubPage />} />
+      <Route path="/games/:gameId" element={<GamePlayPage />} />
       <Route path="/about" element={<AboutPage />} />
       <Route path="/editorial-policy" element={<EditorialPolicyPage />} />
       <Route path="/sources" element={<SourcesPage />} />
