@@ -67,6 +67,13 @@ export function getStaticPageMeta(pageId) {
       path: '/membership/unsubscribe',
       breadcrumbLabel: 'Cancel membership',
     },
+    games: {
+      title: 'Games — Unofficial Cursor News',
+      description:
+        'Cursor-themed browser games from Unofficial Cursor News — logo pieces, Git puns, and Commit Chess.',
+      path: '/games',
+      breadcrumbLabel: 'Games',
+    },
     about: {
       title: 'About — Unofficial Cursor News',
       description:
@@ -109,6 +116,18 @@ export function getStaticPageMeta(pageId) {
     description: DEFAULT_DESCRIPTION,
     path: '/',
     breadcrumbLabel: null,
+  };
+}
+
+export function getGamePageMeta(game) {
+  if (!game?.id) {
+    return getStaticPageMeta('games');
+  }
+  return {
+    title: `${game.title} — Unofficial Cursor News`,
+    description: game.blurb || getStaticPageMeta('games').description,
+    path: game.path || `/games/${game.id}`,
+    breadcrumbLabel: game.title,
   };
 }
 

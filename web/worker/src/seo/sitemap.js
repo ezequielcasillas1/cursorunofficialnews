@@ -12,6 +12,7 @@ const STATIC_PATHS = [
   { path: '/social', changefreq: 'hourly', priority: '0.8' },
   { path: '/videos', changefreq: 'hourly', priority: '0.8' },
   { path: '/tutorials', changefreq: 'hourly', priority: '0.9' },
+  { path: '/games', changefreq: 'weekly', priority: '0.7' },
   { path: '/newsletter', changefreq: 'weekly', priority: '0.7' },
   { path: '/about', changefreq: 'monthly', priority: '0.6' },
   { path: '/editorial-policy', changefreq: 'monthly', priority: '0.6' },

@@ -31,3 +31,9 @@ Feature requests (numbered). Concise bullets only.
 - Swap Google Fonts (free, CDN) to a primary/secondary pairing matching Washington Post's serif+Franklin-style sans
 - Phased rollout: tokens/fonts → masthead/header → article cards/typography → responsive polish
 - Preserve vertical-slice/component structure; no PasteCraft patterns
+
+## 6. Games category (web) — Commit Chess
+- Nav Games → `/games` hub; vertical slice `web/src/games/` + registry
+- Brand logo pieces; AI opponent; client-only (no Worker)
+- Commit Chess (git add/commit/push + rebase/merge/cherry-pick/revert) + command course
+- Coming soon stubs: Diff Wars, Branch Race, Stash Stack

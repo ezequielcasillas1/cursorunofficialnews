@@ -8,7 +8,7 @@
     "build": "node scripts/generate-og-image.mjs && vite build",
     "generate:og-image": "node scripts/generate-og-image.mjs",
     "preview": "vite preview",
-    "test": "node --test src/newsletter/panelDefaults.test.js src/feed/getPaginationRange.test.js src/feed/filterNewsItems.test.js src/feed/categoryFilterPrefs.test.js src/theme/resolveTheme.test.js"
+    "test": "node --test src/newsletter/panelDefaults.test.js src/feed/getPaginationRange.test.js src/feed/filterNewsItems.test.js src/feed/categoryFilterPrefs.test.js src/theme/resolveTheme.test.js src/games/commit-chess/engine.test.js"
   },
   "dependencies": {
     "react": "^19.1.0",

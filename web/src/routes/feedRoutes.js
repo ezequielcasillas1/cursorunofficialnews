@@ -29,6 +29,7 @@ export const STATIC_PAGE_ROUTES = [
   { path: '/newsletter', id: 'newsletter', label: 'Newsletter' },
   { path: '/newsletter/unsubscribe', id: 'newsletterUnsubscribe', label: 'Unsubscribe' },
   { path: '/membership/unsubscribe', id: 'membershipUnsubscribe', label: 'Cancel membership' },
+  { path: '/games', id: 'games', label: 'Games' },
   { path: '/about', id: 'about', label: 'About' },
   { path: '/editorial-policy', id: 'editorialPolicy', label: 'Editorial Policy' },
   { path: '/sources', id: 'sources', label: 'Sources' },
