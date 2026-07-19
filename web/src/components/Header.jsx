@@ -7,6 +7,8 @@ import { Tooltip } from './Tooltip.jsx';
 
 const SOCIAL_LINKS = [
   { label: 'X', href: 'https://x.com/casiezeq' },
+  { label: 'TikTok', href: 'https://www.tiktok.com/@casiezeq' },
+  { label: 'Instagram', href: 'https://www.instagram.com/casiezeq' },
   { label: 'Reddit', href: 'https://reddit.com/user/Ok-Address3409' },
 ];
 
