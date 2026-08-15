@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
 import { loadProjectEnv } from '../env/load-env.js';
 import { prerenderMetaPlugin } from './vite-plugin-prerender-meta.js';
 
@@ -13,7 +14,7 @@ export default defineConfig(({ mode }) => {
     }
   }
 
-  const plugins = [react(), prerenderMetaPlugin()];
+  const plugins = [react(), tailwindcss(), prerenderMetaPlugin()];
 
   // Optional Google Search Console HTML-tag verification (VITE_GOOGLE_SITE_VERIFICATION).
   plugins.push({

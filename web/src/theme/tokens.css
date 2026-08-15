@@ -1,44 +1,46 @@
-/** Brand palette from CN hex logo — navy + cream + muted gold accents */
+/** Obsidian Gold palette — black glass design (webdesign.md) fused with CN brand gold */
 
 :root,
 :root[data-theme='dark'] {
-  --color-ink: #f2f2eb;
-  --color-ink-soft: #d8d4c8;
-  --color-ink-muted: #9a9488;
-  --color-ink-light: #7a7468;
-  --color-paper: #0a0e14;
-  --color-paper-deep: #070a0f;
-  --color-paper-warm: #10161f;
-  --color-card: #141b26;
-  --color-card-elevated: #1a2330;
-  --color-border: #2a3344;
-  --color-border-strong: #3d4a5c;
-  --color-border-subtle: rgba(197, 169, 119, 0.14);
-  --color-navy: #0f172a;
-  --color-navy-soft: #1b263b;
-  /* Logo gold / brass */
+  --color-ink: #f5f5f4;
+  --color-ink-soft: #e5e5e5;
+  --color-ink-muted: #a3a3a3;
+  --color-ink-light: #737373;
+  --color-paper: #050505;
+  --color-paper-deep: #030303;
+  --color-paper-warm: #0c0c0c;
+  --color-card: #111111;
+  --color-card-elevated: #171717;
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-border-strong: rgba(255, 255, 255, 0.15);
+  --color-border-subtle: rgba(197, 169, 119, 0.18);
+  --color-navy: #0a0a0a;
+  --color-navy-soft: #141414;
+  /* Brand gold (CN logo) — primary accent */
   --color-gold: #c5a977;
   --color-gold-muted: #b8965e;
+  --color-gold-bright: #e8d4a8;
   --color-gold-light: #3d3528;
-  --color-accent-soft: #1a2018;
+  --color-accent-soft: #1a160f;
   --color-link: #d4b87a;
   --color-link-hover: #e8d4a8;
   --color-error: #f87171;
   --color-error-soft: #3f1d1d;
   --color-success: #34d399;
   --color-success-soft: #0f2e22;
-  --color-disclaimer-bg: #15202b;
-  --color-disclaimer-text: #d8d4c8;
+  --color-disclaimer-bg: #0c0c0c;
+  --color-disclaimer-text: #a3a3a3;
   --color-chip-bg: transparent;
   --color-chip-active-bg: #c5a977;
-  --color-chip-active-text: #0f172a;
+  --color-chip-active-text: #050505;
 
-  --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
-  --font-body: 'Source Serif 4', Georgia, serif;
-  --font-ui: 'Outfit', system-ui, -apple-system, sans-serif;
+  --font-display: 'Syne', system-ui, sans-serif;
+  --font-serif-accent: 'Instrument Serif', Georgia, serif;
+  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-ui: 'Inter', system-ui, -apple-system, sans-serif;
 
   --content-max: 42rem;
-  --content-wide: 68rem;
+  --content-wide: 72rem;
   --space-xs: 0.25rem;
   --space-sm: 0.5rem;
   --space-md: 0.75rem;
@@ -50,34 +52,37 @@
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 16px;
+  --radius-xl: 24px;
   --radius-pill: 999px;
   --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.04);
-  --shadow-elevated: 0 18px 50px rgba(0, 0, 0, 0.35);
+  --shadow-elevated: 0 18px 50px rgba(0, 0, 0, 0.5);
+  --shadow-gold-glow: 0 0 18px rgba(197, 169, 119, 0.25);
 
   --rule-color: var(--color-border);
   --masthead-rule: 1px solid var(--color-border);
-  --hero-glow: radial-gradient(ellipse 70% 80% at 18% 25%, rgba(197, 169, 119, 0.32), transparent 55%),
-    radial-gradient(ellipse 55% 55% at 92% 8%, rgba(184, 150, 94, 0.18), transparent 50%),
-    linear-gradient(165deg, #070a0f 0%, #0f172a 45%, #1a2330 100%);
+  --hero-glow: radial-gradient(ellipse 60% 50% at 50% 40%, rgba(197, 169, 119, 0.1), transparent 65%),
+    radial-gradient(ellipse 40% 35% at 85% 10%, rgba(197, 169, 119, 0.07), transparent 60%),
+    linear-gradient(180deg, #050505 0%, #080808 100%);
 }
 
 :root[data-theme='light'] {
-  --color-ink: #0f172a;
-  --color-ink-soft: #1b263b;
-  --color-ink-muted: #5c6470;
-  --color-ink-light: #8a919c;
+  --color-ink: #17150f;
+  --color-ink-soft: #2c2820;
+  --color-ink-muted: #5c5648;
+  --color-ink-light: #8a8375;
   --color-paper: #f4f2ec;
   --color-paper-deep: #e8e4dc;
   --color-paper-warm: #fbfaf7;
   --color-card: #fbfaf7;
   --color-card-elevated: #ffffff;
-  --color-border: #ddd6c8;
-  --color-border-strong: #c9c0ae;
-  --color-border-subtle: rgba(15, 23, 42, 0.08);
-  --color-navy: #0f172a;
-  --color-navy-soft: #1b263b;
+  --color-border: rgba(23, 21, 15, 0.1);
+  --color-border-strong: rgba(23, 21, 15, 0.2);
+  --color-border-subtle: rgba(168, 137, 74, 0.25);
+  --color-navy: #f4f2ec;
+  --color-navy-soft: #e8e4dc;
   --color-gold: #a8894a;
-  --color-gold-muted: #c5a977;
+  --color-gold-muted: #8a6f35;
+  --color-gold-bright: #6b5528;
   --color-gold-light: #e8dcc0;
   --color-accent-soft: #efe9dc;
   --color-link: #8a6f35;
@@ -86,21 +91,18 @@
   --color-error-soft: #fee2e2;
   --color-success: #059669;
   --color-success-soft: #d1fae5;
-  --color-disclaimer-bg: #0f172a;
+  --color-disclaimer-bg: #17150f;
   --color-disclaimer-text: #f2f2eb;
   --color-chip-bg: transparent;
-  --color-chip-active-bg: #c5a977;
-  --color-chip-active-text: #0f172a;
+  --color-chip-active-bg: #a8894a;
+  --color-chip-active-text: #fbfaf7;
 
-  --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
-  --font-body: 'Source Serif 4', Georgia, serif;
-  --font-ui: 'Outfit', system-ui, -apple-system, sans-serif;
-
-  --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04);
-  --shadow-elevated: 0 16px 40px rgba(15, 23, 42, 0.08);
+  --shadow-card: 0 1px 2px rgba(23, 21, 15, 0.05);
+  --shadow-elevated: 0 16px 40px rgba(23, 21, 15, 0.1);
+  --shadow-gold-glow: 0 0 18px rgba(168, 137, 74, 0.3);
   --rule-color: var(--color-border);
   --masthead-rule: 1px solid var(--color-border);
-  --hero-glow: radial-gradient(ellipse 70% 80% at 18% 25%, rgba(197, 169, 119, 0.35), transparent 55%),
-    radial-gradient(ellipse 55% 55% at 92% 8%, rgba(184, 150, 94, 0.2), transparent 50%),
-    linear-gradient(165deg, #070a0f 0%, #0f172a 45%, #1a2330 100%);
+  --hero-glow: radial-gradient(ellipse 60% 50% at 50% 40%, rgba(197, 169, 119, 0.22), transparent 65%),
+    radial-gradient(ellipse 40% 35% at 85% 10%, rgba(184, 150, 94, 0.14), transparent 60%),
+    linear-gradient(180deg, #f4f2ec 0%, #efece4 100%);
 }

@@ -160,7 +160,7 @@ export function FeedPage({ categoryId = 'all' }) {
   const showPagination = !isSearching && feedMeta.totalPages > 1;
 
   return (
-    <AppShell onRefresh={handleRefresh} refreshing={refreshing}>
+    <AppShell onRefresh={handleRefresh} refreshing={refreshing} hero status={status}>
       <PageMeta
         title={pageMeta.title}
         description={pageMeta.description}
