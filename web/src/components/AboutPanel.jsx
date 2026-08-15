@@ -17,7 +17,7 @@ export function StatusBar({ lastIngestAt, sourceCount, feedPublishedAfter }) {
 export function AboutPanel() {
   return (
     <section className="about-panel">
-      <h2>About this feed</h2>
+      <h2>About this Cursor news feed</h2>
       {ABOUT_CRAWL_INTRO.map((paragraph) => (
         <p key={paragraph.slice(0, 48)}>{paragraph}</p>
       ))}

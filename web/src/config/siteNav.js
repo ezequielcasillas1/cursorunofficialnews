@@ -1,10 +1,10 @@
 /** Site header/footer nav links and tooltip copy — shared across masthead and footer. */
 
-export const HEADER_NAV = [
+export const FEED_SECTION_NAV = [
   {
     href: '/updates',
     label: 'Updates',
-    tooltip: 'Product and release updates — changelogs and version notes',
+    tooltip: 'Changelogs, releases, and Grok / xAI / SpaceX news',
   },
   {
     href: '/news',
@@ -12,10 +12,43 @@ export const HEADER_NAV = [
     tooltip: 'Cursor news articles, announcements, and blog posts',
   },
   {
+    href: '/forum',
+    label: 'Forum',
+    tooltip: 'Posts from the Cursor forum',
+  },
+  {
+    href: '/issues',
+    label: 'Issues',
+    tooltip: 'Bug reports and broken-install threads',
+  },
+  {
+    href: '/community',
+    label: 'Community',
+    tooltip: 'Reddit, Hacker News, and other community posts',
+  },
+  {
+    href: '/discussion',
+    label: 'Discussion',
+    tooltip: 'Opinion, roundups, and discussion threads',
+  },
+  {
+    href: '/social',
+    label: 'Social',
+    tooltip: 'Posts from Cursor, xAI, Grok, and SpaceX on X',
+  },
+  {
+    href: '/videos',
+    label: 'Videos',
+    tooltip: 'Official and community YouTube videos',
+  },
+  {
     href: '/tutorials',
     label: 'Tutorials',
     tooltip: 'How-to guides and step-by-step tutorials',
   },
+];
+
+export const SITE_CHROME_NAV = [
   {
     href: '/games',
     label: 'Games',
@@ -38,8 +71,10 @@ export const HEADER_NAV = [
   },
 ];
 
+export const HEADER_NAV = [...FEED_SECTION_NAV, ...SITE_CHROME_NAV];
+
 export const FOOTER_NAV = [
-  ...HEADER_NAV.slice(0, 4),
+  ...FEED_SECTION_NAV,
   {
     href: '/newsletter/unsubscribe',
     label: 'Unsubscribe',
@@ -50,7 +85,7 @@ export const FOOTER_NAV = [
     label: 'Cancel membership',
     tooltip: 'Cancel your paid supporter membership',
   },
-  ...HEADER_NAV.slice(4),
+  ...SITE_CHROME_NAV,
 ];
 
 export const LEGAL_NAV = [

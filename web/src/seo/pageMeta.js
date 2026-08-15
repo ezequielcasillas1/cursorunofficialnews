@@ -1,9 +1,13 @@
 import { FEED_CATEGORIES } from '../config/feedCategories.js';
 import { getPathForCategory, SITE_ORIGIN } from '../routes/feedRoutes.js';
 
-export const DEFAULT_SITE_TITLE = 'Unofficial Cursor News';
+/** Visible brand in chrome, emails, and inner-page title suffixes. */
+export const SITE_BRAND = 'Unofficial Cursor News';
+
+/** Homepage <title> — lead with the Google query "cursor news". */
+export const DEFAULT_SITE_TITLE = 'Cursor News — Unofficial Changelog, Releases & Updates';
 export const DEFAULT_DESCRIPTION =
-  'Unofficial Cursor news — changelog, releases, and updates. Not affiliated with Anysphere.';
+  'Cursor news — unofficial feed of changelog, releases, blog posts, and community updates. Independent fan site, not affiliated with Anysphere.';
 
 export const OG_IMAGE_PATH = '/brand/og-image.png';
 export const OG_IMAGE_URL = `${SITE_ORIGIN}${OG_IMAGE_PATH}`;
@@ -11,15 +15,20 @@ export const OG_IMAGE_WIDTH = 1200;
 export const OG_IMAGE_HEIGHT = 630;
 
 const SECTION_DESCRIPTIONS = {
-  updates: 'Cursor changelog, releases, and version updates from official and community sources.',
+  updates: 'Cursor changelog, releases, and Grok / xAI / SpaceX news after the SpaceXAI acquisition. Unofficial fan feed, not affiliated with Anysphere.',
   news: 'Cursor blog posts and product news from official and community sources.',
   forum: 'Cursor forum discussions and community posts.',
   issues: 'Cursor bug reports and GitHub issues tracked in one feed.',
   community: 'Cursor community posts and fan content.',
   discussion: 'Cursor discussion threads, opinions, and analysis.',
-  social: 'Posts from Cursor on X (Twitter).',
+  social: 'Posts from Cursor, xAI, Grok, and SpaceX on X.',
   videos: 'Cursor YouTube videos and video content.',
   tutorials: 'Cursor tutorials, guides, and how-to content.',
+};
+
+/** Keep /news from cannibalizing the homepage for the query "cursor news". */
+const SECTION_TITLES = {
+  news: `Cursor Blog & Product News — ${SITE_BRAND}`,
 };
 
 export function getFeedPageMeta(categoryId) {
@@ -37,7 +46,7 @@ export function getFeedPageMeta(categoryId) {
   const path = getPathForCategory(categoryId);
 
   return {
-    title: `Cursor ${label} — Unofficial Cursor News`,
+    title: SECTION_TITLES[categoryId] ?? `Cursor ${label} — ${SITE_BRAND}`,
     description: SECTION_DESCRIPTIONS[categoryId] ?? `Cursor ${label.toLowerCase()} from unofficial Cursor News.`,
     path,
     breadcrumbLabel: label,
@@ -47,63 +56,63 @@ export function getFeedPageMeta(categoryId) {
 export function getStaticPageMeta(pageId) {
   const pages = {
     newsletter: {
-      title: 'Newsletter — Unofficial Cursor News',
+      title: `Newsletter — ${SITE_BRAND}`,
       description:
         'Subscribe to the Unofficial Cursor News email digest. Members get curated Cursor updates in their inbox.',
       path: '/newsletter',
       breadcrumbLabel: 'Newsletter',
     },
     newsletterUnsubscribe: {
-      title: 'Unsubscribe — Unofficial Cursor News',
+      title: `Unsubscribe — ${SITE_BRAND}`,
       description:
         'Unsubscribe from the Unofficial Cursor News email digest. Stop curated Cursor updates in your inbox anytime.',
       path: '/newsletter/unsubscribe',
       breadcrumbLabel: 'Unsubscribe',
     },
     membershipUnsubscribe: {
-      title: 'Cancel membership — Unofficial Cursor News',
+      title: `Cancel membership — ${SITE_BRAND}`,
       description:
         'Cancel your Unofficial Cursor News monthly membership. Stop Stripe billing while keeping access until period end.',
       path: '/membership/unsubscribe',
       breadcrumbLabel: 'Cancel membership',
     },
     games: {
-      title: 'Games — Unofficial Cursor News',
+      title: `Games — ${SITE_BRAND}`,
       description:
         'Cursor-themed browser games from Unofficial Cursor News — logo pieces, Git puns, and Commit Chess.',
       path: '/games',
       breadcrumbLabel: 'Games',
     },
     about: {
-      title: 'About — Unofficial Cursor News',
+      title: `About Cursor News — ${SITE_BRAND}`,
       description:
-        'About Unofficial Cursor News — an independent fan publication covering Cursor changelogs, releases, and community sources with original notes.',
+        'About this Cursor news feed — including Grok / xAI / SpaceX after the SpaceXAI acquisition. Independent fan site, not affiliated with Anysphere.',
       path: '/about',
       breadcrumbLabel: 'About',
     },
     editorialPolicy: {
-      title: 'Editorial Policy — Unofficial Cursor News',
+      title: `Editorial Policy — ${SITE_BRAND}`,
       description:
         'How Unofficial Cursor News sources stories, writes original commentary, attributes publishers, and links out — never full-article republishing.',
       path: '/editorial-policy',
       breadcrumbLabel: 'Editorial Policy',
     },
     sources: {
-      title: 'Sources — Unofficial Cursor News',
+      title: `Sources — ${SITE_BRAND}`,
       description:
         'Human-readable list of ingest sources powering Unofficial Cursor News — official and community feeds.',
       path: '/sources',
       breadcrumbLabel: 'Sources',
     },
     privacy: {
-      title: 'Privacy Policy — Unofficial Cursor News',
+      title: `Privacy Policy — ${SITE_BRAND}`,
       description:
         'Privacy Policy for Unofficial Cursor News — how we handle newsletter, membership, and site data.',
       path: '/privacy',
       breadcrumbLabel: 'Privacy',
     },
     terms: {
-      title: 'Terms of Use — Unofficial Cursor News',
+      title: `Terms of Use — ${SITE_BRAND}`,
       description:
         'Terms of Use for Unofficial Cursor News — rules for using this unofficial fan news feed and membership.',
       path: '/terms',
@@ -124,7 +133,7 @@ export function getGamePageMeta(game) {
     return getStaticPageMeta('games');
   }
   return {
-    title: `${game.title} — Unofficial Cursor News`,
+    title: `${game.title} — ${SITE_BRAND}`,
     description: game.blurb || getStaticPageMeta('games').description,
     path: game.path || `/games/${game.id}`,
     breadcrumbLabel: game.title,
@@ -134,7 +143,7 @@ export function getGamePageMeta(game) {
 export function getArticlePageMeta(item) {
   if (!item?.id) {
     return {
-      title: `Story — ${DEFAULT_SITE_TITLE}`,
+      title: `Story — ${SITE_BRAND}`,
       description: DEFAULT_DESCRIPTION,
       path: '/',
       breadcrumbLabel: 'Story',
@@ -148,7 +157,7 @@ export function getArticlePageMeta(item) {
     DEFAULT_DESCRIPTION;
 
   return {
-    title: `${item.title} — Unofficial Cursor News`,
+    title: `${item.title} — ${SITE_BRAND}`,
     description,
     path,
     breadcrumbLabel: item.title,
@@ -170,7 +179,7 @@ export function buildBreadcrumbJsonLd(path, breadcrumbLabel) {
       {
         '@type': 'ListItem',
         position: 1,
-        name: 'Home',
+        name: 'Cursor News',
         item: `${SITE_ORIGIN}/`,
       },
       {
@@ -180,5 +189,86 @@ export function buildBreadcrumbJsonLd(path, breadcrumbLabel) {
         item: buildCanonicalUrl(path),
       },
     ],
+  };
+}
+
+const ORGANIZATION_NODE = {
+  '@type': 'Organization',
+  '@id': `${SITE_ORIGIN}/#organization`,
+  name: SITE_BRAND,
+  alternateName: 'Cursor News',
+  url: `${SITE_ORIGIN}/`,
+  logo: {
+    '@type': 'ImageObject',
+    '@id': `${SITE_ORIGIN}/#logo`,
+    url: `${SITE_ORIGIN}/brand/logo-icon.png`,
+    contentUrl: `${SITE_ORIGIN}/brand/logo-icon.png`,
+    width: 512,
+    height: 512,
+    caption: 'Cursor News',
+  },
+};
+
+export function buildWebsiteJsonLd() {
+  return {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'WebSite',
+        '@id': `${SITE_ORIGIN}/#website`,
+        url: `${SITE_ORIGIN}/`,
+        name: 'Cursor News',
+        alternateName: ['Unofficial Cursor News', 'Unofficial Cursor news'],
+        description: DEFAULT_DESCRIPTION,
+        publisher: { '@id': `${SITE_ORIGIN}/#organization` },
+        inLanguage: 'en',
+      },
+      {
+        '@type': 'CollectionPage',
+        '@id': `${SITE_ORIGIN}/#webpage`,
+        url: `${SITE_ORIGIN}/`,
+        name: DEFAULT_SITE_TITLE,
+        description: DEFAULT_DESCRIPTION,
+        isPartOf: { '@id': `${SITE_ORIGIN}/#website` },
+        about: {
+          '@type': 'SoftwareApplication',
+          name: 'Cursor',
+          applicationCategory: 'DeveloperApplication',
+        },
+        inLanguage: 'en',
+        publisher: { '@id': `${SITE_ORIGIN}/#organization` },
+      },
+      ORGANIZATION_NODE,
+    ],
+  };
+}
+
+export function buildPageJsonLd({ title, description, path, breadcrumbLabel }) {
+  if (!path || path === '/') return buildWebsiteJsonLd();
+
+  const graph = [
+    {
+      '@type': 'WebPage',
+      '@id': `${buildCanonicalUrl(path)}#webpage`,
+      url: buildCanonicalUrl(path),
+      name: title,
+      description,
+      isPartOf: { '@id': `${SITE_ORIGIN}/#website` },
+      inLanguage: 'en',
+    },
+    ORGANIZATION_NODE,
+  ];
+
+  const crumbs = buildBreadcrumbJsonLd(path, breadcrumbLabel);
+  if (crumbs) {
+    graph.push({
+      '@type': crumbs['@type'],
+      itemListElement: crumbs.itemListElement,
+    });
+  }
+
+  return {
+    '@context': 'https://schema.org',
+    '@graph': graph,
   };
 }

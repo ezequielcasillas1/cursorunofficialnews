@@ -1,3 +1,23 @@
+### [2026-08-15] - Localhost catalog: Grok/xAI/SpaceX + categories
+**Status:** PENDING USER VERIFY
+**Files:** web/vite.config.js, web/src/config/siteNav.js, web/src/components/{Header,CategoryFilter}.jsx, web/worker/src/sources/registry.js, classify/{url-rules.js,url-rules.test.js,content-signals.js}
+**Result:** Vite /api proxy now defaults to local wrangler (:8787), not production. Dev.to/Medium Grok+xAI locked to spacexai (Updates). Header shows all feed sections. Local D1 still needs ingest for items.
+
+### [2026-08-15] - Grok / xAI / SpaceX Updates coverage
+**Status:** PENDING USER VERIFY
+**Files:** web/worker/src/sources/registry.js, classify/url-rules.js, classify/content-signals.js, mobile/shared/feed/*, notifications, pageMeta, siteNav, crawlCopy, request.md, docs/SOURCE-STRATEGY.md
+**Result:** Added `spacexai` category + official/aggregator Grok, xAI, SpaceXAI, and SpaceX sources. Updates tab includes spacexai. Notification topic “Grok / xAI / SpaceX”. Broken/unverified sources disabled.
+
+### [2026-08-15] - Rank homepage for Google "cursor news"
+**Status:** PENDING USER VERIFY
+**Files:** web/index.html, web/src/seo/pageMeta.js, web/src/seo/crawlCopy.js, web/public/sitemap.xml, web/public/robots.txt, web/public/site.webmanifest, web/worker/src/seo/sitemap.js, web/src/components/Header.jsx, web/src/pages/FeedPage.jsx
+**Result:** Homepage title/H1/JSON-LD now lead with "Cursor News". /news title demoted to avoid cannibalizing. Sitemap lastmod + lower /news priority. Needs deploy for Google to recrawl.
+
+### [2026-08-15] - shadcn/ui on Obsidian Gold web redesign
+**Status:** PENDING USER VERIFY
+**Files:** web/components.json, web/src/components/ui/*, web/src/lib/utils.js, web/src/{App.jsx,index.css,theme/tokens.css,theme/applyTheme.js,components/{Header,NewsCard,NewsFeed,FeedSearch,CategoryFilter,CategoryFilterPanel,FeedPagination,Footer,ThemeToggle,Tooltip,SupporterSlot}.jsx}
+**Result:** shadcn (Radix, new-york) on Vite + Tailwind v4. Brand gold/paper tokens adapt to shadcn; header/cards/search/filters/skeleton/alert/pagination/footer composed from primitives. Build + 17 tests pass.
+
 ### [2026-07-17] - Website AdSense content + visual redesign
 **Status:** PENDING USER VERIFY
 **Files:** web/worker (commentary migration, news-store, news-commentary, sitemap, core-routes, run-ingest, index.js), wrangler.jsonc, web/src (ArticlePage, EditorialPolicy, NewsCard, About, seo, theme, App.css)

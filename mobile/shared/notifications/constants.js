@@ -5,6 +5,7 @@ export const PUSH_BODY_MAX = 120;
 export const CATEGORY_LABELS = {
   changelog: 'Changelog',
   release: 'Release',
+  spacexai: 'Grok / xAI / SpaceX',
   blog: 'Blog',
   forum: 'Forum',
   community: 'Community',

@@ -1,3 +1,4 @@
+import { Separator } from '@/components/ui/separator';
 import { APP_NAME, DISCLAIMER } from '../config.js';
 import { FOOTER_NAV, LEGAL_NAV } from '../config/siteNav.js';
 import { Tooltip } from './Tooltip.jsx';
@@ -16,6 +17,7 @@ export function Footer() {
             </Tooltip>
           ))}
         </nav>
+        <Separator />
         <nav className="site-footer-nav site-footer-legal" aria-label="Legal">
           {LEGAL_NAV.map((link) => (
             <Tooltip key={link.href} text={link.tooltip}>

@@ -27,8 +27,14 @@ Use all four in priority order. Backend merges + dedupes by canonical URL.
 | Changelog page | `https://cursor.com/changelog` | HTML landing; RSS above |
 | GitHub releases | `https://github.com/getcursor/cursor/releases.atom` | Atom |
 | Blog | `https://cursor.com/blog` | Scrape fallback — no public RSS (404 on `/blog/rss.xml`) |
+| SpaceXAI news | `https://x.ai/news` | Scrape `/news/` permalinks (primary) |
+| SpaceXAI sitemap | `https://x.ai/sitemap.xml` | `/news/` URLs — complementary, disabled (scrape preferred for dates) |
+| Grok Build changelog | `https://x.ai/build/changelog` | Scrape |
+| Grok Build releases | `https://github.com/xai-org/grok-build/releases.atom` | Atom |
+| SpaceX updates | `https://www.spacex.com/updates` | SPA — no permalinks; use aggregators |
+| SpaceX YouTube | `UC2C_jShtL725hvbm1arSV9w` | YouTube Atom |
 
-**Extend:** add new official URLs to `mobile/server/src/sources/registry.js` when Cursor publishes them.
+**Extend:** add new official URLs to `web/worker/src/sources/registry.js` when Cursor or SpaceXAI publishes them.
 
 ### 2. Scraping API (fallback only)
 
@@ -47,7 +53,7 @@ Single registry drives all ingest workers.
 
 Fields per source:
 
-- `id`, `name`, `category` (changelog | blog | release | forum | community)
+- `id`, `name`, `category` (changelog | blog | release | forum | community | spacexai | social | video | tutorial)
 - `feedUrl` | `pageUrl` | `scrapeSelector`
 - `ingestMethod`: `rss` | `atom` | `api` | `scrape`
 - `enabled`, `priority`, `maxExcerptChars`
@@ -82,7 +88,7 @@ Prefer official source over aggregator when duplicates match.
 
 ## Notifications (pivot feature vs NetNewsWire)
 
-- Per-category toggles: Changelog, Releases, Blog, Forum
+- Per-category toggles: Changelog, Releases, Grok / xAI / SpaceX, Blog, Forum
 - Digest vs instant (Pro tier later)
 - Deep link to **original URL**, not in-app full text
 

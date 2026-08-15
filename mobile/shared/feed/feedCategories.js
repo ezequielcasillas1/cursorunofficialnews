@@ -11,7 +11,7 @@ export const FEED_CATEGORIES = [
   {
     id: 'updates',
     label: 'Updates',
-    apiCategories: ['changelog', 'release'],
+    apiCategories: ['changelog', 'release', 'spacexai'],
     tooltip: SECTION_TOOLTIPS.updates,
   },
   { id: 'news', label: 'News', apiCategories: ['blog'], tooltip: SECTION_TOOLTIPS.news },
@@ -48,7 +48,7 @@ export function getCategoryApiParam(categoryId) {
 export function getEmptyFeedMessage(categoryId, filter = {}) {
   const messages = {
     all: 'No items yet. Refresh the feed to run ingest.',
-    updates: 'No changelog or release items found.',
+    updates: 'No changelog, release, or Grok / xAI / SpaceX items found.',
     news: 'No blog posts found.',
     forum: 'No forum posts found.',
     issues: 'No bug or issue reports right now.',

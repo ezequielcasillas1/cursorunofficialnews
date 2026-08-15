@@ -6,6 +6,7 @@ export const DEFAULT_CATEGORY_ITEM_LIMIT = 1;
 export const DIGEST_CATEGORY_ORDER = [
   'changelog',
   'release',
+  'spacexai',
   'blog',
   'forum',
   'community',

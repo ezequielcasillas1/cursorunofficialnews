@@ -1,5 +1,13 @@
 import { useState } from 'react';
-import { APP_NAME } from '../config.js';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
 import { HEADER_NAV } from '../config/siteNav.js';
 import { useSiteViews } from '../hooks/useSiteViews.js';
 import { SupporterSlot } from './SupporterSlot.jsx';
@@ -17,7 +25,10 @@ const SOCIAL_LINKS = [
 const MARQUEE_WORDS = [
   { text: 'CHANGELOG', serif: false },
   { text: 'Releases', serif: true },
-  { text: 'BLOG', serif: false, gold: true },
+  { text: 'GROK', serif: false, gold: true },
+  { text: 'xAI', serif: true },
+  { text: 'SPACEX', serif: false, gold: true },
+  { text: 'BLOG', serif: false },
   { text: 'Forum', serif: true },
   { text: 'COMMUNITY', serif: false },
   { text: 'Tutorials', serif: true },
@@ -154,7 +165,7 @@ function HeroStatusCard({ status }) {
   );
 }
 
-function Hero({ status, onlineCount }) {
+function Hero({ status, onlineCount, heading = 'Cursor News', kicker = 'unofficially.' }) {
   const today = new Date().toLocaleDateString(undefined, {
     weekday: 'long',
     year: 'numeric',
@@ -174,33 +185,26 @@ function Hero({ status, onlineCount }) {
             </div>
 
             <h1 className="text-6xl md:text-7xl lg:text-8xl font-semibold tracking-tighter text-[var(--color-ink)] leading-[0.9] m-0">
-              CURSOR
+              {heading}
               <br />
-              <span className="font-serif-accent text-[var(--color-ink-muted)]">news, unofficially.</span>
+              <span className="font-serif-accent text-[var(--color-ink-muted)]">{kicker}</span>
             </h1>
 
             <p className="text-sm md:text-base text-[var(--color-ink-muted)] max-w-md leading-relaxed font-light m-0">
-              Independent Cursor briefing — changelogs, releases, and community, with original notes
-              on every story. Never the full article: tap through to the original publisher.
+              Cursor news — independent briefing on changelogs, releases, and community, with original
+              notes on every story. Never the full article: tap through to the original publisher.
             </p>
 
             <div className="flex items-center gap-4 pt-2 flex-wrap">
-              <a
-                href="#feed"
-                className="h-12 px-8 bg-[var(--color-gold)] text-[#0a0a0a] text-xs font-bold uppercase tracking-widest rounded-full hover:bg-[var(--color-gold-bright)] transition-all flex items-center gap-2 group no-underline"
-              >
-                Browse the feed
-                <Icon
-                  name="arrow-right"
-                  className="transition-transform group-hover:translate-x-1"
-                />
-              </a>
-              <a
-                href="/editorial-policy"
-                className="h-12 px-8 border border-[var(--color-border)] text-[var(--color-ink)] text-xs font-bold uppercase tracking-widest rounded-full hover:border-[var(--color-gold)]/60 hover:text-[var(--color-gold-bright)] transition-colors flex items-center no-underline"
-              >
-                Editorial policy
-              </a>
+              <Button asChild size="pill" className="no-underline">
+                <a href="#feed">
+                  Browse the feed
+                  <Icon name="arrow-right" className="transition-transform group-hover/button:translate-x-1" />
+                </a>
+              </Button>
+              <Button asChild variant="outline" size="pill" className="no-underline">
+                <a href="/editorial-policy">Editorial policy</a>
+              </Button>
             </div>
 
             <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] uppercase tracking-widest text-[var(--color-ink-light)] m-0">
@@ -234,7 +238,14 @@ function Hero({ status, onlineCount }) {
   );
 }
 
-export function Header({ onRefresh, refreshing, hero = false, status = null }) {
+export function Header({
+  onRefresh,
+  refreshing,
+  hero = false,
+  status = null,
+  heroHeading = 'Cursor News',
+  heroKicker = 'unofficially.',
+}) {
   const [menuOpen, setMenuOpen] = useState(false);
   const onlineCount = useSiteViews();
 
@@ -244,7 +255,7 @@ export function Header({ onRefresh, refreshing, hero = false, status = null }) {
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-4">
           <BrandMark />
 
-          <div className="hidden lg:flex items-center gap-7 text-[11px] font-semibold text-[var(--color-ink-muted)] uppercase tracking-widest">
+          <div className="hidden lg:flex flex-wrap items-center justify-end gap-x-4 gap-y-1 max-w-4xl text-[11px] font-semibold text-[var(--color-ink-muted)] uppercase tracking-widest">
             {HEADER_NAV.map((link) => (
               <Tooltip key={link.href} text={link.tooltip}>
                 <a
@@ -260,57 +271,69 @@ export function Header({ onRefresh, refreshing, hero = false, status = null }) {
           <div className="flex items-center gap-3">
             <ThemeToggle />
             {onRefresh ? (
-              <button
+              <Button
                 type="button"
+                variant="outline"
+                size="sm"
                 onClick={onRefresh}
                 disabled={refreshing}
-                className="hidden sm:inline-flex h-9 px-4 items-center rounded-full border border-[var(--color-border)] text-[10px] font-bold uppercase tracking-widest text-[var(--color-ink-muted)] hover:text-[var(--color-gold)] hover:border-[var(--color-gold)]/60 transition-colors disabled:opacity-50"
+                className="hidden rounded-full uppercase tracking-widest sm:inline-flex"
               >
                 {refreshing ? 'Refreshing…' : 'Refresh'}
-              </button>
+              </Button>
             ) : null}
             <SupporterSlot variant="inline" />
-            <button
-              type="button"
-              className="lg:hidden inline-flex items-center justify-center w-9 h-9 rounded-full border border-[var(--color-border)] text-[var(--color-ink)]"
-              aria-label={menuOpen ? 'Close menu' : 'Open menu'}
-              aria-expanded={menuOpen}
-              onClick={() => setMenuOpen((open) => !open)}
-            >
-              <Icon name={menuOpen ? 'x' : 'menu'} width={18} />
-            </button>
+            <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+              <SheetTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="rounded-full lg:hidden"
+                  aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+                >
+                  <Icon name={menuOpen ? 'x' : 'menu'} width={18} />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="bg-background">
+                <SheetHeader>
+                  <SheetTitle className="font-display uppercase tracking-tight">Sections</SheetTitle>
+                </SheetHeader>
+                <Separator />
+                <nav className="flex flex-col gap-1 px-4 text-xs font-semibold uppercase tracking-widest">
+                  {HEADER_NAV.map((link) => (
+                    <a
+                      key={link.href}
+                      href={link.href}
+                      onClick={() => setMenuOpen(false)}
+                      className="rounded-lg px-2 py-3 text-muted-foreground no-underline transition-colors hover:bg-muted hover:text-primary"
+                    >
+                      {link.label}
+                    </a>
+                  ))}
+                </nav>
+                {onRefresh ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="mx-4 rounded-full uppercase tracking-widest"
+                    onClick={onRefresh}
+                    disabled={refreshing}
+                  >
+                    {refreshing ? 'Refreshing…' : 'Refresh'}
+                  </Button>
+                ) : null}
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
-
-        {menuOpen ? (
-          <div className="lg:hidden border-t border-[var(--color-border)] bg-[var(--color-paper)]/95 backdrop-blur-xl">
-            <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col gap-3 text-xs font-semibold uppercase tracking-widest">
-              {HEADER_NAV.map((link) => (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setMenuOpen(false)}
-                  className="py-2 text-[var(--color-ink-muted)] hover:text-[var(--color-gold-bright)] transition-colors no-underline"
-                >
-                  {link.label}
-                </a>
-              ))}
-              {onRefresh ? (
-                <button
-                  type="button"
-                  onClick={onRefresh}
-                  disabled={refreshing}
-                  className="self-start h-9 px-4 rounded-full border border-[var(--color-border)] text-[10px] font-bold uppercase tracking-widest text-[var(--color-ink-muted)] disabled:opacity-50"
-                >
-                  {refreshing ? 'Refreshing…' : 'Refresh'}
-                </button>
-              ) : null}
-            </div>
-          </div>
-        ) : null}
       </nav>
 
-      {hero ? <Hero status={status} onlineCount={onlineCount} /> : <div className="h-16" aria-hidden="true" />}
+      {hero ? (
+        <Hero status={status} onlineCount={onlineCount} heading={heroHeading} kicker={heroKicker} />
+      ) : (
+        <div className="h-16" aria-hidden="true" />
+      )}
     </header>
   );
 }

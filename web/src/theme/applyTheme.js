@@ -2,6 +2,7 @@
 export function applyTheme(theme) {
   const resolved = theme === 'light' ? 'light' : 'dark';
   document.documentElement.setAttribute('data-theme', resolved);
+  document.documentElement.classList.toggle('dark', resolved === 'dark');
   document.documentElement.style.colorScheme = resolved;
 }
 

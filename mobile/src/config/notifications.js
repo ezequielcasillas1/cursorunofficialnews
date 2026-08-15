@@ -19,6 +19,11 @@ export const NOTIFICATION_CATEGORIES = [
     description: 'GitHub release announcements when available.',
   },
   {
+    id: 'spacexai',
+    label: 'Grok / xAI / SpaceX',
+    description: 'Official and aggregator news on Grok, xAI, SpaceXAI, and SpaceX.',
+  },
+  {
     id: 'blog',
     label: 'Blog',
     description: 'Cursor blog posts and editorial news.',
@@ -36,7 +41,7 @@ export const NOTIFICATION_CATEGORIES = [
   {
     id: 'social',
     label: 'Social',
-    description: 'Posts from Cursor on X (Twitter).',
+    description: 'Posts from Cursor, xAI, Grok, and SpaceX on X.',
   },
   {
     id: 'video',
@@ -52,7 +57,7 @@ export const NOTIFICATION_CATEGORIES = [
 
 export const DEFAULT_NOTIFICATION_PREFS = {
   enabled: false,
-  categories: ['changelog', 'release', 'blog'],
+  categories: ['changelog', 'release', 'spacexai', 'blog'],
   officialOnly: false,
 };
 

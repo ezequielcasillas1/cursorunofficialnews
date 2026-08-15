@@ -158,9 +158,19 @@ export function FeedPage({ categoryId = 'all' }) {
   }
 
   const showPagination = !isSearching && feedMeta.totalPages > 1;
+  const isHome = selectedCategory === 'all';
+  const heroHeading = isHome ? 'Cursor News' : `Cursor ${pageMeta.breadcrumbLabel}`;
+  const heroKicker = selectedCategory === 'news' ? 'blog & product posts.' : 'unofficially.';
 
   return (
-    <AppShell onRefresh={handleRefresh} refreshing={refreshing} hero status={status}>
+    <AppShell
+      onRefresh={handleRefresh}
+      refreshing={refreshing}
+      hero
+      status={status}
+      heroHeading={heroHeading}
+      heroKicker={heroKicker}
+    >
       <PageMeta
         title={pageMeta.title}
         description={pageMeta.description}

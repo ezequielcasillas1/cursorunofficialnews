@@ -55,6 +55,7 @@ export function AboutScreen({ onBack }) {
         <Text style={styles.sectionTitle}>Current features</Text>
         <Text style={styles.body}>
           • Official changelog RSS and GitHub releases{'\n'}
+          • Grok, xAI, and SpaceX news after the SpaceXAI Cursor acquisition{'\n'}
           • Forum announcements and blog posts (RSS + optional scrape){'\n'}
           • Tutorials from Cursor Learn, community guides (RSS, sitemap + scrape){'\n'}
           • YouTube channel videos{'\n'}

@@ -32,7 +32,7 @@ Brand (match cursorunofficial.news — navy hero + cream/gold editorial):
 - Table layout, inline CSS, web-safe font fallbacks; absolute image URLs only
 
 Structure rules:
-- Group headlines by topic category in the same order as the subscriber settings (changelog, releases, blog, forum, community, social, videos, tutorials).
+- Group headlines by topic category in the same order as the subscriber settings (changelog, releases, Grok / xAI / SpaceX, blog, forum, community, social, videos, tutorials).
 - Respect per-category headline counts already applied in digestSections (1–3 items per enabled topic).
 - When subscriber.officialOnly is true, only include headlines from verified/primary (official) sources — same as the feed "Official only" filter.
 - Insert an editorial divider BETWEEN category groups only. If N categories have content, use exactly N-1 dividers — never after the final category.

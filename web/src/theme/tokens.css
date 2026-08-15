@@ -63,6 +63,40 @@
   --hero-glow: radial-gradient(ellipse 60% 50% at 50% 40%, rgba(197, 169, 119, 0.1), transparent 65%),
     radial-gradient(ellipse 40% 35% at 85% 10%, rgba(197, 169, 119, 0.07), transparent 60%),
     linear-gradient(180deg, #050505 0%, #080808 100%);
+
+  /* shadcn adapter — brand tokens stay source of truth */
+  --background: var(--color-paper);
+  --foreground: var(--color-ink);
+  --card: var(--color-card-elevated);
+  --card-foreground: var(--color-ink);
+  --popover: var(--color-card-elevated);
+  --popover-foreground: var(--color-ink);
+  --primary: var(--color-gold);
+  --primary-foreground: #0a0a0a;
+  --secondary: var(--color-paper-warm);
+  --secondary-foreground: var(--color-ink);
+  --muted: var(--color-paper-warm);
+  --muted-foreground: var(--color-ink-muted);
+  --accent: var(--color-gold-light);
+  --accent-foreground: var(--color-gold-bright);
+  --destructive: var(--color-error);
+  --border: rgba(255, 255, 255, 0.08);
+  --input: rgba(255, 255, 255, 0.12);
+  --ring: var(--color-gold);
+  --radius: 0.625rem;
+  --sidebar: var(--color-paper-deep);
+  --sidebar-foreground: var(--color-ink);
+  --sidebar-primary: var(--color-gold);
+  --sidebar-primary-foreground: #0a0a0a;
+  --sidebar-accent: var(--color-gold-light);
+  --sidebar-accent-foreground: var(--color-gold-bright);
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-ring: var(--color-gold);
+  --chart-1: var(--color-gold);
+  --chart-2: var(--color-gold-muted);
+  --chart-3: var(--color-ink-muted);
+  --chart-4: var(--color-ink-light);
+  --chart-5: var(--color-card-elevated);
 }
 
 :root[data-theme='light'] {
@@ -105,4 +139,10 @@
   --hero-glow: radial-gradient(ellipse 60% 50% at 50% 40%, rgba(197, 169, 119, 0.22), transparent 65%),
     radial-gradient(ellipse 40% 35% at 85% 10%, rgba(184, 150, 94, 0.14), transparent 60%),
     linear-gradient(180deg, #f4f2ec 0%, #efece4 100%);
+
+  --primary-foreground: #fbfaf7;
+  --border: rgba(23, 21, 15, 0.1);
+  --input: rgba(23, 21, 15, 0.12);
+  --sidebar-border: rgba(23, 21, 15, 0.1);
+  --sidebar-primary-foreground: #fbfaf7;
 }

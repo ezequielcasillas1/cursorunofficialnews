@@ -37,3 +37,16 @@ Feature requests (numbered). Concise bullets only.
 - Brand logo pieces; AI opponent; client-only (no Worker)
 - Commit Chess (git add/commit/push + rebase/merge/cherry-pick/revert) + command course
 - Coming soon stubs: Diff Wars, Branch Race, Stash Stack
+
+## 7. shadcn/ui on the Obsidian Gold web redesign
+- Init shadcn in `web/` (Vite + Tailwind v4, Radix, new-york)
+- Adapter: map shadcn tokens to existing gold/paper theme (keep Syne / Instrument Serif / Inter)
+- Compose header, news cards, search, filters, loading/error, pagination, footer
+- Preserve vertical slices; no PasteCraft patterns
+
+## 8. Grok / xAI / SpaceX Updates coverage
+- New `spacexai` category for official + aggregator Grok, xAI, SpaceXAI, and SpaceX news
+- Updates tab = changelog + release + spacexai; Reddit/HN stay Community; official X → Social; YouTube → Videos
+- Official: x.ai news, Grok Build releases, @xai/@grok/@SpaceX/@SpaceXAI, SpaceX YouTube
+- Aggregators: Google News, SpaceNews, HN, Reddit, Dev.to/Medium (xAI first-class)
+- Notification topic “Grok / xAI / SpaceX”; keep unofficial disclaimer

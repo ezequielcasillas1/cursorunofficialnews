@@ -17,6 +17,17 @@
     },
     "n8n-mcp": {
       "url": "https://api.n8n-mcp.com/mcp"
+    },
+    "emergent": {
+      "command": "C:\\Program Files\\nodejs\\npx.cmd",
+      "args": [
+        "-y",
+        "mcp-remote@latest",
+        "https://mcp.emergent.sh/",
+        "7890",
+        "--transport",
+        "http-only"
+      ]
     }
   }
 }

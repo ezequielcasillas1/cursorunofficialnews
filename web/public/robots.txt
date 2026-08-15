@@ -2,4 +2,7 @@ User-agent: *
 Allow: /
 Disallow: /api/
 
+User-agent: Googlebot
+Allow: /
+
 Sitemap: https://cursorunofficial.news/sitemap.xml

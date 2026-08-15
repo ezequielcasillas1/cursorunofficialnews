@@ -1,30 +1,33 @@
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+
 export function FeedSearch({ value, onChange, resultCount, totalCount }) {
   const trimmed = value.trim();
   const showCount = trimmed.length > 0 && typeof resultCount === 'number';
 
   return (
     <div className="feed-search">
-      <label className="feed-search-label" htmlFor="feed-search-input">
+      <Label
+        htmlFor="feed-search-input"
+        className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground"
+      >
         Search
-      </label>
-      <div className="feed-search-row">
-        <input
+      </Label>
+      <div className="flex items-center gap-2">
+        <Input
           id="feed-search-input"
           type="search"
-          className="feed-search-input"
+          className="h-12 rounded-full px-4"
           placeholder="Search titles, sources, excerpts…"
           value={value}
           onChange={(event) => onChange(event.target.value)}
           aria-describedby={showCount ? 'feed-search-count' : undefined}
         />
         {trimmed ? (
-          <button
-            type="button"
-            className="btn btn-ghost feed-search-clear"
-            onClick={() => onChange('')}
-          >
+          <Button type="button" variant="outline" size="pill" className="h-12 shrink-0" onClick={() => onChange('')}>
             Clear
-          </button>
+          </Button>
         ) : null}
       </div>
       {showCount ? (

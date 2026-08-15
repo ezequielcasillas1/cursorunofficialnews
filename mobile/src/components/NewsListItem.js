@@ -63,6 +63,7 @@ function formatCategoryLabel(category, sourceName) {
   const labels = {
     changelog: 'Changelog',
     release: 'Release',
+    spacexai: 'Grok / xAI / SpaceX',
     blog: 'Blog',
     forum: 'Forum',
     community: 'Community',

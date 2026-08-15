@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import {
   buildBreadcrumbJsonLd,
   buildCanonicalUrl,
+  buildPageJsonLd,
   OG_IMAGE_URL,
   OG_IMAGE_WIDTH,
   OG_IMAGE_HEIGHT,
@@ -76,6 +77,11 @@ export function PageMeta({ title, description, path = '/', breadcrumbLabel = nul
     ensureMeta('twitter:title', META_IDS.twitterTitle).setAttribute('content', title);
     ensureMeta('twitter:description', META_IDS.twitterDescription).setAttribute('content', description);
     ensureMeta('twitter:image', META_IDS.twitterImage).setAttribute('content', OG_IMAGE_URL);
+
+    const schemaEl = ensureJsonLdScript('page-schema-jsonld');
+    schemaEl.textContent = JSON.stringify(
+      buildPageJsonLd({ title, description, path, breadcrumbLabel }),
+    );
 
     const jsonLd = buildBreadcrumbJsonLd(path, breadcrumbLabel);
     const jsonLdEl = ensureJsonLdScript('page-breadcrumb-jsonld');

@@ -7,6 +7,7 @@ import {
   OG_IMAGE_URL,
   OG_IMAGE_WIDTH,
   OG_IMAGE_HEIGHT,
+  buildPageJsonLd,
 } from './src/seo/pageMeta.js';
 import { ABOUT_CRAWL_INTRO } from './src/seo/crawlCopy.js';
 
@@ -45,13 +46,23 @@ function replaceMeta(html, { title, description, path, canonical }) {
   return out;
 }
 
+function replaceJsonLd(html, jsonLd) {
+  const pretty = JSON.stringify(jsonLd, null, 2).replace(/\n/g, '\n      ');
+  const block = `<script type="application/ld+json" id="page-schema-jsonld">\n      ${pretty}\n    </script>`;
+  if (/<script type="application\/ld\+json"[^>]*>[\s\S]*?<\/script>/.test(html)) {
+    return html.replace(/<script type="application\/ld\+json"[^>]*>[\s\S]*?<\/script>/, block);
+  }
+  return html.replace('</head>', `    ${block}\n  </head>`);
+}
+
 function buildNoscriptBlock({ title, description, path }) {
+  const heading = path === '/' ? 'Cursor News' : title;
   const intro =
     path === '/about' || path === '/'
       ? `<p>${ABOUT_CRAWL_INTRO.map((p) => escapeHtml(p)).join('</p><p>')}</p>`
       : `<p>${escapeHtml(description)}</p>`;
 
-  return `<noscript class="crawl-fallback"><h1>${escapeHtml(title)}</h1>${intro}<p><a href="${escapeHtml(path === '/' ? '/' : path)}">Continue to ${escapeHtml(title)}</a></p></noscript>`;
+  return `<noscript class="crawl-fallback"><h1>${escapeHtml(heading)}</h1>${intro}<p><a href="${escapeHtml(path === '/' ? '/' : path)}">Continue to ${escapeHtml(title)}</a></p></noscript>`;
 }
 
 function injectNoscript(html, noscriptBlock) {
@@ -83,6 +94,15 @@ export function prerenderMetaPlugin() {
         };
 
         let html = replaceMeta(baseHtml, meta);
+        html = replaceJsonLd(
+          html,
+          buildPageJsonLd({
+            title: meta.title,
+            description: meta.description,
+            path: meta.path,
+            breadcrumbLabel: route.breadcrumbLabel,
+          }),
+        );
         html = injectNoscript(html, buildNoscriptBlock(meta));
 
         const filePath =

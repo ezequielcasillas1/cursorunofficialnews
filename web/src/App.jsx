@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { FeedPage } from './pages/FeedPage.jsx';
 import { AboutPage } from './pages/AboutPage.jsx';
 import { ArticlePage } from './pages/ArticlePage.jsx';
@@ -16,7 +17,8 @@ import './App.css';
 
 export default function App() {
   return (
-    <Routes>
+    <TooltipProvider delayDuration={200}>
+      <Routes>
       <Route path="/" element={<FeedPage categoryId="all" />} />
       {FEED_SECTION_ROUTES.map(({ categoryId, path }) => (
         <Route key={categoryId} path={path} element={<FeedPage categoryId={categoryId} />} />
@@ -33,6 +35,7 @@ export default function App() {
       <Route path="/privacy" element={<PrivacyPage />} />
       <Route path="/terms" element={<TermsPage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+      </Routes>
+    </TooltipProvider>
   );
 }

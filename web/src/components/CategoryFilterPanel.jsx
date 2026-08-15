@@ -6,6 +6,8 @@ import {
   summarizeCategoryFilter,
   toggleSourceFilter,
 } from '../feed/categoryFilterPrefs.js';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { OFFICIAL_ONLY_TOOLTIP } from '../config/feedCategories.js';
 import { CollapsiblePanel } from './ui/CollapsiblePanel.jsx';
 import { Tooltip } from './Tooltip.jsx';
@@ -53,18 +55,16 @@ export function CategoryFilterPanel({
           <span className="category-filter-group-label">Source type</span>
           <div className="category-filter-chips">
             <Tooltip text={OFFICIAL_ONLY_TOOLTIP}>
-              <button
+              <Button
                 type="button"
-                className={
-                  normalized.officialOnly
-                    ? 'chip chip-official chip-active'
-                    : 'chip chip-official'
-                }
+                variant={normalized.officialOnly ? 'default' : 'outline'}
+                size="sm"
+                className="h-8 rounded-full px-3.5 text-[10px] font-semibold uppercase tracking-[0.1em]"
                 aria-pressed={normalized.officialOnly}
                 onClick={handleOfficialToggle}
               >
                 Official only
-              </button>
+              </Button>
             </Tooltip>
           </div>
         </div>
@@ -80,18 +80,25 @@ export function CategoryFilterPanel({
               {tabSources.map((source) => {
                 const selected = normalized.sourceIds?.includes(source.id);
                 return (
-                  <button
+                  <Button
                     key={source.id}
                     type="button"
-                    className={selected ? 'chip chip-active' : 'chip'}
+                    variant={selected ? 'default' : 'outline'}
+                    size="sm"
+                    className="h-8 rounded-full px-3.5 text-[10px] font-semibold uppercase tracking-[0.1em]"
                     aria-pressed={Boolean(selected)}
                     onClick={() => handleSourceToggle(source.id)}
                   >
                     {source.name}
                     {source.isOfficial ? (
-                      <span className="category-filter-source-badge">Official</span>
+                      <Badge
+                        variant={selected ? 'secondary' : 'outline'}
+                        className="ml-1 h-4 rounded-sm px-1 text-[9px] uppercase"
+                      >
+                        Official
+                      </Badge>
                     ) : null}
-                  </button>
+                  </Button>
                 );
               })}
             </div>
@@ -100,9 +107,9 @@ export function CategoryFilterPanel({
 
         {activeCount > 0 ? (
           <div className="category-filter-actions">
-            <button type="button" className="category-filter-reset" onClick={handleReset}>
+            <Button type="button" variant="link" className="h-auto px-0 text-[11px] uppercase tracking-widest" onClick={handleReset}>
               Reset filters
-            </button>
+            </Button>
           </div>
         ) : null}
       </div>

@@ -1,8 +1,12 @@
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { loadProjectEnv } from '../env/load-env.js';
 import { prerenderMetaPlugin } from './vite-plugin-prerender-meta.js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig(({ mode }) => {
   loadProjectEnv('web');
@@ -30,6 +34,11 @@ export default defineConfig(({ mode }) => {
 
   return {
     define: viteEnvDefines,
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, './src'),
+      },
+    },
     plugins,
     server: {
       host: '127.0.0.1',
@@ -39,8 +48,11 @@ export default defineConfig(({ mode }) => {
         // full API under /api/* — no path rewrite needed since the Worker's
         // Hono app is mounted at basePath('/api') itself.
         '/api': {
-          target: 'http://127.0.0.1:8787',
+          // Local wrangler (`npm run dev:api` on :8787). Override with
+          // VITE_API_PROXY=https://cursorunofficial.news to hit production.
+          target: process.env.VITE_API_PROXY || 'http://127.0.0.1:8787',
           changeOrigin: true,
+          secure: false,
         },
       },
     },

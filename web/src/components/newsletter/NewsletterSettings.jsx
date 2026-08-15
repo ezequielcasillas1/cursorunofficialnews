@@ -152,7 +152,7 @@ export function NewsletterSettings({ membership }) {
         <div className="newsletter-topics-header">
           <h3>Email topics</h3>
           <p className="hint">
-            Same digest topic options as mobile: changelog, releases, blog, forum,
+            Same digest topic options as mobile: changelog, releases, Grok / xAI / SpaceX, blog, forum,
             community, social, videos, and tutorials. For each topic, choose how many
             headlines (1–{NEWSLETTER_CATEGORY_LIMIT.max}) to include per digest.
           </p>

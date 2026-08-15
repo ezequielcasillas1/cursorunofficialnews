@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {
   applyCategoryLimits,
   buildDigestSections,
+  DIGEST_CATEGORY_ORDER,
   flattenDigestSections,
 } from './category-limits.js';
 
@@ -44,6 +45,13 @@ test('buildDigestSections respects enabled topics and per-category limits', () =
 test('applyCategoryLimits matches flattened digest sections', () => {
   const sections = buildDigestSections(items, subscriber);
   assert.deepEqual(applyCategoryLimits(items, subscriber), flattenDigestSections(sections));
+});
+
+test('DIGEST_CATEGORY_ORDER includes spacexai after release', () => {
+  const releaseIdx = DIGEST_CATEGORY_ORDER.indexOf('release');
+  const spacexaiIdx = DIGEST_CATEGORY_ORDER.indexOf('spacexai');
+  assert.ok(releaseIdx >= 0);
+  assert.equal(spacexaiIdx, releaseIdx + 1);
 });
 
 test('buildDigestSections skips disabled categories with no items', () => {

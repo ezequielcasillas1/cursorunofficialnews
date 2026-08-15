@@ -1,4 +1,4 @@
-export const DEFAULT_RESUBSCRIBE_CATEGORIES = ['changelog', 'release', 'blog'];
+export const DEFAULT_RESUBSCRIBE_CATEGORIES = ['changelog', 'release', 'spacexai', 'blog'];
 
 export function resolveDefaultCategories(previousCategories = []) {
   return previousCategories.length > 0

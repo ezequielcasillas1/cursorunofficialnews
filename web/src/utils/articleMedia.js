@@ -3,6 +3,7 @@ import { sanitizeExternalUrl } from '../../../mobile/shared/url/safe-external-ur
 const CATEGORY_LABELS = {
   changelog: 'Changelog',
   release: 'Release',
+  spacexai: 'Grok / xAI / SpaceX',
   blog: 'Blog',
   forum: 'Forum',
   community: 'Community',
@@ -16,6 +17,7 @@ const CATEGORY_LABELS = {
 const CATEGORY_ACCENTS = {
   changelog: 'navy',
   release: 'gold',
+  spacexai: 'gold',
   blog: 'warm',
   forum: 'blue',
   community: 'warm',
