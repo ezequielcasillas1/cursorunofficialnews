@@ -20,6 +20,14 @@ function parseBlogAnchorText(rawText) {
     };
   }
 
+  const trailingDate = inner.match(/^(.*?)\s+([A-Za-z]{3,9}\s+\d{1,2},\s+\d{4})\s*$/);
+  if (trailingDate) {
+    return {
+      title: trailingDate[1].trim().slice(0, 200),
+      pubDate: trailingDate[2],
+    };
+  }
+
   return {
     title: inner.slice(0, 200),
     pubDate: null,

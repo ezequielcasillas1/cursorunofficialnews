@@ -601,7 +601,7 @@ export const SOURCES = [
     name: 'SpaceX YouTube',
     category: 'video',
     feedUrl:
-      'https://www.youtube.com/feeds/videos.xml?channel_id=UC2C_jShtL725hvbm1arSV9w',
+      'https://www.youtube.com/feeds/videos.xml?channel_id=UCtI0Hodo5o5dUb67FeUjDeA',
     ingestMethod: 'rss',
     enabled: true,
     priority: 9,

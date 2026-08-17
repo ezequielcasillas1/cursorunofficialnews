@@ -8,6 +8,7 @@ import { registerMembershipRoutes } from './monetization/membership-routes.js';
 import { registerLlmRoutes } from './llm/llm-routes.js';
 import { handleStripeWebhook } from './monetization/stripe-webhook.js';
 import { registerAdminRoutes } from './admin/admin-routes.js';
+import { isHealthPath, isSiteOffline, OFFLINE_MESSAGE } from './ops/site-offline.js';
 
 /**
  * Builds the API Hono app under the `/api` base path, so the web frontend's
@@ -24,6 +25,16 @@ export function createApp() {
     c.header('X-Frame-Options', 'DENY');
     if (c.env.ENVIRONMENT === 'production') {
       c.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    }
+    await next();
+  });
+
+  app.use('*', async (c, next) => {
+    const pathname = new URL(c.req.url).pathname;
+    if (isSiteOffline(c.env) && !isHealthPath(pathname)) {
+      c.header('Cache-Control', 'no-store');
+      c.header('Retry-After', '3600');
+      return c.text(OFFLINE_MESSAGE, 503);
     }
     await next();
   });

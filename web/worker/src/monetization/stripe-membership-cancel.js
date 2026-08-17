@@ -1,6 +1,74 @@
 import { getStripeClient } from './stripe-client.js';
 import { deactivateMember, getMemberByToken } from '../store/memberships.js';
 import { unsubscribeByEmail } from '../store/email-subscribers.js';
+import {
+  shouldReconcileMembershipWithStripe,
+  syncActiveMembershipFromStripe,
+} from './stripe-membership-sync.js';
+import {
+  buildMembershipCancelNotice,
+  cancelNoticeIdempotencyKey,
+  fetchLatestPaidInvoiceSummary,
+} from './membership-cancel-notice.js';
+import { sendMembershipCancelEmail } from './send-membership-cancel-email.js';
+
+async function withCancelNotice(env, member, result) {
+  let invoice = null;
+  if (member?.stripeSubscriptionId && env) {
+    try {
+      const stripe = getStripeClient(env);
+      invoice = await fetchLatestPaidInvoiceSummary(stripe, member.stripeSubscriptionId);
+    } catch (err) {
+      console.warn('[membership/cancel] invoice lookup:', err.message || err);
+    }
+  }
+
+  const notice = buildMembershipCancelNotice({
+    email: member?.email || result.email,
+    immediate: Boolean(result.immediate),
+    alreadyScheduled: Boolean(result.alreadyScheduled),
+    currentPeriodEnd: result.currentPeriodEnd || result.cancelAt || null,
+    invoice,
+  });
+
+  let emailed = false;
+  try {
+    const sendResult = await sendMembershipCancelEmail(
+      {
+        notice,
+        idempotencyKey: cancelNoticeIdempotencyKey({
+          email: member?.email,
+          subscriptionId: member?.stripeSubscriptionId,
+          currentPeriodEnd: notice.currentPeriodEnd,
+          immediate: notice.immediate,
+        }),
+      },
+      env,
+    );
+    emailed = Boolean(sendResult?.sent);
+  } catch (err) {
+    console.warn('[membership/cancel] notice email:', err.message || err);
+  }
+
+  return {
+    ...result,
+    notice: { ...notice, emailed },
+  };
+}
+
+async function memberForCancelToken(db, membershipToken, env) {
+  const member = await getMemberByToken(db, membershipToken);
+  if (!member || !shouldReconcileMembershipWithStripe(member) || !env) {
+    return member;
+  }
+  try {
+    const synced = await syncActiveMembershipFromStripe(db, member.email, env);
+    if (synced?.active) return synced;
+  } catch (err) {
+    console.warn('[membership/cancel] stripe sync:', err.message || err);
+  }
+  return member;
+}
 
 export function isMembershipCancellable(member) {
   if (!member) {
@@ -26,7 +94,7 @@ export async function getMembershipCancelEligibility(db, membershipToken, env = 
     return { cancellable: false, reason: 'token is required' };
   }
 
-  const member = await getMemberByToken(db, token);
+  const member = await memberForCancelToken(db, token, env);
   const eligibility = isMembershipCancellable(member);
   const base = {
     ...eligibility,
@@ -37,6 +105,7 @@ export async function getMembershipCancelEligibility(db, membershipToken, env = 
       : 'immediate_deactivate',
     cancelAtPeriodEnd: false,
     alreadyScheduled: false,
+    resumable: false,
     currentPeriodEnd: null,
     cancelAt: null,
   };
@@ -52,6 +121,7 @@ export async function getMembershipCancelEligibility(db, membershipToken, env = 
       ...base,
       cancelAtPeriodEnd: Boolean(subscription.cancel_at_period_end),
       alreadyScheduled: Boolean(subscription.cancel_at_period_end),
+      resumable: Boolean(subscription.cancel_at_period_end),
       currentPeriodEnd: subscription.current_period_end
         ? new Date(subscription.current_period_end * 1000).toISOString()
         : null,
@@ -72,7 +142,7 @@ export async function processMembershipCancel(env, db, { membershipToken } = {})
     throw new Error('membershipToken is required');
   }
 
-  const member = await getMemberByToken(db, token);
+  const member = await memberForCancelToken(db, token, env);
   const eligibility = isMembershipCancellable(member);
   if (!eligibility.cancellable) {
     const err = new Error(eligibility.reason);
@@ -88,13 +158,13 @@ export async function processMembershipCancel(env, db, { membershipToken } = {})
     });
     await unsubscribeByEmail(db, member.email);
 
-    return {
+    return withCancelNotice(env, member, {
       ok: true,
       email: member.email,
       membershipStatus: 'cancelled',
       immediate: true,
       newsletterEnded: true,
-    };
+    });
   }
 
   const stripe = getStripeClient(env);
@@ -111,7 +181,7 @@ export async function processMembershipCancel(env, db, { membershipToken } = {})
   }
 
   if (subscription.cancel_at_period_end) {
-    return {
+    return withCancelNotice(env, member, {
       ok: true,
       email: member.email,
       membershipStatus: 'active',
@@ -123,14 +193,14 @@ export async function processMembershipCancel(env, db, { membershipToken } = {})
       currentPeriodEnd: subscription.current_period_end
         ? new Date(subscription.current_period_end * 1000).toISOString()
         : null,
-    };
+    });
   }
 
   const updated = await stripe.subscriptions.update(member.stripeSubscriptionId, {
     cancel_at_period_end: true,
   });
 
-  return {
+  return withCancelNotice(env, member, {
     ok: true,
     email: member.email,
     membershipStatus: 'active',
@@ -139,5 +209,5 @@ export async function processMembershipCancel(env, db, { membershipToken } = {})
     currentPeriodEnd: updated.current_period_end
       ? new Date(updated.current_period_end * 1000).toISOString()
       : null,
-  };
+  });
 }

@@ -27,7 +27,6 @@ export async function createMembershipClaimRequest(db, email, env) {
   const expiresAt = new Date(now + getMembershipClaimTtlMinutes(env) * 60_000).toISOString();
 
   await cleanupExpiredRequests(db, now);
-  await db.prepare('DELETE FROM membership_claim_requests WHERE email = ?').bind(normalized).run();
 
   const token = generateClaimToken();
   const record = {

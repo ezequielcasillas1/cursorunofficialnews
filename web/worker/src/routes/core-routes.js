@@ -25,6 +25,7 @@ import { isTwitterApiConfigured } from '../ingest/twitter-api.js';
 import { isWorkersAiConfigured } from '../llm/workers-ai-client.js';
 import { getStripeMembershipConfigStatus } from '../monetization/stripe-client.js';
 import { runIngestWithLock } from '../ingest/run-ingest.js';
+import { healthPayload } from '../ops/site-offline.js';
 
 export function registerCoreRoutes(app) {
   app.get('/', (c) =>
@@ -35,7 +36,7 @@ export function registerCoreRoutes(app) {
     }),
   );
 
-  app.get('/health', (c) => c.json({ ok: true }));
+  app.get('/health', (c) => c.json(healthPayload(c.env)));
 
   app.get('/v1/status', async (c) => {
     const db = c.env.DB;

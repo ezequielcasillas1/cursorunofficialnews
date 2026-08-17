@@ -19,11 +19,16 @@ Feature requests (numbered). Concise bullets only.
 - Detected via score-based heuristics; layered after base classification
 - Added Issues + Discussion tabs to mobile + web feed filters
 
-## 4. Stripe membership replaces Buy Me a Coffee — DONE (pending Stripe object creation)
-- $1–$5/mo Stripe Checkout subscription; one entitlement unlocks ad-free + email newsletter
-- Newsletter subscribe/resubscribe now membership-gated (`membershipToken` required)
-- Refunds: $4+/mo members can request full refund via `POST /v1/membership/refund` (membershipToken)
-- See `docs/STRIPE-GO-LIVE.md` for required secrets + manual Stripe dashboard steps
+## 4. Stripe membership replaces Buy Me a Coffee
+- $1–$5/mo Stripe Checkout; paid entitlement is Stripe-backed for every email
+- Checkout requires membership email; reuse Stripe customer; block duplicate active subs
+- Claim/restore uses D1 + Stripe sync — no production owner-email paid bypass
+- Restore retries stay unlimited; CAPTCHA after 10 attempts (no hard 429 cutoff)
+- Newsletter subscribe/resubscribe gated by `membershipToken`
+- Refunds: $4+/mo via `POST /v1/membership/refund`
+- Cancel notice: Resend email + last Stripe invoice on the cancel screen
+- Cancel screen: Resubscribe undoes scheduled Stripe cancel (`cancel_at_period_end`)
+- See `docs/STRIPE-GO-LIVE.md`
 
 ## 5. New Yorker-inspired web redesign + WaPo-style fonts
 - Refresh `web/` visual language inspired by newyorker.com editorial layout (masthead, rules, typographic hierarchy)

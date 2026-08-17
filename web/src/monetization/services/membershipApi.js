@@ -1,10 +1,11 @@
 import { API_BASE } from '../../config.js';
 
 const REQUEST_TIMEOUT_MS = 15000;
+const CLAIM_REQUEST_TIMEOUT_MS = 45000;
 
-async function fetchJson(path, options = {}) {
+async function fetchJson(path, options = {}, timeoutMs = REQUEST_TIMEOUT_MS) {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
     const res = await fetch(`${API_BASE}${path}`, {
@@ -23,6 +24,15 @@ async function fetchJson(path, options = {}) {
       const err = new Error(body.error || `Request failed (${res.status})`);
       if (body.membershipStatus) {
         err.membershipStatus = body.membershipStatus;
+      }
+      if (body.code) {
+        err.code = body.code;
+      }
+      if (body.captchaRequired) {
+        err.captchaRequired = true;
+      }
+      if (body.siteKey) {
+        err.siteKey = body.siteKey;
       }
       throw err;
     }
@@ -52,12 +62,19 @@ export function confirmMembershipCheckout(sessionId) {
   return fetchJson(`/v1/membership/checkout/confirm?${params.toString()}`);
 }
 
-export function claimMembership(email) {
-  return fetchJson('/v1/membership/claim', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email }),
-  });
+export function claimMembership(email, { turnstileToken } = {}) {
+  return fetchJson(
+    '/v1/membership/claim',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email,
+        turnstileToken: turnstileToken || undefined,
+      }),
+    },
+    CLAIM_REQUEST_TIMEOUT_MS,
+  );
 }
 
 export function fetchMembershipStatus(token) {
@@ -93,6 +110,14 @@ export function fetchCancelEligibility(token) {
 
 export function cancelMembership(membershipToken) {
   return fetchJson('/v1/membership/cancel', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ membershipToken }),
+  });
+}
+
+export function resumeMembership(membershipToken) {
+  return fetchJson('/v1/membership/resume', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ membershipToken }),

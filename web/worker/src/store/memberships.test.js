@@ -59,25 +59,25 @@ function createLegacyMembershipDb() {
 describe('activateMember legacy D1 schema', () => {
   it('falls back to core upsert when admin columns are missing', async () => {
     const { db, rows } = createLegacyMembershipDb();
-    const member = await activateMember(db, { email: 'ezequielcasillas1@gmail.com' });
+    const member = await activateMember(db, { email: 'member@example.com' });
 
-    assert.equal(member.email, 'ezequielcasillas1@gmail.com');
+    assert.equal(member.email, 'member@example.com');
     assert.equal(member.active, true);
-    assert.ok(rows.has('ezequielcasillas1@gmail.com'));
+    assert.ok(rows.has('member@example.com'));
   });
 });
 
 describe('getEntitlement newsletter whitelist', () => {
   it('unlocks newsletter for whitelisted email even when active=0', async () => {
     const { db } = createLegacyMembershipDb();
-    const member = await activateMember(db, { email: 'ezequielcasillas1@gmail.com' });
+    const member = await activateMember(db, { email: 'member@example.com' });
     const env = {
       ENVIRONMENT: 'production',
-      NEWSLETTER_FREE_EMAILS: 'ezequielcasillas1@gmail.com',
+      NEWSLETTER_FREE_EMAILS: 'member@example.com',
     };
 
     const entitlement = await getEntitlement(db, member.membershipToken, env);
     assert.equal(entitlement.newsletterUnlocked, true);
-    assert.equal(entitlement.email, 'ezequielcasillas1@gmail.com');
+    assert.equal(entitlement.email, 'member@example.com');
   });
 });

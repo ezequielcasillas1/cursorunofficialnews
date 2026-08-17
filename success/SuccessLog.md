@@ -1,4 +1,10 @@
-﻿### [July 3, 2026] - Privacy, terms, unsubscribe pages, nav tooltips
+﻿### [July 19, 2026] - TikTok + Instagram follow links
+**Status:** SUCCESS
+**Commit:** 83704c8 (merge dbc7e8d)
+**Files:** web/src/components/Header.jsx
+**Result:** Hero follow links add TikTok @casiezeq and Instagram @casiezeq next to X/Reddit. PR #6 merged; user verified.
+
+### [July 3, 2026] - Privacy, terms, unsubscribe pages, nav tooltips
 **Status:** SUCCESS
 **Commit:** 7bfde1d
 **Files:** web/src legal pages, unsubscribe pages, siteNav tooltips, worker membership/email routes, docs/n8n workflow

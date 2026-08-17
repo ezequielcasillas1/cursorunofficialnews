@@ -1,6 +1,7 @@
 import { createApp } from './src/app.js';
 import { bootstrapIngestIfEmpty, runIngestWithLock } from './src/ingest/run-ingest.js';
 import { runScheduledDigest } from './src/jobs/run-scheduled-digest.js';
+import { healthPayload, isHealthPath, isSiteOffline, offlineResponse } from './src/ops/site-offline.js';
 import { sitemapResponse } from './src/seo/sitemap.js';
 
 /** @param {string} pathname */
@@ -31,8 +32,12 @@ export default {
 
     // Unprefixed convenience alias for uptime monitors / Cloudflare health
     // checks (the full API also answers at /api/health).
-    if (url.pathname === '/health') {
-      return Response.json({ ok: true });
+    if (isHealthPath(url.pathname)) {
+      return Response.json(healthPayload(env));
+    }
+
+    if (isSiteOffline(env)) {
+      return offlineResponse(request);
     }
 
     if (url.pathname === '/api' || url.pathname.startsWith('/api/')) {
@@ -69,6 +74,11 @@ export default {
 
   /** Cron Trigger — ingest every 30 min; digest batch at 1pm CT (hourly cron, slot-gated). */
   async scheduled(controller, env, ctx) {
+    if (isSiteOffline(env)) {
+      console.log(JSON.stringify({ event: 'cron_skipped', reason: 'site_offline', cron: controller.cron }));
+      return;
+    }
+
     const cron = controller.cron;
 
     if (cron === '*/30 * * * *') {

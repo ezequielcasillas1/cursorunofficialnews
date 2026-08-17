@@ -32,7 +32,7 @@ Use all four in priority order. Backend merges + dedupes by canonical URL.
 | Grok Build changelog | `https://x.ai/build/changelog` | Scrape |
 | Grok Build releases | `https://github.com/xai-org/grok-build/releases.atom` | Atom |
 | SpaceX updates | `https://www.spacex.com/updates` | SPA — no permalinks; use aggregators |
-| SpaceX YouTube | `UC2C_jShtL725hvbm1arSV9w` | YouTube Atom |
+| SpaceX YouTube | `UCtI0Hodo5o5dUb67FeUjDeA` | YouTube Atom |
 
 **Extend:** add new official URLs to `web/worker/src/sources/registry.js` when Cursor or SpaceXAI publishes them.
 

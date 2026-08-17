@@ -547,11 +547,38 @@ html[data-theme='light'] .feed-search-input {
   line-height: 1.6;
 }
 
+.taco-checkout-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-lg);
+}
+
+.taco-claim-label-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.taco-claim-label-row label {
+  font-family: var(--font-ui);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-ink-light);
+}
+
+.taco-checkout-submit {
+  width: 100%;
+  margin-top: var(--space-sm);
+}
+
 .taco-tiers {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
   gap: var(--space-sm);
-  margin-bottom: var(--space-lg);
+  margin: var(--space-sm) 0 0;
 }
 
 .taco-tier-btn {
@@ -575,6 +602,18 @@ html[data-theme='light'] .taco-tier-btn {
   border-color: var(--color-gold);
   transform: translateY(-2px);
   box-shadow: var(--shadow-gold-glow);
+}
+
+.taco-tier-btn--selected,
+.taco-tier-btn[aria-checked='true'] {
+  border-color: var(--color-gold);
+  background: rgba(197, 169, 119, 0.12);
+  box-shadow: var(--shadow-gold-glow);
+}
+
+html[data-theme='light'] .taco-tier-btn--selected,
+html[data-theme='light'] .taco-tier-btn[aria-checked='true'] {
+  background: rgba(197, 169, 119, 0.18);
 }
 
 .taco-tier-btn:disabled {
@@ -685,6 +724,10 @@ html[data-theme='light'] .taco-claim-row input {
   margin: var(--space-sm) 0 0;
   font-size: 0.8125rem;
   color: var(--color-error);
+}
+
+.taco-turnstile {
+  min-height: 65px;
 }
 
 .taco-info-btn {
@@ -1807,6 +1850,52 @@ html[data-theme='light'] .unsubscribe-form input[type='email'] {
 
 .membership-unsubscribe-success {
   color: var(--color-success);
+}
+
+.membership-cancel-receipt {
+  margin: 0 0 var(--space-lg);
+  padding: var(--space-lg);
+  border: 1px solid color-mix(in srgb, var(--color-success) 35%, var(--color-border));
+  border-radius: var(--radius-xl);
+  background: var(--color-success-soft);
+}
+
+.membership-cancel-receipt-kicker {
+  margin: 0 0 var(--space-xs);
+  font-family: var(--font-ui);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-success);
+}
+
+.membership-cancel-receipt-title {
+  margin: 0 0 var(--space-sm);
+  font-size: 1.125rem;
+}
+
+.membership-cancel-invoice {
+  margin-top: var(--space-md);
+  padding-top: var(--space-md);
+  border-top: 1px solid color-mix(in srgb, var(--color-success) 25%, transparent);
+}
+
+.membership-cancel-invoice-label {
+  margin: 0 0 var(--space-xs);
+  font-family: var(--font-ui);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-ink-muted);
+}
+
+.membership-resume-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin: var(--space-lg) 0 0;
 }
 
 /* --- Tooltip -------------------------------------------------------------------------- */

@@ -41,7 +41,7 @@ EXPO_PUBLIC_REGISTER_SECRET=<same-as-REGISTER_SECRET>
 |---|---|---|---|
 | Device register | `POST` `/api/v1/devices/register` | 10 req / 1 min / IP | Block 10 min |
 | Membership checkout | `POST` `/api/v1/membership/checkout` | 10 req / 1 min / IP | Block 10 min |
-| Membership claim | `POST` `/api/v1/membership/claim` | 10 req / 1 min / IP | Block 10 min |
+| Membership claim | `POST` `/api/v1/membership/claim` | 10 req / 1 min / IP | **Managed Challenge** (Turnstile). Do **not** Block — app requires CAPTCHA after 10 restores and keeps sending. |
 | Email subscribe | `POST` `/api/v1/email/subscribe` | 10 req / 1 min / IP | Block 10 min |
 | Email unsubscribe | `POST` `/api/v1/email/unsubscribe` | 20 req / 1 min / IP | Block 10 min |
 
@@ -61,8 +61,8 @@ Do not run `npm audit fix --force` without planning an Expo major upgrade.
 
 ## Optional / future
 
-- **Turnstile** on membership checkout or claim — needs site key + server verify; not wired yet.
-- **NEWSLETTER_FREE_EMAILS** — production bypass whitelist; keep minimal; Worker logs a one-time warning when set.
+- **Turnstile** on membership restore after 10 attempts — set `TURNSTILE_SITE_KEY` (Worker var) + `TURNSTILE_SECRET` (`wrangler secret put`). Local/dev uses Cloudflare dummy keys. Never hard-blocks restore.
+- **NEWSLETTER_FREE_EMAILS** — optional newsletter-only list; does **not** grant paid Stripe membership.
 
 ## Related
 

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { MEMBERSHIP_DEV_ACTIVE, MEMBERSHIP_DEV_EMAIL } from './config.js';
+import { MEMBERSHIP_DEV_ACTIVE } from './config.js';
 import {
   clearStoredMembershipToken,
   consumeMembershipClaimTokenFromUrl,
@@ -8,6 +8,9 @@ import {
   getStoredMembershipToken,
   setStoredMembershipToken,
 } from './membershipStorage.js';
+import { resolveMembershipClaimChallenge } from './resolveMembershipClaimChallenge.js';
+import { resolveCancelReceipt } from './resolveCancelReceipt.js';
+import { resolveResumeNotice } from './resolveResumeNotice.js';
 import {
   claimMembership,
   confirmMembershipCheckout,
@@ -15,17 +18,19 @@ import {
   fetchMembershipStatus,
   fetchRefundEligibility,
   cancelMembership,
+  resumeMembership,
   requestMembershipRefund,
   startMembershipCheckout,
   verifyMembershipClaim,
 } from './services/membershipApi.js';
 
 export function useMembership() {
-  const [adFree, setAdFree] = useState(MEMBERSHIP_DEV_ACTIVE);
-  const [newsletterUnlocked, setNewsletterUnlocked] = useState(MEMBERSHIP_DEV_ACTIVE);
-  const [checking, setChecking] = useState(!MEMBERSHIP_DEV_ACTIVE);
+  const [adFree, setAdFree] = useState(false);
+  const [newsletterUnlocked, setNewsletterUnlocked] = useState(false);
+  const [checking, setChecking] = useState(true);
   const [claiming, setClaiming] = useState(false);
   const [checkingOut, setCheckingOut] = useState(false);
+  const [claimCaptcha, setClaimCaptcha] = useState(null);
   const [claimError, setClaimError] = useState('');
   const [claimNotice, setClaimNotice] = useState('');
   const [memberEmail, setMemberEmail] = useState('');
@@ -39,6 +44,10 @@ export function useMembership() {
   const [cancelling, setCancelling] = useState(false);
   const [cancelError, setCancelError] = useState('');
   const [cancelNotice, setCancelNotice] = useState('');
+  const [cancelReceipt, setCancelReceipt] = useState(null);
+  const [resuming, setResuming] = useState(false);
+  const [resumeError, setResumeError] = useState('');
+  const [resumeNotice, setResumeNotice] = useState(null);
 
   const applyEntitlement = useCallback((token, data) => {
     const active = Boolean(data.adFree);
@@ -60,52 +69,31 @@ export function useMembership() {
 
   const verifyToken = useCallback(
     async (token) => {
-      if (MEMBERSHIP_DEV_ACTIVE) {
-        if (MEMBERSHIP_DEV_EMAIL) {
-          setChecking(true);
-          try {
-            const data = await claimMembership(MEMBERSHIP_DEV_EMAIL);
-            if (data.token) {
-              applyEntitlement(data.token, data);
-              setChecking(false);
-              return true;
-            }
-          } catch {
-            // Fall back to client-side dev unlock below.
-          } finally {
-            setChecking(false);
-          }
+      const resolved = String(token || '').trim();
+
+      if (resolved) {
+        setChecking(true);
+        try {
+          const data = await fetchMembershipStatus(resolved);
+          setClaimError('');
+          return applyEntitlement(resolved, data);
+        } catch {
+          setAdFree(false);
+          setNewsletterUnlocked(false);
+          setMembershipStatus(null);
+          setMembershipToken('');
+          return false;
+        } finally {
+          setChecking(false);
         }
-
-        setAdFree(true);
-        setNewsletterUnlocked(true);
-        setChecking(false);
-        return true;
       }
 
-      if (!token) {
-        setAdFree(false);
-        setNewsletterUnlocked(false);
-        setMembershipStatus(null);
-        setMembershipToken('');
-        setChecking(false);
-        return false;
-      }
-
-      setChecking(true);
-      try {
-        const data = await fetchMembershipStatus(token);
-        setClaimError('');
-        return applyEntitlement(token, data);
-      } catch {
-        setAdFree(false);
-        setNewsletterUnlocked(false);
-        setMembershipStatus(null);
-        setMembershipToken('');
-        return false;
-      } finally {
-        setChecking(false);
-      }
+      setAdFree(false);
+      setNewsletterUnlocked(false);
+      setMembershipStatus(null);
+      setMembershipToken('');
+      setChecking(false);
+      return false;
     },
     [applyEntitlement],
   );
@@ -161,18 +149,12 @@ export function useMembership() {
   const bootRef = useRef(false);
 
   useEffect(() => {
-    if (MEMBERSHIP_DEV_ACTIVE && !MEMBERSHIP_DEV_EMAIL) return;
     if (bootRef.current) return;
     bootRef.current = true;
 
     let cancelled = false;
 
     async function boot() {
-      if (MEMBERSHIP_DEV_ACTIVE && MEMBERSHIP_DEV_EMAIL) {
-        await verifyToken(getStoredMembershipToken());
-        return;
-      }
-
       const sessionId = consumeMembershipSessionIdFromUrl();
       if (sessionId) {
         const ok = await confirmCheckoutSession(sessionId);
@@ -210,7 +192,11 @@ export function useMembership() {
       setClaimError('Could not start checkout — please try again.');
       return false;
     } catch (err) {
-      setClaimError(err.message || 'Could not start checkout');
+      setClaimError(
+        err.code === 'ALREADY_SUBSCRIBED'
+          ? err.message
+          : err.message || 'Could not start checkout',
+      );
       return false;
     } finally {
       setCheckingOut(false);
@@ -218,18 +204,19 @@ export function useMembership() {
   }, []);
 
   const claimAdFree = useCallback(
-    async (email) => {
+    async (email, { turnstileToken } = {}) => {
       setClaimError('');
       setClaimNotice('');
       setClaiming(true);
       try {
-        const data = await claimMembership(email);
+        const data = await claimMembership(email, { turnstileToken });
         if (data.token) {
           setStoredMembershipToken(data.token);
         }
         const unlocked = Boolean(data.adFree || data.newsletterUnlocked);
         if (unlocked && data.token) {
           applyEntitlement(data.token, data);
+          setClaimCaptcha(null);
           setClaimNotice(
             data.newsletterUnlocked && !data.adFree
               ? 'Newsletter access unlocked on this device.'
@@ -238,11 +225,18 @@ export function useMembership() {
           return true;
         }
 
+        setClaimCaptcha(null);
         setClaimNotice(
           data.message || 'Check your email for a one-time verification link to restore your membership.',
         );
         return true;
       } catch (err) {
+        const challenge = resolveMembershipClaimChallenge(err);
+        if (challenge.captchaRequired) {
+          setClaimCaptcha({ siteKey: challenge.siteKey });
+          setClaimError(challenge.error);
+          return false;
+        }
         setClaimError(err.message || 'Could not verify membership');
         setMembershipStatus(err.membershipStatus || null);
         return false;
@@ -262,6 +256,7 @@ export function useMembership() {
     setMembershipToken('');
     setClaimError('');
     setClaimNotice('');
+    setClaimCaptcha(null);
     setRefundEligibility(null);
     setRefundError('');
     setRefundNotice('');
@@ -316,7 +311,7 @@ export function useMembership() {
 
   const refreshCancelEligibility = useCallback(async (token) => {
     const resolved = String(token || membershipToken || getStoredMembershipToken() || '').trim();
-    if (!resolved || MEMBERSHIP_DEV_ACTIVE) {
+    if (!resolved) {
       setCancelEligibility(null);
       return null;
     }
@@ -324,8 +319,12 @@ export function useMembership() {
       const data = await fetchCancelEligibility(resolved);
       setCancelEligibility(data);
       return data;
-    } catch {
-      setCancelEligibility(null);
+    } catch (err) {
+      setCancelEligibility({
+        cancellable: false,
+        loadError: true,
+        error: err.message || 'Could not load cancellation options',
+      });
       return null;
     }
   }, [membershipToken]);
@@ -339,33 +338,25 @@ export function useMembership() {
 
     setCancelError('');
     setCancelNotice('');
+    setCancelReceipt(null);
+    setResumeError('');
+    setResumeNotice(null);
     setCancelling(true);
     try {
       const data = await cancelMembership(token);
+      const receipt = resolveCancelReceipt(data);
+      setCancelReceipt(receipt);
+      setCancelNotice(
+        receipt?.summary ||
+          (data.immediate
+            ? 'Your membership has been cancelled. Newsletter access has ended on this device.'
+            : 'Membership cancellation scheduled. You keep access until the end of your billing period.'),
+      );
       if (data.immediate) {
         clearMembership();
-        setCancelNotice('Your membership has been cancelled. Newsletter access has ended on this device.');
         return true;
       }
 
-      const endDate = data.currentPeriodEnd || data.cancelAt;
-      const formatted = endDate
-        ? new Date(endDate).toLocaleDateString(undefined, {
-            month: 'long',
-            day: 'numeric',
-            year: 'numeric',
-          })
-        : null;
-
-      setCancelNotice(
-        data.alreadyScheduled
-          ? formatted
-            ? `Cancellation is already scheduled. Your membership stays active until ${formatted}.`
-            : 'Cancellation is already scheduled. Your membership stays active until the end of the billing period.'
-          : formatted
-            ? `Membership cancellation scheduled. You keep access until ${formatted}, and billing will not renew.`
-            : 'Membership cancellation scheduled. You keep access until the end of your billing period.',
-      );
       await refreshCancelEligibility(token);
       return true;
     } catch (err) {
@@ -376,6 +367,31 @@ export function useMembership() {
     }
   }, [clearMembership, membershipToken, refreshCancelEligibility]);
 
+  const resumeScheduledCancellation = useCallback(async () => {
+    const token = membershipToken || getStoredMembershipToken();
+    if (!token) {
+      setResumeError('Membership token not found on this device');
+      return false;
+    }
+
+    setResumeError('');
+    setResuming(true);
+    try {
+      const data = await resumeMembership(token);
+      setResumeNotice(resolveResumeNotice(data));
+      setCancelReceipt(null);
+      setCancelNotice('');
+      setCancelError('');
+      await refreshCancelEligibility(token);
+      return true;
+    } catch (err) {
+      setResumeError(err.message || 'Could not resubscribe');
+      return false;
+    } finally {
+      setResuming(false);
+    }
+  }, [membershipToken, refreshCancelEligibility]);
+
   useEffect(() => {
     if (!adFree || !membershipToken || MEMBERSHIP_DEV_ACTIVE) {
       setRefundEligibility(null);
@@ -385,12 +401,12 @@ export function useMembership() {
   }, [adFree, membershipToken, refreshRefundEligibility]);
 
   useEffect(() => {
-    if (!adFree || !membershipToken || MEMBERSHIP_DEV_ACTIVE) {
+    if (!(adFree || newsletterUnlocked) || !membershipToken) {
       setCancelEligibility(null);
       return;
     }
     refreshCancelEligibility(membershipToken);
-  }, [adFree, membershipToken, refreshCancelEligibility]);
+  }, [adFree, newsletterUnlocked, membershipToken, refreshCancelEligibility]);
 
   return {
     adFree,
@@ -398,6 +414,8 @@ export function useMembership() {
     checking,
     claiming,
     checkingOut,
+    claimCaptchaRequired: Boolean(claimCaptcha),
+    claimCaptchaSiteKey: claimCaptcha?.siteKey || '',
     claimError,
     claimNotice,
     memberEmail,
@@ -411,11 +429,16 @@ export function useMembership() {
     cancelling,
     cancelError,
     cancelNotice,
+    cancelReceipt,
+    resuming,
+    resumeError,
+    resumeNotice,
     startCheckout,
     claimAdFree,
     clearMembership,
     requestRefund,
     cancelActiveMembership,
+    resumeScheduledCancellation,
     refreshCancelEligibility,
     refreshStatus: () => verifyToken(getStoredMembershipToken()),
   };

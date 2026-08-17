@@ -2,7 +2,6 @@ import {
   getPrimaryDevMemberEmail,
   isDevMemberEmail,
   isDevMembershipBypassEnabled,
-  isNewsletterFreeEmail,
 } from './membership-email-lists.js';
 import { normalizeEmail } from '../store/email-subscribers.js';
 import { activateMember, getEntitlement, getMember, getMemberByToken } from '../store/memberships.js';
@@ -36,24 +35,14 @@ export async function resolveNewsletterEntitlement(db, membershipToken, env) {
 }
 
 /**
- * Claim-style helper for prod newsletter whitelist and local dev bypass.
+ * Local-dev instant claim only. Production paid membership is Stripe for every email.
+ * NEWSLETTER_FREE_EMAILS does not mint an active paid membership.
  */
 export async function resolveMembershipClaim(db, email, env) {
   const normalized = normalizeEmail(email);
   if (!normalized) return null;
 
   if (env?.ENVIRONMENT !== 'production' && isDevMemberEmail(normalized, env)) {
-    const member = await activateMember(db, { email: normalized });
-    return {
-      email: member.email,
-      membershipToken: member.membershipToken,
-      adFree: true,
-      newsletterUnlocked: true,
-      membershipStatus: 'active',
-    };
-  }
-
-  if (isNewsletterFreeEmail(normalized, env)) {
     const member = await activateMember(db, { email: normalized });
     return {
       email: member.email,

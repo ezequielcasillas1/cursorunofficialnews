@@ -94,6 +94,7 @@ npx wrangler secret put STRIPE_PRICE_ID_2
 npx wrangler secret put STRIPE_PRICE_ID_3
 npx wrangler secret put STRIPE_PRICE_ID_4
 npx wrangler secret put STRIPE_PRICE_ID_5
+npx wrangler secret put TURNSTILE_SECRET
 
 # Ingest sources (optional)
 npx wrangler secret put TWITTER_BEARER_TOKEN
@@ -114,6 +115,7 @@ Only **`INGEST_SECRET`** is required in production. Other secrets are optional â
 | `CURSOR_API_KEY` | For newsletter AI | Newsletter build skips AI |
 | `N8N_NEWSLETTER_*` | For n8n webhook path | Webhook trigger skipped |
 | `REGISTER_SECRET` | **No** (mobile push only) | `POST /api/v1/devices/register` returns 503; all other website flows work |
+| `TURNSTILE_SECRET` | Restore CAPTCHA after 10 attempts | Restore stays unlimited (no CAPTCHA) |
 
 **Push registration (mobile only):** If you later enable mobile push, set `REGISTER_SECRET` on the Worker and mirror it in mobile as `EXPO_PUBLIC_REGISTER_SECRET`.
 
@@ -121,7 +123,7 @@ Only **`INGEST_SECRET`** is required in production. Other secrets are optional â
 
 Workflow export, credentials, and audit-fix import steps: [docs/n8n/README.md](n8n/README.md).
 
-Non-secret config lives in `wrangler.jsonc` â†’ `vars` (`ENVIRONMENT`, `PUBLIC_API_BASE`, `PUBLIC_WEB_BASE`, `RESEND_FROM_EMAIL`, `EMAIL_NOTIFICATIONS`, `PUSH_NOTIFICATIONS`, `N8N_NEWSLETTER_MODE`).
+Non-secret config lives in `wrangler.jsonc` â†’ `vars` (`ENVIRONMENT`, `PUBLIC_API_BASE`, `PUBLIC_WEB_BASE`, `RESEND_FROM_EMAIL`, `EMAIL_NOTIFICATIONS`, `PUSH_NOTIFICATIONS`, `N8N_NEWSLETTER_MODE`, optional `TURNSTILE_SITE_KEY`).
 
 Optional production secret for owner newsletter access without paid membership:
 
@@ -162,9 +164,10 @@ npx wrangler secret put INGEST_SECRET
 |---|---|
 | Email digests + verification | `RESEND_API_KEY` |
 | Stripe membership | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_ID_1` â€¦ `_5` |
+| Restore CAPTCHA (after 10 attempts) | `TURNSTILE_SECRET` + `TURNSTILE_SITE_KEY` var |
 | Newsletter AI | `CURSOR_API_KEY` |
 | n8n newsletter webhook | `N8N_NEWSLETTER_WEBHOOK_URL`, `N8N_NEWSLETTER_WEBHOOK_SECRET` |
-| Owner newsletter bypass | `NEWSLETTER_FREE_EMAILS` (optional) |
+| Owner newsletter bypass | `NEWSLETTER_FREE_EMAILS` (optional; newsletter-only, not paid membership) |
 
 **Skip for website-only:** `REGISTER_SECRET` (mobile push registration only).
 

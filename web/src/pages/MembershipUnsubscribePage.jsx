@@ -7,6 +7,8 @@ import {
   setStoredMembershipToken,
 } from '../monetization/membershipStorage.js';
 import { useMembership } from '../monetization/useMembership.js';
+import { resolveCancelPageView } from '../monetization/resolveCancelPageView.js';
+import { canShowResubscribe } from '../monetization/resolveResumeNotice.js';
 import { getStaticPageMeta } from '../seo/pageMeta.js';
 
 function formatPeriodEnd(iso) {
@@ -66,22 +68,80 @@ function NotSignedInPanel({ onVerifyToken, verifying, verifyError }) {
   );
 }
 
+function CancelReceipt({ receipt }) {
+  if (!receipt) return null;
+  const invoice = receipt.invoice;
+
+  return (
+    <div className="membership-cancel-receipt" role="status">
+      <p className="membership-cancel-receipt-kicker">Cancellation notice</p>
+      <h3 className="membership-cancel-receipt-title">{receipt.headline}</h3>
+      <p className="hint membership-unsubscribe-success">{receipt.summary}</p>
+      {receipt.emailedTo ? (
+        <p className="hint">
+          {receipt.emailed
+            ? `A confirmation was emailed to ${receipt.emailedTo}.`
+            : `Keep this receipt. We could not email ${receipt.emailedTo} right now.`}
+        </p>
+      ) : null}
+      {invoice ? (
+        <div className="membership-cancel-invoice">
+          <p className="membership-cancel-invoice-label">Last invoice</p>
+          <p>
+            {[invoice.number, invoice.amountLabel].filter(Boolean).join(' · ') || 'Paid membership invoice'}
+          </p>
+          <div className="taco-claim-row">
+            {invoice.hostedInvoiceUrl ? (
+              <a
+                className="btn"
+                href={invoice.hostedInvoiceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                View invoice
+              </a>
+            ) : null}
+            {invoice.invoicePdf ? (
+              <a
+                className="btn btn-ghost"
+                href={invoice.invoicePdf}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Download PDF
+              </a>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function CancelMembershipPanel({
   email,
   cancelEligibility,
   cancelNotice,
+  cancelReceipt,
   cancelError,
   cancelling,
   onConfirmCancel,
   refundEligibility,
+  resuming,
+  resumeError,
+  resumeNotice,
+  onResubscribe,
 }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const scheduledEnd = formatPeriodEnd(cancelEligibility?.currentPeriodEnd);
   const stripeMember = Boolean(cancelEligibility?.hasStripeSubscription);
+  const showResubscribe = canShowResubscribe({ cancelReceipt, cancelEligibility, resumeNotice });
 
   return (
     <section className="taco-panel membership-unsubscribe-panel">
-      <h2 className="taco-title">Cancel membership</h2>
+      <h2 className="taco-title">
+        {resumeNotice ? 'Membership resumed' : cancelReceipt ? 'Cancellation notice' : 'Cancel membership'}
+      </h2>
       <p className="taco-subtitle">
         {email ? (
           <>
@@ -92,7 +152,8 @@ function CancelMembershipPanel({
         )}
       </p>
 
-      <ul className="membership-unsubscribe-details">
+      {!cancelReceipt && !resumeNotice ? (
+        <ul className="membership-unsubscribe-details">
         <li>
           This cancels your <strong>monthly membership</strong> (Stripe subscription), not just email
           digests.
@@ -117,22 +178,65 @@ function CancelMembershipPanel({
           </li>
         ) : null}
       </ul>
+      ) : null}
 
-      {cancelNotice ? <p className="hint membership-unsubscribe-success">{cancelNotice}</p> : null}
+      {resumeNotice ? (
+        <div className="membership-cancel-receipt" role="status">
+          <p className="membership-cancel-receipt-kicker">Membership</p>
+          <h3 className="membership-cancel-receipt-title">{resumeNotice.headline}</h3>
+          <p className="hint membership-unsubscribe-success">{resumeNotice.summary}</p>
+        </div>
+      ) : cancelReceipt ? (
+        <CancelReceipt receipt={cancelReceipt} />
+      ) : cancelNotice ? (
+        <p className="hint membership-unsubscribe-success">{cancelNotice}</p>
+      ) : null}
       {cancelError ? (
         <p className="taco-claim-error" role="alert">
           {cancelError}
         </p>
       ) : null}
+      {resumeError ? (
+        <p className="taco-claim-error" role="alert">
+          {resumeError}
+        </p>
+      ) : null}
 
-      {!cancelNotice && cancelEligibility?.alreadyScheduled ? (
+      {showResubscribe ? (
+        <div className="membership-resume-row">
+          <p className="hint">Changed your mind? Resubscribe to keep billing and access going.</p>
+          <button
+            type="button"
+            className="btn"
+            disabled={resuming}
+            aria-busy={resuming}
+            onClick={onResubscribe}
+          >
+            {resuming ? 'Resubscribing…' : 'Resubscribe'}
+          </button>
+        </div>
+      ) : null}
+
+      {cancelReceipt?.immediate ? (
+        <div className="membership-resume-row">
+          <p className="hint">This membership has ended. Start a new one to resubscribe.</p>
+          <Link to="/newsletter#membership-section" className="btn">
+            Join again
+          </Link>
+        </div>
+      ) : null}
+
+      {!cancelNotice && !cancelReceipt && !showResubscribe && cancelEligibility?.alreadyScheduled ? (
         <p className="hint">
           Cancellation is already scheduled
           {scheduledEnd ? ` — access until ${scheduledEnd}` : ''}.
         </p>
       ) : null}
 
-      {!cancelNotice && cancelEligibility?.cancellable !== false && !cancelEligibility?.alreadyScheduled ? (
+      {!cancelNotice &&
+      !resumeNotice &&
+      cancelEligibility?.cancellable !== false &&
+      !cancelEligibility?.alreadyScheduled ? (
         !confirmOpen ? (
           <button type="button" className="btn btn-danger" onClick={() => setConfirmOpen(true)}>
             Cancel my membership
@@ -161,7 +265,7 @@ function CancelMembershipPanel({
         )
       ) : null}
 
-      {scheduledEnd && !cancelNotice ? (
+      {scheduledEnd && !cancelNotice && !resumeNotice ? (
         <p className="hint">Current period ends {scheduledEnd}.</p>
       ) : null}
     </section>
@@ -197,12 +301,19 @@ export function MembershipUnsubscribePage() {
     checking,
     memberEmail,
     membershipStatus,
+    membershipToken,
     cancelEligibility,
     cancelling,
     cancelError,
     cancelNotice,
+    cancelReceipt,
     refundEligibility,
     cancelActiveMembership,
+    resuming,
+    resumeError,
+    resumeNotice,
+    resumeScheduledCancellation,
+    refreshCancelEligibility,
     refreshStatus,
   } = membership;
 
@@ -228,8 +339,14 @@ export function MembershipUnsubscribePage() {
   }
 
   const hasEntitlement = adFree || newsletterUnlocked;
-  const cancelLoaded = cancelEligibility !== null;
-  const canCancel = hasEntitlement && cancelLoaded && cancelEligibility.cancellable;
+  const view = cancelReceipt || resumeNotice
+    ? 'cancel'
+    : resolveCancelPageView({
+        checking,
+        hasEntitlement,
+        hasToken: Boolean(membershipToken),
+        cancelEligibility,
+      });
 
   return (
     <AppShell>
@@ -248,9 +365,9 @@ export function MembershipUnsubscribePage() {
           </p>
         </section>
 
-        {checking ? <p className="hint">Checking membership status…</p> : null}
+        {view === 'checking' ? <p className="hint">Checking membership status…</p> : null}
 
-        {!checking && !hasEntitlement ? (
+        {view === 'restore' ? (
           <NotSignedInPanel
             onVerifyToken={handleVerifyToken}
             verifying={verifying}
@@ -258,23 +375,38 @@ export function MembershipUnsubscribePage() {
           />
         ) : null}
 
-        {!checking && hasEntitlement && !cancelLoaded ? (
-          <p className="hint">Loading cancellation options…</p>
+        {view === 'loading' ? <p className="hint">Loading cancellation options…</p> : null}
+
+        {view === 'error' ? (
+          <section className="taco-panel membership-unsubscribe-panel">
+            <h2 className="taco-title">Could not load cancellation options</h2>
+            <p className="taco-claim-error" role="alert">
+              {cancelEligibility?.error || 'The membership API did not return cancellation details.'}
+            </p>
+            <button type="button" className="btn" onClick={() => refreshCancelEligibility()}>
+              Try again
+            </button>
+          </section>
         ) : null}
 
-        {!checking && hasEntitlement && cancelLoaded && canCancel ? (
+        {view === 'cancel' ? (
           <CancelMembershipPanel
             email={memberEmail}
             cancelEligibility={cancelEligibility}
             cancelNotice={cancelNotice}
+            cancelReceipt={cancelReceipt}
             cancelError={cancelError}
             cancelling={cancelling}
             onConfirmCancel={() => cancelActiveMembership()}
+            resuming={resuming}
+            resumeError={resumeError}
+            resumeNotice={resumeNotice}
+            onResubscribe={() => resumeScheduledCancellation()}
             refundEligibility={refundEligibility}
           />
         ) : null}
 
-        {!checking && hasEntitlement && cancelLoaded && !canCancel ? (
+        {view === 'inactive' ? (
           <InactiveMembershipPanel membershipStatus={membershipStatus} />
         ) : null}
       </main>

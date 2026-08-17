@@ -1,5 +1,7 @@
 import { useRef, useState } from 'react';
 import { MEMBERSHIP_TIER_AMOUNTS } from '../../monetization/config.js';
+import { resolveMembershipCheckout } from '../../monetization/resolveMembershipCheckout.js';
+import { TurnstileWidget } from '../../monetization/TurnstileWidget.jsx';
 
 const MEMBERSHIP_EMAIL_INFO =
   'Enter the email you used at checkout (or want to use). We send a one-time verification link to confirm your active membership, then the email newsletter unlocks on this device. Ad-free browsing will follow once AdSense is enabled.';
@@ -28,11 +30,13 @@ function MembershipEmailInfoButton() {
       </button>
       <dialog ref={dialogRef} className="taco-info-dialog">
         <p className="taco-info-dialog-text">{MEMBERSHIP_EMAIL_INFO}</p>
-        <form method="dialog">
-          <button type="submit" className="btn taco-info-dialog-close">
-            Got it
-          </button>
-        </form>
+        <button
+          type="button"
+          className="btn taco-info-dialog-close"
+          onClick={() => dialogRef.current?.close()}
+        >
+          Got it
+        </button>
       </dialog>
     </>
   );
@@ -45,21 +49,45 @@ export function MembershipPanel({
   claiming,
   claimError,
   claimNotice,
+  claimCaptchaRequired = false,
+  claimCaptchaSiteKey = '',
   compact = false,
 }) {
   const [email, setEmail] = useState('');
+  const [selectedAmount, setSelectedAmount] = useState(MEMBERSHIP_TIER_AMOUNTS[0]);
   const [showClaimForm, setShowClaimForm] = useState(false);
+  const [emailError, setEmailError] = useState('');
+  const [turnstileToken, setTurnstileToken] = useState('');
+  const [turnstileResetKey, setTurnstileResetKey] = useState(0);
+  const claimOpen = showClaimForm || claimCaptchaRequired;
 
-  async function handleTierClick(amount) {
-    if (!onCheckout) return;
-    await onCheckout(amount);
+  async function handleCheckoutSubmit(event) {
+    event.preventDefault();
+    if (!onCheckout || checkingOut) return;
+    const result = resolveMembershipCheckout({
+      email,
+      amount: selectedAmount,
+      allowedAmounts: MEMBERSHIP_TIER_AMOUNTS,
+    });
+    if (!result.ok) {
+      setEmailError(result.error);
+      return;
+    }
+    setEmailError('');
+    await onCheckout(result.amount, result.email);
   }
 
   async function handleClaimSubmit(event) {
     event.preventDefault();
     if (!email.trim() || !onClaim) return;
-    const ok = await onClaim(email.trim());
-    if (ok) setShowClaimForm(false);
+    if (claimCaptchaRequired && claimCaptchaSiteKey && !turnstileToken) {
+      setEmailError('Complete the CAPTCHA to send another restore link.');
+      return;
+    }
+    setEmailError('');
+    await onClaim(email.trim(), { turnstileToken });
+    setTurnstileToken('');
+    setTurnstileResetKey((value) => value + 1);
   }
 
   return (
@@ -77,20 +105,54 @@ export function MembershipPanel({
         </div>
       </div>
 
-      <div className="taco-tiers" role="group" aria-label="Monthly membership tiers">
-        {MEMBERSHIP_TIER_AMOUNTS.map((amount) => (
-          <button
-            key={amount}
-            type="button"
-            className="taco-tier-btn"
-            onClick={() => handleTierClick(amount)}
-            disabled={checkingOut}
-          >
-            <span className="taco-tier-price">${amount}</span>
-            <span className="taco-tier-label">/ mo</span>
+      <form className="taco-checkout-form" onSubmit={handleCheckoutSubmit}>
+        <div className="taco-claim-label-row">
+          <label htmlFor="taco-membership-email">Membership email</label>
+          <MembershipEmailInfoButton />
+        </div>
+        <div className="taco-claim-row">
+          <input
+            id="taco-membership-email"
+            type="email"
+            autoComplete="email"
+            placeholder="you@example.com"
+            value={email}
+            onChange={(event) => {
+              setEmail(event.target.value);
+              if (emailError) setEmailError('');
+            }}
+            required
+          />
+          <button type="submit" className="btn" disabled={checkingOut || !onCheckout}>
+            {checkingOut ? 'Opening…' : 'Continue'}
           </button>
-        ))}
-      </div>
+        </div>
+
+        <div className="taco-tiers" role="radiogroup" aria-label="Monthly membership amount">
+          {MEMBERSHIP_TIER_AMOUNTS.map((amount) => (
+            <button
+              key={amount}
+              type="button"
+              role="radio"
+              aria-checked={selectedAmount === amount}
+              className={`taco-tier-btn${selectedAmount === amount ? ' taco-tier-btn--selected' : ''}`}
+              onClick={() => setSelectedAmount(amount)}
+              disabled={checkingOut}
+            >
+              <span className="taco-tier-price">${amount}</span>
+              <span className="taco-tier-label">/ mo</span>
+            </button>
+          ))}
+        </div>
+
+        <button
+          type="submit"
+          className="btn btn-primary taco-checkout-submit"
+          disabled={checkingOut || !onCheckout}
+        >
+          {checkingOut ? 'Opening checkout…' : `Continue to checkout · $${selectedAmount}/mo`}
+        </button>
+      </form>
 
       <p className="taco-footnote">
         Secure checkout via Stripe.{' '}
@@ -99,33 +161,38 @@ export function MembershipPanel({
         AdSense goes live.
       </p>
 
-      {!showClaimForm ? (
+      {!claimOpen ? (
         <div className="taco-claim-actions">
           <button type="button" className="taco-claim-toggle" onClick={() => setShowClaimForm(true)}>
             Already a member on another device? Restore access
           </button>
-          <MembershipEmailInfoButton />
         </div>
       ) : (
         <form className="taco-claim-form" onSubmit={handleClaimSubmit}>
-          <label htmlFor="taco-claim-email">Membership email</label>
-          <div className="taco-claim-row">
-            <input
-              id="taco-claim-email"
-              type="email"
-              autoComplete="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              required
+          {claimCaptchaRequired && claimCaptchaSiteKey ? (
+            <TurnstileWidget
+              key={turnstileResetKey}
+              siteKey={claimCaptchaSiteKey}
+              onToken={setTurnstileToken}
             />
-            <button type="submit" className="btn" disabled={claiming}>
-              {claiming ? 'Sending…' : 'Email link'}
-            </button>
-          </div>
+          ) : null}
+          <button
+            type="submit"
+            className="btn"
+            disabled={
+              claiming || !email.trim() || (claimCaptchaRequired && Boolean(claimCaptchaSiteKey) && !turnstileToken)
+            }
+          >
+            {claiming ? 'Sending…' : 'Email restore link'}
+          </button>
         </form>
       )}
       {checkingOut ? <p className="hint">Opening secure checkout…</p> : null}
+      {emailError ? (
+        <p className="taco-claim-error" role="alert">
+          {emailError}
+        </p>
+      ) : null}
       {claimError ? <p className="taco-claim-error">{claimError}</p> : null}
       {claimNotice ? <p className="hint">{claimNotice}</p> : null}
     </section>

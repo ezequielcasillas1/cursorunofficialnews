@@ -1,7 +1,47 @@
+### [2026-08-17] - Restore Cloudflare production site live
+**Status:** PENDING USER VERIFY
+**Files:** wrangler.jsonc
+**Result:** SITE_OFFLINE=false; run_worker_first restored to /api, /sitemap.xml, /health. Zone unpaused; apex Worker domain re-attached. Production website live. www left on existing Namecheap CNAME.
+
+### [2026-08-17] - Cancel screen resubscribe
+**Status:** PENDING USER VERIFY
+**Files:** stripe-membership-resume.js, membership-routes.js, MembershipUnsubscribePage.jsx, resolveResumeNotice.js, useMembership.js
+**Result:** Ending cancel screen has Resubscribe. Stripe `cancel_at_period_end=false`. Token + rate limit. Immediate cancel gets Join again.
+
+### [2026-08-17] - Membership cancel notice email + receipt
+**Status:** PENDING USER VERIFY
+**Files:** membership-cancel-notice.js, send-membership-cancel-email.js, stripe-membership-cancel.js, MembershipUnsubscribePage.jsx, resolveCancelReceipt.js
+**Result:** After cancel, Resend sends a confirmation to the membership email with last Stripe invoice links. The cancel screen shows the same receipt. Cancel still succeeds if email fails.
+
+
+**Status:** PENDING USER VERIFY
+**Files:** membership-routes.js, membership-claim-guard.js, MembershipPanel.jsx, useMembership.js, turnstile.js
+**Result:** Restore no longer 429-cuts off. First 10 attempts free; after that Cloudflare Turnstile. Prior magic links stay valid until TTL.
+
+
+**Status:** PENDING USER VERIFY
+**Files:** MembershipPanel.jsx, App.css, resolveMembershipCheckout.js
+**Result:** Checkout is a form: email + Continue, selectable $1–$5 amount, gold Continue to checkout. Enter in the email field submits.
+
+### [2026-08-17] - Production Stripe membership for any email
+**Status:** PENDING USER VERIFY
+**Files:** stripe-checkout.js, stripe-membership-sync.js, membership-entitlement.js, membership-routes.js, MembershipPanel.jsx, useMembership.js
+**Result:** Paid membership follows Stripe for every address. Owner whitelist no longer mints an active sub. Checkout requires email, reuses customers, and 409s duplicate active subs.
+
+
+**Status:** PENDING USER VERIFY
+**Files:** web/src/monetization/{useMembership.js,resolveCancelPageView.js}, web/src/pages/MembershipUnsubscribePage.jsx, web/worker/src/monetization/{stripe-membership-sync.js,stripe-membership-cancel.js}
+**Result:** Local DEV_ACTIVE skipped cancel eligibility so the page never left "Loading cancellation options…". Now fetches eligibility when a token exists, shows restore/error instead of spinning, and reconciles D1-only members with Stripe before cancel.
+
+
+**Status:** PENDING USER VERIFY
+**Files:** wrangler.jsonc, web/worker/index.js, web/worker/src/ops/site-offline.js, web/worker/src/app.js, web/worker/src/monetization/{membership-offline.js,membership-routes.js,stripe-webhook.js,stripe-checkout.js}, web/worker/src/routes/core-routes.js
+**Result:** SITE_OFFLINE=true + run_worker_first so HTML and /api return 503. /health stays { ok, offline }. Membership checkout/webhook/claim hard-disabled. Dev ENVIRONMENT skips the gate. Deployed Worker version d6e58c38. Detached apex custom domain (re-attachable). Zone left paused. No D1/secret/Worker delete.
+
 ### [2026-08-15] - Localhost catalog: Grok/xAI/SpaceX + categories
 **Status:** PENDING USER VERIFY
-**Files:** web/vite.config.js, web/src/config/siteNav.js, web/src/components/{Header,CategoryFilter}.jsx, web/worker/src/sources/registry.js, classify/{url-rules.js,url-rules.test.js,content-signals.js}
-**Result:** Vite /api proxy now defaults to local wrangler (:8787), not production. Dev.to/Medium Grok+xAI locked to spacexai (Updates). Header shows all feed sections. Local D1 still needs ingest for items.
+**Files:** web/vite.config.js, web/src/config/siteNav.js, web/src/components/{Header,CategoryFilter}.jsx, web/worker/src/{sources/registry.js,ingest/scrape.js,classify/url-rules.js,classify/url-rules.test.js,classify/content-signals.js}, docs/SOURCE-STRATEGY.md
+**Result:** Vite /api now proxies to local :8787. Ingest ran (1373 items, 409 spacexai). Dev.to/Medium Grok+xAI locked to Updates. SpaceX YouTube ID corrected (was CGP Grey). Header lists all feed sections.
 
 ### [2026-08-15] - Grok / xAI / SpaceX Updates coverage
 **Status:** PENDING USER VERIFY

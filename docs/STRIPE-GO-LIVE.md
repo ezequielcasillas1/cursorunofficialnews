@@ -14,6 +14,9 @@ Web (cursorunofficial.news)
   → GET  /api/v1/membership/status           (poll entitlement)
   → GET  /api/v1/membership/refund/eligibility (refund eligibility — $4+/mo)
   → POST /api/v1/membership/refund           (request full refund + cancel)
+  → GET  /api/v1/membership/cancel/eligibility
+  → POST /api/v1/membership/cancel           (cancel at period end + email notice)
+  → POST /api/v1/membership/resume           (undo scheduled cancel / resubscribe)
 ```
 
 ---
@@ -163,7 +166,7 @@ Copy the signing secret (`whsec_...`) immediately — it is shown once at creati
 |---|---|
 | **Real charges** | Live Checkout charges real cards. No test card `4242…` — use a real card you control or cancel immediately in Stripe Dashboard. |
 | **Separate D1** | Local `wrangler dev` uses a **local** D1 SQLite — live memberships activated locally do not appear in production D1 until you deploy and checkout on prod. |
-| **Dev bypasses still active** | `ENVIRONMENT=development` enables `MEMBERSHIP_DEV_EMAILS` instant claim (no Stripe) and exposes `GET /v1/membership/members`. Web frontend: `VITE_MEMBERSHIP_DEV_ACTIVE=true` in `web/.env` skips all Stripe UI-side. Unset these before live checkout testing. |
+| **Dev bypasses still active** | `ENVIRONMENT=development` enables `MEMBERSHIP_DEV_EMAILS` instant claim (no Stripe). Unset that list before live checkout testing. Production paid membership is Stripe for every email. |
 | **Webhook mismatch** | Live `whsec_...` from Dashboard ≠ `stripe listen` test secret. Wrong secret → webhook returns `401`. |
 | **Mixed keys** | `sk_live_...` + test `price_...` IDs (or vice versa) → Stripe API errors at checkout. Keys and price IDs must all be from the same mode. |
 

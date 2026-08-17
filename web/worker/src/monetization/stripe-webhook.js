@@ -10,6 +10,7 @@ import {
 } from '../store/membership-refunds.js';
 import { isValidEmail, normalizeEmail } from '../store/email-subscribers.js';
 import { getStripeClient, getStripeCryptoProvider } from './stripe-client.js';
+import { isMembershipBillingOffline, membershipBillingOfflineJson } from './membership-offline.js';
 
 const ACTIVE_SUBSCRIPTION_STATUSES = new Set(['active', 'trialing']);
 const ENDED_SUBSCRIPTION_STATUSES = new Set(['canceled', 'unpaid', 'incomplete_expired']);
@@ -193,6 +194,7 @@ async function handleRefundUpdated(c, event) {
 /** Hono handler — expects the raw request body (registered before JSON body parsing). */
 export async function handleStripeWebhook(c) {
   const env = c.env;
+  if (isMembershipBillingOffline(env)) return membershipBillingOfflineJson(c);
   const webhookSecret = env.STRIPE_WEBHOOK_SECRET?.trim();
   if (!webhookSecret || !env.STRIPE_SECRET_KEY?.trim()) {
     return c.json({ error: 'Stripe webhook is not configured' }, 503);

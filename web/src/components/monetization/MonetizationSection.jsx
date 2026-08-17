@@ -61,6 +61,8 @@ export function MonetizationSection({ membership }) {
         claiming={claiming}
         claimError={claimError}
         claimNotice={claimNotice}
+        claimCaptchaRequired={membership.claimCaptchaRequired}
+        claimCaptchaSiteKey={membership.claimCaptchaSiteKey}
       />
       <AdSenseSlot className="monetization-ad" />
     </section>

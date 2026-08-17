@@ -6,7 +6,6 @@ import {
 import { resolveActiveMemberForClaim } from './stripe-membership-sync.js';
 import {
   getEntitlementByToken,
-  isDevMemberEmail,
   resolveMembershipClaim,
 } from '../lib/membership-entitlement.js';
 import { isValidEmail, normalizeEmail } from '../store/email-subscribers.js';
@@ -28,13 +27,17 @@ import {
   getMembershipCancelEligibility,
   processMembershipCancel,
 } from './stripe-membership-cancel.js';
-import { checkRateLimit, clientRateKey } from '../security/rate-limit.js';
+import { processMembershipResume } from './stripe-membership-resume.js';
+import { checkRateLimit, clientIp, clientRateKey } from '../security/rate-limit.js';
+import { recordAttempt } from '../security/attempt-counter.js';
 import { publicErrorMessage } from '../security/public-error.js';
+import { isMembershipBillingOffline, membershipBillingOfflineJson } from './membership-offline.js';
+import { resolveMembershipClaimGuard } from './membership-claim-guard.js';
 
-const CLAIM_RATE_MS = 30_000;
 const CHECKOUT_RATE_MS = 30_000;
 const REFUND_RATE_MS = 60_000;
 const CANCEL_RATE_MS = 60_000;
+const RESUME_RATE_MS = 60_000;
 
 const CLAIM_PENDING_MESSAGE =
   'If that email has an active membership, we sent a verification link.';
@@ -42,19 +45,33 @@ const CLAIM_PENDING_MESSAGE =
 export function registerMembershipRoutes(app) {
   app.post('/v1/membership/checkout', async (c) => {
     c.header('Cache-Control', 'no-store');
+    if (isMembershipBillingOffline(c.env)) return membershipBillingOfflineJson(c);
     if (!checkRateLimit(clientRateKey(c, 'membership-checkout'), CHECKOUT_RATE_MS)) {
       return c.json({ error: 'Too many requests — try again shortly' }, 429);
     }
     try {
       const body = await c.req.json().catch(() => ({}));
       const email = body?.email ? normalizeEmail(body.email) : '';
-      if (email && !isValidEmail(email)) {
+      if (!isValidEmail(email)) {
         return c.json({ error: 'Enter a valid email address' }, 400);
       }
 
       const { url } = await createMembershipCheckoutSession(c.env, { amount: body?.amount, email });
       return c.json({ ok: true, url });
     } catch (err) {
+      if (err.code === 'ALREADY_SUBSCRIBED') {
+        return c.json(
+          {
+            error: publicErrorMessage(
+              err,
+              'This email already has an active membership. Restore access on this device instead.',
+              c.env,
+            ),
+            code: 'ALREADY_SUBSCRIBED',
+          },
+          409,
+        );
+      }
       return c.json({ error: publicErrorMessage(err, 'Could not start checkout', c.env) }, 400);
     }
   });
@@ -63,6 +80,7 @@ export function registerMembershipRoutes(app) {
   // the success_url — this is the synchronous path; the webhook is the durable one.
   app.get('/v1/membership/checkout/confirm', async (c) => {
     c.header('Cache-Control', 'no-store');
+    if (isMembershipBillingOffline(c.env)) return membershipBillingOfflineJson(c);
     const db = c.env.DB;
     const sessionId = String(c.req.query('session_id') || '').trim();
     if (!sessionId) {
@@ -110,6 +128,7 @@ export function registerMembershipRoutes(app) {
   // "Restore membership on this device" — magic-link flow for users who lost their token.
   app.post('/v1/membership/claim', async (c) => {
     c.header('Cache-Control', 'no-store');
+    if (isMembershipBillingOffline(c.env)) return membershipBillingOfflineJson(c);
     const db = c.env.DB;
     try {
       const body = await c.req.json().catch(() => ({}));
@@ -118,33 +137,37 @@ export function registerMembershipRoutes(app) {
         return c.json({ error: 'A valid email address is required' }, 400);
       }
 
-      if (c.env.ENVIRONMENT !== 'production' && isDevMemberEmail(email, c.env)) {
-        const devRecord = await activateMember(db, { email });
+      const localDevClaim = await resolveMembershipClaim(db, email, c.env);
+      if (localDevClaim?.membershipToken) {
         return c.json({
           ok: true,
-          adFree: true,
-          newsletterUnlocked: true,
-          email: devRecord.email,
-          token: devRecord.membershipToken,
-          activationUrl: buildMembershipActivationUrl(devRecord.membershipToken, c.env),
+          adFree: localDevClaim.adFree,
+          newsletterUnlocked: localDevClaim.newsletterUnlocked,
+          email: localDevClaim.email,
+          token: localDevClaim.membershipToken,
+          activationUrl: buildMembershipActivationUrl(localDevClaim.membershipToken, c.env),
         });
       }
 
-      const freeClaim = await resolveMembershipClaim(db, email, c.env);
-      if (freeClaim?.newsletterUnlocked) {
-        return c.json({
-          ok: true,
-          adFree: freeClaim.adFree,
-          newsletterUnlocked: freeClaim.newsletterUnlocked,
-          email: freeClaim.email,
-          token: freeClaim.membershipToken,
-          activationUrl: buildMembershipActivationUrl(freeClaim.membershipToken, c.env),
-        });
+      const attemptKey = clientRateKey(c, `membership-claim:${email}`);
+      const guard = await resolveMembershipClaimGuard({
+        attemptKey,
+        turnstileToken: body?.turnstileToken || body?.cfTurnstileResponse,
+        ip: clientIp(c),
+        env: c.env,
+      });
+      if (!guard.ok) {
+        return c.json(
+          {
+            error: guard.error,
+            code: guard.code,
+            captchaRequired: true,
+            siteKey: guard.siteKey,
+          },
+          403,
+        );
       }
-
-      if (!checkRateLimit(clientRateKey(c, `membership-claim:${email}`), CLAIM_RATE_MS)) {
-        return c.json({ error: 'Too many requests — try again shortly' }, 429);
-      }
+      recordAttempt(attemptKey);
 
       if (!isMembershipClaimEmailConfigured(c.env)) {
         return c.json(
@@ -171,6 +194,7 @@ export function registerMembershipRoutes(app) {
 
   app.post('/v1/membership/claim/verify', async (c) => {
     c.header('Cache-Control', 'no-store');
+    if (isMembershipBillingOffline(c.env)) return membershipBillingOfflineJson(c);
     const db = c.env.DB;
     const body = await c.req.json().catch(() => ({}));
     const claimToken = String(body?.token || '').trim();
@@ -308,6 +332,38 @@ export function registerMembershipRoutes(app) {
       }
       console.error('[membership/cancel]', err.message || err);
       return c.json({ error: publicErrorMessage(err, 'Could not cancel membership', c.env) }, 502);
+    }
+  });
+
+  app.post('/v1/membership/resume', async (c) => {
+    c.header('Cache-Control', 'no-store');
+    if (!checkRateLimit(clientRateKey(c, 'membership-resume'), RESUME_RATE_MS)) {
+      return c.json({ error: 'Too many requests — try again shortly' }, 429);
+    }
+
+    const db = c.env.DB;
+    const body = await c.req.json().catch(() => ({}));
+    const membershipToken = String(body?.membershipToken || body?.token || '').trim();
+    if (!membershipToken) {
+      return c.json({ error: 'membershipToken is required' }, 400);
+    }
+
+    try {
+      const result = await processMembershipResume(c.env, db, { membershipToken });
+      return c.json(result);
+    } catch (err) {
+      const code = err.code || '';
+      if (code === 'NOT_RESUMABLE') {
+        return c.json({ error: publicErrorMessage(err, 'Resubscribe is not available', c.env) }, 403);
+      }
+      if (code === 'ENDED') {
+        return c.json(
+          { error: publicErrorMessage(err, 'This membership has already ended', c.env), code: 'ENDED' },
+          409,
+        );
+      }
+      console.error('[membership/resume]', err.message || err);
+      return c.json({ error: publicErrorMessage(err, 'Could not resume membership', c.env) }, 502);
     }
   });
 
