@@ -16,11 +16,9 @@ import {
   verifyNewsletterSubscription,
 } from './services/newsletterApi.js';
 
-export const MEMBERSHIP_REQUIRED_MESSAGE =
-  'An active membership is required to unlock the email newsletter.';
-
 function syncablePrefs(prefs) {
   return {
+    email: String(prefs.email || '').trim().toLowerCase(),
     categories: Array.isArray(prefs.categories) ? prefs.categories : [],
     categoryLimits: prefs.categoryLimits || {},
     officialOnly: Boolean(prefs.officialOnly),
@@ -45,23 +43,13 @@ function mergeSubscriber(basePrefs, subscriber, manageToken) {
         ? subscriber.officialOnly
         : basePrefs.officialOnly,
     enabled:
-      typeof subscriber?.enabled === 'boolean'
-        ? subscriber.enabled
-        : basePrefs.enabled,
+      typeof subscriber?.enabled === 'boolean' ? subscriber.enabled : basePrefs.enabled,
     manageToken: manageToken ?? basePrefs.manageToken,
     pendingVerification: Boolean(subscriber?.pending),
   });
 }
 
-/**
- * @param {{ newsletterUnlocked?: boolean, memberEmail?: string, membershipToken?: string }} membership
- *   Entitlement from `useMembership()` — the newsletter is membership-gated (see
- *   `web/worker/src/notifications/email-routes.js`), so every subscribe/resubscribe
- *   call must carry `membershipToken`; the server re-derives the email server-side.
- */
-export function useNewsletter(membership = {}) {
-  const { newsletterUnlocked = false, memberEmail = '', membershipToken = '' } = membership;
-
+export function useNewsletter() {
   const [prefs, setPrefs] = useState({ ...DEFAULT_NEWSLETTER_PREFS });
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
@@ -75,51 +63,40 @@ export function useNewsletter(membership = {}) {
     return normalized;
   }, []);
 
-  // Newsletter email always mirrors the verified membership email — the server
-  // ignores any other value, so keep the display in sync once membership loads.
-  useEffect(() => {
-    if (newsletterUnlocked && memberEmail && prefs.email !== memberEmail) {
-      persistPrefs({ ...prefs, email: memberEmail });
+  const syncToServer = useCallback(async (nextPrefs) => {
+    const clean = syncablePrefs(nextPrefs);
+    if (!clean.email) {
+      throw new Error('Enter your email address to subscribe.');
     }
-  }, [newsletterUnlocked, memberEmail, prefs, persistPrefs]);
+    if (clean.enabled && clean.categories.length === 0) {
+      throw new Error('Select at least one topic for the email digest.');
+    }
 
-  const syncToServer = useCallback(
-    async (nextPrefs) => {
-      if (!newsletterUnlocked) {
-        throw new Error(MEMBERSHIP_REQUIRED_MESSAGE);
-      }
+    const response = await subscribeNewsletter({
+      email: clean.email,
+      categories: clean.enabled ? clean.categories : [],
+      categoryLimits: clean.enabled ? clean.categoryLimits : {},
+      officialOnly: clean.officialOnly,
+      enabled: clean.enabled,
+      resendVerification: clean.pendingVerification,
+    });
 
-      const clean = syncablePrefs(nextPrefs);
-      if (clean.enabled && clean.categories.length === 0) {
-        throw new Error('Select at least one topic for the email digest.');
-      }
-
-      const response = await subscribeNewsletter({
-        categories: clean.enabled ? clean.categories : [],
-        categoryLimits: clean.enabled ? clean.categoryLimits : {},
-        officialOnly: clean.officialOnly,
-        enabled: clean.enabled,
-        resendVerification: clean.pendingVerification,
-        membershipToken,
+    if (response?.pending) {
+      return normalizeNewsletterPrefs({
+        ...nextPrefs,
+        email: clean.email,
+        enabled: false,
+        pendingVerification: true,
+        manageToken: '',
       });
+    }
 
-      if (response?.pending) {
-        return normalizeNewsletterPrefs({
-          ...nextPrefs,
-          enabled: false,
-          pendingVerification: true,
-          manageToken: '',
-        });
-      }
-
-      return mergeSubscriber(
-        nextPrefs,
-        response?.subscriber,
-        response?.subscriber?.manageToken || clean.manageToken,
-      );
-    },
-    [newsletterUnlocked, membershipToken],
-  );
+    return mergeSubscriber(
+      nextPrefs,
+      response?.subscriber,
+      response?.subscriber?.manageToken || clean.manageToken,
+    );
+  }, []);
 
   const verifyFromUrlToken = useCallback(
     async (verifyToken, basePrefs) => {
@@ -276,6 +253,17 @@ export function useNewsletter(membership = {}) {
     [persistPrefs, syncToServer],
   );
 
+  const setEmail = useCallback(
+    (email) => {
+      const next = normalizeNewsletterPrefs({ ...prefs, email: String(email || '').trim() });
+      persistPrefs(next);
+      setErrorMessage('');
+      setStatusMessage('');
+      return next;
+    },
+    [persistPrefs, prefs],
+  );
+
   const toggleCategory = useCallback(
     (categoryId) => {
       const set = new Set(prefs.categories);
@@ -335,9 +323,9 @@ export function useNewsletter(membership = {}) {
   const setEnabled = useCallback(
     async (enabled) => {
       const next = { ...prefs, enabled };
-      return runSync(next, { syncServer: newsletterUnlocked });
+      return runSync(next, { syncServer: true });
     },
-    [prefs, runSync, newsletterUnlocked],
+    [prefs, runSync],
   );
 
   const subscribe = useCallback(async () => {
@@ -355,6 +343,7 @@ export function useNewsletter(membership = {}) {
     syncing,
     statusMessage,
     errorMessage,
+    setEmail,
     toggleCategory,
     setCategoryLimit,
     setOfficialOnly,

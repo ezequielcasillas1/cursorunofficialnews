@@ -42,13 +42,6 @@ export function buildResubscribeClientScript(token) {
     submitBtn.disabled = true;
     submitBtn.textContent = 'Resubscribing…';
 
-    var membershipToken = '';
-    try {
-      membershipToken = localStorage.getItem('cain_membership_token') || '';
-    } catch (e) {
-      membershipToken = '';
-    }
-
     fetch('/api/v1/email/resubscribe', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
@@ -56,7 +49,6 @@ export function buildResubscribeClientScript(token) {
         token: token,
         categories: categories,
         categoryLimits: categoryLimits,
-        membershipToken: membershipToken,
       }),
     })
       .then(function (response) {

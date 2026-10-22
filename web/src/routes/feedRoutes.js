@@ -1,10 +1,14 @@
+import { normalizePublicPath } from '../../../mobile/shared/seo/publicPaths.js';
 import { FEED_CATEGORIES } from '../config/feedCategories.js';
 
-export const SITE_ORIGIN = 'https://cursorunofficial.news';
+export { SITE_ORIGIN } from '../../../mobile/shared/seo/publicPaths.js';
 
 /** Map category id → URL path */
 export const CATEGORY_PATHS = Object.fromEntries(
-  FEED_CATEGORIES.map((cat) => [cat.id, cat.id === 'all' ? '/' : `/${cat.id}`]),
+  FEED_CATEGORIES.map((cat) => [
+    cat.id,
+    cat.id === 'all' ? '/' : normalizePublicPath(`/${cat.id}`),
+  ]),
 );
 
 export function getPathForCategory(categoryId) {
@@ -26,13 +30,12 @@ export const FEED_SECTION_ROUTES = FEED_CATEGORIES.filter((cat) => cat.id !== 'a
 }));
 
 export const STATIC_PAGE_ROUTES = [
-  { path: '/newsletter', id: 'newsletter', label: 'Newsletter' },
-  { path: '/newsletter/unsubscribe', id: 'newsletterUnsubscribe', label: 'Unsubscribe' },
-  { path: '/membership/unsubscribe', id: 'membershipUnsubscribe', label: 'Cancel membership' },
-  { path: '/games', id: 'games', label: 'Games' },
-  { path: '/about', id: 'about', label: 'About' },
-  { path: '/editorial-policy', id: 'editorialPolicy', label: 'Editorial Policy' },
-  { path: '/sources', id: 'sources', label: 'Sources' },
-  { path: '/privacy', id: 'privacy', label: 'Privacy' },
-  { path: '/terms', id: 'terms', label: 'Terms' },
+  { path: '/newsletter/', id: 'newsletter', label: 'Newsletter' },
+  { path: '/newsletter/unsubscribe/', id: 'newsletterUnsubscribe', label: 'Unsubscribe' },
+  { path: '/games/', id: 'games', label: 'Games' },
+  { path: '/about/', id: 'about', label: 'About' },
+  { path: '/editorial-policy/', id: 'editorialPolicy', label: 'Editorial Policy' },
+  { path: '/sources/', id: 'sources', label: 'Sources' },
+  { path: '/privacy/', id: 'privacy', label: 'Privacy' },
+  { path: '/terms/', id: 'terms', label: 'Terms' },
 ];

@@ -1,14 +1,12 @@
 import { useEffect } from 'react';
-import { MonetizationSection } from '../components/monetization/MonetizationSection.jsx';
+import { SupportPanel } from '../components/support/SupportPanel.jsx';
 import { NewsletterSettings } from '../components/newsletter/NewsletterSettings.jsx';
 import { PageMeta } from '../components/PageMeta.jsx';
-import { useMembership } from '../monetization/useMembership.js';
 import { AppShell } from '../layout/AppShell.jsx';
 import { getStaticPageMeta } from '../seo/pageMeta.js';
 
 export function NewsletterPage() {
   const pageMeta = getStaticPageMeta('newsletter');
-  const membership = useMembership();
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
@@ -27,13 +25,13 @@ export function NewsletterPage() {
           <h1>Email newsletter</h1>
           <p>
             Get a curated digest of Cursor changelog entries, releases, and community highlights.
-            The email newsletter is a membership benefit — join below to subscribe.{' '}
-            <a href="/newsletter/unsubscribe">Unsubscribe</a> anytime. By subscribing you agree to
-            our <a href="/terms">Terms</a> and <a href="/privacy">Privacy Policy</a>.
+            Subscribe below with your email — free, with double opt-in confirmation.{' '}
+            <a href="/newsletter/unsubscribe/">Unsubscribe</a> anytime. By subscribing you agree to
+            our <a href="/terms/">Terms</a> and <a href="/privacy/">Privacy Policy</a>.
           </p>
         </section>
-        <MonetizationSection membership={membership} />
-        <NewsletterSettings membership={membership} />
+        <SupportPanel />
+        <NewsletterSettings />
       </main>
     </AppShell>
   );

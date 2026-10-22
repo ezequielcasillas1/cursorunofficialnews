@@ -1,4 +1,4 @@
-import { AdSenseSlot } from './monetization/AdSenseSlot.jsx';
+import { AdSenseSlot } from './ads/AdSenseSlot.jsx';
 
 /** In-feed ad slot — shares AdSenseSlot loader and env (VITE_ADSENSE_*). */
 export function AdSlot() {

@@ -14,7 +14,6 @@ import {
   unsubscribeByToken,
   verifySubscriberByToken,
 } from '../store/email-subscribers.js';
-import { resolveNewsletterEntitlement } from '../lib/membership-entitlement.js';
 import { buildUnsubscribeHtmlPage } from './unsubscribe/unsubscribe-html-page.js';
 import { renderPageShell, renderMessageParagraph } from './unsubscribe/components/page-shell.js';
 import { sendWelcomeDigest } from '../jobs/send-welcome-digest.js';
@@ -36,18 +35,6 @@ const VERIFY_PENDING_MESSAGE =
 
 const VERIFY_RESEND_RATE_MESSAGE =
   'We recently sent a confirmation link to that address. Check your inbox and spam folder, or try again in a minute.';
-
-const MEMBERSHIP_REQUIRED_MESSAGE =
-  'An active membership is required to unlock the email newsletter.';
-
-/**
- * Newsletter is membership-gated: the client sends `membershipToken`, we
- * re-derive the verified member email server-side (never trust a
- * client-submitted email) and require an active entitlement.
- */
-async function requireNewsletterEntitlement(db, membershipToken, env) {
-  return resolveNewsletterEntitlement(db, membershipToken, env);
-}
 
 // Module-level cache is fine here — it's just a soft rate-limit hint, not
 // correctness-critical, and resets whenever the isolate recycles.
@@ -154,14 +141,12 @@ export function registerEmailRoutes(app) {
     }
     try {
       const body = await c.req.json().catch(() => ({}));
-      const { categories, categoryLimits, officialOnly, enabled, resendVerification, membershipToken } = body || {};
+      const { email, categories, categoryLimits, officialOnly, enabled, resendVerification } = body || {};
 
-      const entitlement = await requireNewsletterEntitlement(db, membershipToken, c.env);
-      if (!entitlement) {
-        return c.json({ error: MEMBERSHIP_REQUIRED_MESSAGE }, 402);
+      const normalizedEmail = normalizeEmail(email);
+      if (!isValidEmail(normalizedEmail)) {
+        return c.json({ error: 'A valid email address is required.' }, 400);
       }
-      // Membership email is the verified source of truth — never trust a client-submitted email here.
-      const normalizedEmail = entitlement.email;
 
       const isEnabled = enabled !== false;
       const existing = await getSubscriber(db, normalizedEmail);
@@ -416,12 +401,7 @@ export function registerEmailRoutes(app) {
         return c.json({ error: 'This unsubscribe link is invalid or has already been used.' }, 410);
       }
 
-      const { categories, categoryLimits, officialOnly, resendVerification, membershipToken } = body || {};
-
-      const entitlement = await requireNewsletterEntitlement(db, membershipToken, c.env);
-      if (!entitlement || entitlement.email !== existing.email) {
-        return c.json({ error: MEMBERSHIP_REQUIRED_MESSAGE }, 402);
-      }
+      const { categories, categoryLimits, officialOnly, resendVerification } = body || {};
 
       const wantsResend = Boolean(resendVerification);
       const needsVerificationFlow =

@@ -4,10 +4,8 @@ import { resolveCorsOrigin } from './security/cors-options.js';
 import { registerCoreRoutes } from './routes/core-routes.js';
 import { registerEmailRoutes } from './notifications/email-routes.js';
 import { registerNewsletterRoutes } from './notifications/newsletter-routes.js';
-import { registerMembershipRoutes } from './monetization/membership-routes.js';
 import { registerLlmRoutes } from './llm/llm-routes.js';
-import { handleStripeWebhook } from './monetization/stripe-webhook.js';
-import { registerAdminRoutes } from './admin/admin-routes.js';
+import { registerPublicStatsRoutes } from './routes/public-stats-routes.js';
 import { isHealthPath, isSiteOffline, OFFLINE_MESSAGE } from './ops/site-offline.js';
 
 /**
@@ -18,7 +16,7 @@ import { isHealthPath, isSiteOffline, OFFLINE_MESSAGE } from './ops/site-offline
 export function createApp() {
   const app = new Hono().basePath('/api');
 
-    app.use('*', async (c, next) => {
+  app.use('*', async (c, next) => {
     c.header('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
     c.header('Referrer-Policy', 'strict-origin-when-cross-origin');
     c.header('X-Content-Type-Options', 'nosniff');
@@ -49,15 +47,11 @@ export function createApp() {
     }),
   );
 
-  // Raw-body webhook — register before any JSON body parsing assumptions.
-  app.post('/v1/stripe/webhook', handleStripeWebhook);
-
   registerCoreRoutes(app);
-  registerMembershipRoutes(app);
   registerEmailRoutes(app);
   registerNewsletterRoutes(app);
   registerLlmRoutes(app);
-  registerAdminRoutes(app);
+  registerPublicStatsRoutes(app);
 
   return app;
 }

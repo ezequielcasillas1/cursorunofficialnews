@@ -1,8 +1,11 @@
 import { createApp } from './src/app.js';
 import { bootstrapIngestIfEmpty, runIngestWithLock } from './src/ingest/run-ingest.js';
 import { runScheduledDigest } from './src/jobs/run-scheduled-digest.js';
+import { runVisitorAnalyticsSnapshot } from './src/jobs/snapshot-visitor-analytics.js';
 import { healthPayload, isHealthPath, isSiteOffline, offlineResponse } from './src/ops/site-offline.js';
+import { getNewsItem } from './src/store/news-store.js';
 import { sitemapResponse } from './src/seo/sitemap.js';
+import { isKnownSpaPath, parseItemIdFromPath } from './src/seo/spa-routing.js';
 
 /** @param {string} pathname */
 function resolveExplicitAssetContentType(pathname) {
@@ -24,14 +27,34 @@ function resolveExplicitAssetContentType(pathname) {
   return null;
 }
 
+async function notFoundResponse(env) {
+  const response = await env.ASSETS.fetch(new Request(new URL('/404.html', 'https://cursorunofficial.news')));
+  const headers = new Headers(response.headers);
+  headers.set('Cache-Control', 'no-store');
+  return new Response(response.body, { status: 404, headers });
+}
+
+async function resolveSpaAsset(request, env, db) {
+  const url = new URL(request.url);
+  const itemId = parseItemIdFromPath(url.pathname);
+  if (itemId) {
+    const item = await getNewsItem(db, itemId);
+    if (!item) {
+      return notFoundResponse(env);
+    }
+  } else if (!isKnownSpaPath(url.pathname)) {
+    return notFoundResponse(env);
+  }
+
+  return env.ASSETS.fetch(request);
+}
+
 const apiApp = createApp();
 
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
-    // Unprefixed convenience alias for uptime monitors / Cloudflare health
-    // checks (the full API also answers at /api/health).
     if (isHealthPath(url.pathname)) {
       return Response.json(healthPayload(env));
     }
@@ -42,20 +65,14 @@ export default {
 
     if (url.pathname === '/api' || url.pathname.startsWith('/api/')) {
       const response = await apiApp.fetch(request, env, ctx);
-      // Best-effort cache seed on a cold D1 database — cheap no-op (a single
-      // COUNT query) once news_items has rows. There is no server "boot"
-      // event in Workers, so this replaces the old bootstrapIngestIfEmpty()
-      // call in the Express app.listen() callback.
       ctx.waitUntil(bootstrapIngestIfEmpty(env.DB, env).catch(() => {}));
       return response;
     }
 
-    // Dynamic sitemap (section pages + recent /item/:id URLs from D1).
     if (url.pathname === '/sitemap.xml') {
       return sitemapResponse(env.DB, env);
     }
 
-    // Static files that must never hit SPA fallback — explicit Content-Type.
     const explicitContentType = resolveExplicitAssetContentType(url.pathname);
     if (explicitContentType) {
       const assetResponse = await env.ASSETS.fetch(request);
@@ -68,11 +85,14 @@ export default {
         });
       }
     }
+    if (url.pathname.startsWith("/assets/")) {
+      return env.ASSETS.fetch(request);
+    }
 
-    return env.ASSETS.fetch(request);
+
+    return resolveSpaAsset(request, env, env.DB);
   },
 
-  /** Cron Trigger — ingest every 30 min; digest batch at 1pm CT (hourly cron, slot-gated). */
   async scheduled(controller, env, ctx) {
     if (isSiteOffline(env)) {
       console.log(JSON.stringify({ event: 'cron_skipped', reason: 'site_offline', cron: controller.cron }));
@@ -80,6 +100,19 @@ export default {
     }
 
     const cron = controller.cron;
+
+    if (cron === '15 6 * * *') {
+      ctx.waitUntil(
+        runVisitorAnalyticsSnapshot(env.DB, env)
+          .then((result) => {
+            console.log(JSON.stringify({ event: 'visitor_analytics_snapshot', cron, ...result }));
+          })
+          .catch((err) => {
+            console.error('[cron] visitor_analytics_snapshot', err.message || err);
+          }),
+      );
+      return;
+    }
 
     if (cron === '*/30 * * * *') {
       ctx.waitUntil(

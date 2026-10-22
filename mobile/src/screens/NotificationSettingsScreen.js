@@ -34,11 +34,10 @@ import {
   isValidEmailFormat,
   toggleEmailCategory,
   setEmailCategoryLimit,
-  loadMembershipToken,
-  saveMembershipToken,
 } from '../services/emailNewsletter';
 
-import { getMobileMembershipUrl } from '../monetization/config';
+import { API_BASE } from '../config/constants';
+import { BUY_ME_A_COFFEE_URL, getNewsletterWebUrl } from '../config/support';
 
 import {
   loadNotificationPrefs,
@@ -62,30 +61,23 @@ export function NotificationSettingsScreen({ onBack, previewItem }) {
   const [emailError, setEmailError] = useState('');
   const [syncing, setSyncing] = useState(false);
   const [emailSyncing, setEmailSyncing] = useState(false);
-  const [membershipToken, setMembershipToken] = useState('');
-  const [membershipTokenDraft, setMembershipTokenDraft] = useState('');
+
+  const publicWebBase = API_BASE.replace(/\/api$/i, '');
+  const newsletterWebUrl = getNewsletterWebUrl(publicWebBase);
 
   useEffect(() => {
-    Promise.all([loadNotificationPrefs(), loadEmailPrefs(), loadMembershipToken()]).then(
-      ([push, email, token]) => {
-        setPrefs(push);
-        setEmailPrefs(email);
-        setMembershipToken(token);
-        setMembershipTokenDraft(token);
-      },
-    );
+    Promise.all([loadNotificationPrefs(), loadEmailPrefs()]).then(([push, email]) => {
+      setPrefs(push);
+      setEmailPrefs(email);
+    });
   }, []);
 
-  function handleOpenMembershipPage() {
-    Linking.openURL(getMobileMembershipUrl()).catch(() => {});
+  function handleOpenNewsletterWeb() {
+    Linking.openURL(newsletterWebUrl).catch(() => {});
   }
 
-  async function handleSaveMembershipToken() {
-    const trimmed = membershipTokenDraft.trim();
-    await saveMembershipToken(trimmed);
-    setMembershipToken(trimmed);
-    setEmailStatus(trimmed ? 'Membership token saved on this device.' : 'Membership token cleared.');
-    setEmailError('');
+  function handleOpenBuyMeACoffee() {
+    Linking.openURL(BUY_ME_A_COFFEE_URL).catch(() => {});
   }
 
   async function persist(nextPrefs) {
@@ -142,11 +134,6 @@ export function NotificationSettingsScreen({ onBack, previewItem }) {
   }
 
   async function syncEmailToServer(prefs) {
-    if (!membershipToken) {
-      throw new Error(
-        'An active membership is required to unlock the email newsletter. Join on the website, then paste your membership token below.',
-      );
-    }
     if (!isValidEmailFormat(prefs.email)) {
       throw new Error('Enter a valid email address.');
     }
@@ -155,12 +142,12 @@ export function NotificationSettingsScreen({ onBack, previewItem }) {
       throw new Error('Select at least one topic for email digest.');
     }
     const response = await subscribeEmail({
+      email: prefs.email,
       categories,
       categoryLimits: prefs.enabled ? prefs.categoryLimits : {},
       officialOnly: prefs.officialOnly,
       enabled: prefs.enabled,
       resendVerification: prefs.pendingVerification,
-      membershipToken,
     });
     if (response?.pending) {
       return {
@@ -375,33 +362,17 @@ export function NotificationSettingsScreen({ onBack, previewItem }) {
         One digest per update cycle — not one email per item.
       </Text>
 
-      <View style={styles.membershipCard}>
-        <Text style={styles.masterLabel}>Membership required</Text>
-        <Text style={styles.membershipHint}>
-          The email newsletter is a $1–$5/mo membership benefit. Join or manage your membership on the
-          website, then paste your membership token below to unlock the newsletter on this device.
-          Ad-free browsing on the website is coming soon once AdSense is enabled.
+      <View style={styles.supportCard}>
+        <Text style={styles.masterLabel}>Free email digest</Text>
+        <Text style={styles.supportHint}>
+          Subscribe with your email below — no paid membership. You can also manage topics on the website.
         </Text>
-        <Pressable onPress={handleOpenMembershipPage} style={styles.previewButton}>
-          <Text style={styles.previewButtonText}>Open membership page</Text>
+        <Pressable onPress={handleOpenNewsletterWeb} style={styles.previewButton}>
+          <Text style={styles.previewButtonText}>Open newsletter on web</Text>
         </Pressable>
-        <TextInput
-          style={styles.emailInput}
-          value={membershipTokenDraft}
-          onChangeText={setMembershipTokenDraft}
-          placeholder="Paste membership token"
-          placeholderTextColor={colors.inkLight}
-          autoCapitalize="none"
-          autoCorrect={false}
-        />
-        <Pressable onPress={handleSaveMembershipToken} style={styles.emailButtonOutline}>
-          <Text style={styles.emailButtonOutlineText}>
-            {membershipToken ? 'Update token' : 'Save token'}
-          </Text>
+        <Pressable onPress={handleOpenBuyMeACoffee} style={styles.emailButtonOutline}>
+          <Text style={styles.emailButtonOutlineText}>Buy me a coffee</Text>
         </Pressable>
-        {membershipToken ? (
-          <Text style={styles.membershipStatusText}>Membership token saved on this device.</Text>
-        ) : null}
       </View>
 
       <Text style={[styles.sectionLabel, styles.emailFieldLabel]}>Email address</Text>
@@ -645,7 +616,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.xl,
     marginBottom: spacing.lg,
   },
-  membershipCard: {
+  supportCard: {
     backgroundColor: colors.cardElevated,
     borderColor: colors.borderStrong,
     borderRadius: radii.md,
@@ -654,14 +625,10 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
     padding: spacing.lg,
   },
-  membershipHint: {
+  supportHint: {
     ...typography.bodySmall,
     color: colors.inkSoft,
     lineHeight: 20,
-  },
-  membershipStatusText: {
-    ...typography.bodySmall,
-    color: colors.success,
   },
   emailHeader: {
     alignItems: 'center',

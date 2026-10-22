@@ -1,5 +1,13 @@
+import {
+  buildCanonicalUrl,
+  itemPublicPath,
+  normalizePublicPath,
+  SITE_ORIGIN,
+} from '../../../mobile/shared/seo/publicPaths.js';
 import { FEED_CATEGORIES } from '../config/feedCategories.js';
-import { getPathForCategory, SITE_ORIGIN } from '../routes/feedRoutes.js';
+import { getPathForCategory } from '../routes/feedRoutes.js';
+
+export { buildCanonicalUrl, SITE_ORIGIN };
 
 /** Visible brand in chrome, emails, and inner-page title suffixes. */
 export const SITE_BRAND = 'Unofficial Cursor News';
@@ -48,7 +56,7 @@ export function getFeedPageMeta(categoryId) {
   return {
     title: SECTION_TITLES[categoryId] ?? `Cursor ${label} — ${SITE_BRAND}`,
     description: SECTION_DESCRIPTIONS[categoryId] ?? `Cursor ${label.toLowerCase()} from unofficial Cursor News.`,
-    path,
+    path: normalizePublicPath(path),
     breadcrumbLabel: label,
   };
 }
@@ -58,74 +66,71 @@ export function getStaticPageMeta(pageId) {
     newsletter: {
       title: `Newsletter — ${SITE_BRAND}`,
       description:
-        'Subscribe to the Unofficial Cursor News email digest. Members get curated Cursor updates in their inbox.',
-      path: '/newsletter',
+        'Subscribe to the Unofficial Cursor News email digest — curated Cursor updates in your inbox.',
+      path: '/newsletter/',
       breadcrumbLabel: 'Newsletter',
     },
     newsletterUnsubscribe: {
       title: `Unsubscribe — ${SITE_BRAND}`,
       description:
         'Unsubscribe from the Unofficial Cursor News email digest. Stop curated Cursor updates in your inbox anytime.',
-      path: '/newsletter/unsubscribe',
+      path: '/newsletter/unsubscribe/',
       breadcrumbLabel: 'Unsubscribe',
-    },
-    membershipUnsubscribe: {
-      title: `Cancel membership — ${SITE_BRAND}`,
-      description:
-        'Cancel your Unofficial Cursor News monthly membership. Stop Stripe billing while keeping access until period end.',
-      path: '/membership/unsubscribe',
-      breadcrumbLabel: 'Cancel membership',
     },
     games: {
       title: `Games — ${SITE_BRAND}`,
       description:
         'Cursor-themed browser games from Unofficial Cursor News — logo pieces, Git puns, and Commit Chess.',
-      path: '/games',
+      path: '/games/',
       breadcrumbLabel: 'Games',
     },
     about: {
       title: `About Cursor News — ${SITE_BRAND}`,
       description:
         'About this Cursor news feed — including Grok / xAI / SpaceX after the SpaceXAI acquisition. Independent fan site, not affiliated with Anysphere.',
-      path: '/about',
+      path: '/about/',
       breadcrumbLabel: 'About',
     },
     editorialPolicy: {
       title: `Editorial Policy — ${SITE_BRAND}`,
       description:
         'How Unofficial Cursor News sources stories, writes original commentary, attributes publishers, and links out — never full-article republishing.',
-      path: '/editorial-policy',
+      path: '/editorial-policy/',
       breadcrumbLabel: 'Editorial Policy',
     },
     sources: {
       title: `Sources — ${SITE_BRAND}`,
       description:
         'Human-readable list of ingest sources powering Unofficial Cursor News — official and community feeds.',
-      path: '/sources',
+      path: '/sources/',
       breadcrumbLabel: 'Sources',
     },
     privacy: {
       title: `Privacy Policy — ${SITE_BRAND}`,
       description:
-        'Privacy Policy for Unofficial Cursor News — how we handle newsletter, membership, and site data.',
-      path: '/privacy',
+        'Privacy Policy for Unofficial Cursor News — how we handle newsletter and site data.',
+      path: '/privacy/',
       breadcrumbLabel: 'Privacy',
     },
     terms: {
       title: `Terms of Use — ${SITE_BRAND}`,
       description:
-        'Terms of Use for Unofficial Cursor News — rules for using this unofficial fan news feed and membership.',
-      path: '/terms',
+        'Terms of Use for Unofficial Cursor News — rules for using this unofficial fan news feed.',
+      path: '/terms/',
       breadcrumbLabel: 'Terms',
     },
   };
 
-  return pages[pageId] ?? {
-    title: DEFAULT_SITE_TITLE,
-    description: DEFAULT_DESCRIPTION,
-    path: '/',
-    breadcrumbLabel: null,
-  };
+  const page = pages[pageId];
+  if (!page) {
+    return {
+      title: DEFAULT_SITE_TITLE,
+      description: DEFAULT_DESCRIPTION,
+      path: '/',
+      breadcrumbLabel: null,
+    };
+  }
+  return { ...page, path: normalizePublicPath(page.path) };
 }
 
 export function getGamePageMeta(game) {
@@ -150,7 +155,7 @@ export function getArticlePageMeta(item) {
     };
   }
 
-  const path = `/item/${encodeURIComponent(item.id)}`;
+  const path = itemPublicPath(item.id);
   const description =
     (item.commentary && String(item.commentary).replace(/\s+/g, ' ').trim().slice(0, 160)) ||
     (item.excerpt && String(item.excerpt).trim().slice(0, 160)) ||
@@ -162,11 +167,6 @@ export function getArticlePageMeta(item) {
     path,
     breadcrumbLabel: item.title,
   };
-}
-
-export function buildCanonicalUrl(path) {
-  if (!path || path === '/') return `${SITE_ORIGIN}/`;
-  return `${SITE_ORIGIN}${path.startsWith('/') ? path : `/${path}`}`;
 }
 
 export function buildBreadcrumbJsonLd(path, breadcrumbLabel) {

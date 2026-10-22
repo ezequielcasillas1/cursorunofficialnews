@@ -40,7 +40,7 @@ function replaceMeta(html, { title, description, path, canonical }) {
     out = out.replace(re, `$1${escapeHtml(content)}$2`);
   }
 
-  const canonicalRe = /(<link rel="canonical" href=")[^"]*(")/i;
+  const canonicalRe = /(<link[^>]*rel="canonical"[^>]*href=")[^"]*(")/i;
   out = out.replace(canonicalRe, `$1${escapeHtml(canonical)}$2`);
 
   return out;

@@ -14,6 +14,7 @@ import { listDevices, registerDevice, unregisterDevice } from '../store/device-t
 import { optionalRegisterSecret, requireIngestSecret } from '../middleware/require-api-secret.js';
 import { checkRateLimit, clientRateKey } from '../security/rate-limit.js';
 import { publicErrorMessage } from '../security/public-error.js';
+import { isAutomatedVisitorRequest } from '../security/visitor-bot.js';
 
 const DEVICE_REGISTER_RATE_MS = 60_000;
 const PRESENCE_HEARTBEAT_RATE_MS = 15_000;
@@ -23,7 +24,6 @@ const MAX_DEVICE_TOKEN_LENGTH = 512;
 import { isScrapeConfigured } from '../ingest/scrape.js';
 import { isTwitterApiConfigured } from '../ingest/twitter-api.js';
 import { isWorkersAiConfigured } from '../llm/workers-ai-client.js';
-import { getStripeMembershipConfigStatus } from '../monetization/stripe-client.js';
 import { runIngestWithLock } from '../ingest/run-ingest.js';
 import { healthPayload } from '../ops/site-offline.js';
 
@@ -50,7 +50,6 @@ export function registerCoreRoutes(app) {
       payload.scrapeConfigured = isScrapeConfigured(c.env);
       payload.twitterApiConfigured = isTwitterApiConfigured(c.env);
       payload.workersAiConfigured = isWorkersAiConfigured(c.env);
-      payload.stripeMembership = getStripeMembershipConfigStatus(c.env);
     }
     return c.json(payload);
   });
@@ -73,6 +72,12 @@ export function registerCoreRoutes(app) {
     const db = c.env.DB;
 
     try {
+      if (isAutomatedVisitorRequest(c)) {
+        await pruneStalePresence(db);
+        const online = await getActiveVisitorCount(db);
+        return c.json({ online, recorded: false, reason: 'automated_client' });
+      }
+
       let sessionId = getCookie(c, PRESENCE_SESSION_COOKIE);
       const rateKey = isValidSessionId(sessionId)
         ? `session:${sessionId}:presence-heartbeat`

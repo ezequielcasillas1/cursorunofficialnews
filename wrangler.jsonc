@@ -19,8 +19,9 @@
   "assets": {
     "directory": "./web/dist",
     "binding": "ASSETS",
-    "not_found_handling": "single-page-application",
-    "run_worker_first": ["/api/*", "/sitemap.xml", "/health"]
+    "html_handling": "force-trailing-slash",
+    "not_found_handling": "404-page",
+    "run_worker_first": ["/*"]
   },
   "d1_databases": [
     {
@@ -33,7 +34,7 @@
     "binding": "AI"
   },
   "triggers": {
-    "crons": ["*/30 * * * *", "0 * * * *"]
+    "crons": ["*/30 * * * *", "0 * * * *", "15 6 * * *"]
   }
   // Custom domains (cursorunofficial.news, www) are attached in the Cloudflare
   // dashboard under Workers → cursorunofficialnews → Domains & Routes.

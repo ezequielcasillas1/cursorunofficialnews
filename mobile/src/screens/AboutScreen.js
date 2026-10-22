@@ -98,8 +98,8 @@ export function AboutScreen({ onBack }) {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Coming later</Text>
         <Text style={styles.body}>
-          Instant alert delivery and optional membership extras. Public web/PWA
-          build. Core news feed stays free.
+          Instant alert delivery and more web/PWA polish. Core news feed and
+          email digest stay free.
         </Text>
       </View>
 

@@ -14,8 +14,8 @@ export const APP_NAME = 'Unofficial Cursor News';
 export const DISCLAIMER =
   'Not affiliated with, endorsed by, or sponsored by Anysphere, Inc. "Cursor" is a trademark of its respective owner.';
 
-/** Google AdSense — prefer VITE_ADSENSE_CLIENT_ID / VITE_ADSENSE_SLOT_ID (see monetization/config.js) */
+/** Google AdSense — prefer VITE_ADSENSE_CLIENT_ID / VITE_ADSENSE_SLOT_ID (see config/adsense.js) */
 export {
   ADSENSE_CLIENT_ID as ADSENSE_CLIENT,
   ADSENSE_SLOT_ID as ADSENSE_SLOT,
-} from './monetization/config.js';
+} from './config/adsense.js';
