@@ -1,0 +1,377 @@
+import {
+  activateMember,
+  buildMembershipActivationUrl,
+  listMembers,
+} from '../store/memberships.js';
+import { resolveActiveMemberForClaim } from './stripe-membership-sync.js';
+import {
+  getEntitlementByToken,
+  resolveMembershipClaim,
+} from '../lib/membership-entitlement.js';
+import { isValidEmail, normalizeEmail } from '../store/email-subscribers.js';
+import {
+  consumeMembershipClaimRequest,
+  createMembershipClaimRequest,
+} from '../store/membership-claim-requests.js';
+import {
+  isMembershipClaimEmailConfigured,
+  sendMembershipClaimEmail,
+} from './send-membership-claim-email.js';
+import { createMembershipCheckoutSession, retrieveCompletedCheckoutSession } from './stripe-checkout.js';
+import {
+  getMembershipRefundEligibility,
+  MIN_REFUND_AMOUNT_CENTS,
+  processMembershipRefund,
+} from './stripe-refund.js';
+import {
+  getMembershipCancelEligibility,
+  processMembershipCancel,
+} from './stripe-membership-cancel.js';
+import { processMembershipResume } from './stripe-membership-resume.js';
+import { checkRateLimit, clientIp, clientRateKey } from '../security/rate-limit.js';
+import { recordAttempt } from '../security/attempt-counter.js';
+import { publicErrorMessage } from '../security/public-error.js';
+import { isMembershipBillingOffline, membershipBillingOfflineJson } from './membership-offline.js';
+import { resolveMembershipClaimGuard } from './membership-claim-guard.js';
+
+const CHECKOUT_RATE_MS = 30_000;
+const REFUND_RATE_MS = 60_000;
+const CANCEL_RATE_MS = 60_000;
+const RESUME_RATE_MS = 60_000;
+
+const CLAIM_PENDING_MESSAGE =
+  'If that email has an active membership, we sent a verification link.';
+
+export function registerMembershipRoutes(app) {
+  app.post('/v1/membership/checkout', async (c) => {
+    c.header('Cache-Control', 'no-store');
+    if (isMembershipBillingOffline(c.env)) return membershipBillingOfflineJson(c);
+    if (!checkRateLimit(clientRateKey(c, 'membership-checkout'), CHECKOUT_RATE_MS)) {
+      return c.json({ error: 'Too many requests — try again shortly' }, 429);
+    }
+    try {
+      const body = await c.req.json().catch(() => ({}));
+      const email = body?.email ? normalizeEmail(body.email) : '';
+      if (!isValidEmail(email)) {
+        return c.json({ error: 'Enter a valid email address' }, 400);
+      }
+
+      const { url } = await createMembershipCheckoutSession(c.env, { amount: body?.amount, email });
+      return c.json({ ok: true, url });
+    } catch (err) {
+      if (err.code === 'ALREADY_SUBSCRIBED') {
+        return c.json(
+          {
+            error: publicErrorMessage(
+              err,
+              'This email already has an active membership. Restore access on this device instead.',
+              c.env,
+            ),
+            code: 'ALREADY_SUBSCRIBED',
+          },
+          409,
+        );
+      }
+      return c.json({ error: publicErrorMessage(err, 'Could not start checkout', c.env) }, 400);
+    }
+  });
+
+  // Client redirects here (or calls it directly) with the Checkout Session id from
+  // the success_url — this is the synchronous path; the webhook is the durable one.
+  app.get('/v1/membership/checkout/confirm', async (c) => {
+    c.header('Cache-Control', 'no-store');
+    if (isMembershipBillingOffline(c.env)) return membershipBillingOfflineJson(c);
+    const db = c.env.DB;
+    const sessionId = String(c.req.query('session_id') || '').trim();
+    if (!sessionId) {
+      return c.json({ error: 'session_id query parameter is required' }, 400);
+    }
+
+    try {
+      const session = await retrieveCompletedCheckoutSession(c.env, sessionId);
+      if (session.status !== 'complete') {
+        return c.json({ error: 'This checkout session has not completed yet.' }, 409);
+      }
+
+      const email = normalizeEmail(session.customer_details?.email || session.customer_email || '');
+      if (!isValidEmail(email)) {
+        return c.json({ error: 'Could not determine the membership email from Stripe.' }, 422);
+      }
+
+      const subscription = session.subscription;
+      const customer = session.customer;
+      const tierAmount = Number(session.metadata?.tier_amount);
+
+      const member = await activateMember(db, {
+        email,
+        stripeCustomerId: typeof customer === 'string' ? customer : customer?.id,
+        stripeSubscriptionId: typeof subscription === 'string' ? subscription : subscription?.id,
+        amountCents: Number.isFinite(tierAmount) && tierAmount > 0
+          ? Math.round(tierAmount * 100)
+          : session.amount_total,
+      });
+
+      return c.json({
+        ok: true,
+        adFree: true,
+        newsletterUnlocked: true,
+        email: member.email,
+        token: member.membershipToken,
+        membershipStatus: 'active',
+      });
+    } catch (err) {
+      console.error('[membership/checkout/confirm]', err.message || err);
+      return c.json({ error: 'Could not confirm checkout session with Stripe.' }, 502);
+    }
+  });
+
+  // "Restore membership on this device" — magic-link flow for users who lost their token.
+  app.post('/v1/membership/claim', async (c) => {
+    c.header('Cache-Control', 'no-store');
+    if (isMembershipBillingOffline(c.env)) return membershipBillingOfflineJson(c);
+    const db = c.env.DB;
+    try {
+      const body = await c.req.json().catch(() => ({}));
+      const email = normalizeEmail(body?.email);
+      if (!isValidEmail(email)) {
+        return c.json({ error: 'A valid email address is required' }, 400);
+      }
+
+      const localDevClaim = await resolveMembershipClaim(db, email, c.env);
+      if (localDevClaim?.membershipToken) {
+        return c.json({
+          ok: true,
+          adFree: localDevClaim.adFree,
+          newsletterUnlocked: localDevClaim.newsletterUnlocked,
+          email: localDevClaim.email,
+          token: localDevClaim.membershipToken,
+          activationUrl: buildMembershipActivationUrl(localDevClaim.membershipToken, c.env),
+        });
+      }
+
+      const attemptKey = clientRateKey(c, `membership-claim:${email}`);
+      const guard = await resolveMembershipClaimGuard({
+        attemptKey,
+        turnstileToken: body?.turnstileToken || body?.cfTurnstileResponse,
+        ip: clientIp(c),
+        env: c.env,
+      });
+      if (!guard.ok) {
+        return c.json(
+          {
+            error: guard.error,
+            code: guard.code,
+            captchaRequired: true,
+            siteKey: guard.siteKey,
+          },
+          403,
+        );
+      }
+      recordAttempt(attemptKey);
+
+      if (!isMembershipClaimEmailConfigured(c.env)) {
+        return c.json(
+          { error: 'Membership email verification is unavailable right now. Please try again later.' },
+          503,
+        );
+      }
+
+      const member = await resolveActiveMemberForClaim(db, email, c.env);
+      if (member?.active) {
+        const request = await createMembershipClaimRequest(db, email, c.env);
+        await sendMembershipClaimEmail({ email, claimToken: request.token }, c.env);
+      } else {
+        console.info('[membership/claim] no active membership resolved; skipping verification email');
+      }
+
+      return c.json({ ok: true, pending: true, message: CLAIM_PENDING_MESSAGE });
+    } catch (err) {
+      const message = err.message || 'Claim failed';
+      const status = message.includes('unavailable') ? 503 : 400;
+      return c.json({ error: message }, status);
+    }
+  });
+
+  app.post('/v1/membership/claim/verify', async (c) => {
+    c.header('Cache-Control', 'no-store');
+    if (isMembershipBillingOffline(c.env)) return membershipBillingOfflineJson(c);
+    const db = c.env.DB;
+    const body = await c.req.json().catch(() => ({}));
+    const claimToken = String(body?.token || '').trim();
+    if (!claimToken) {
+      return c.json({ error: 'token is required' }, 400);
+    }
+
+    const request = await consumeMembershipClaimRequest(db, claimToken);
+    if (!request) {
+      return c.json({ error: 'This verification link is invalid or has expired.' }, 410);
+    }
+
+    const member = await resolveActiveMemberForClaim(db, request.email, c.env);
+    if (!member?.active) {
+      return c.json(
+        { error: 'Your membership could not be verified. Please request a new verification link.' },
+        410,
+      );
+    }
+
+    return c.json({
+      ok: true,
+      adFree: true,
+      newsletterUnlocked: true,
+      email: member.email,
+      token: member.membershipToken,
+      activationUrl: buildMembershipActivationUrl(member.membershipToken, c.env),
+    });
+  });
+
+  app.get('/v1/membership/status', async (c) => {
+    c.header('Cache-Control', 'no-store');
+    const db = c.env.DB;
+    const token = String(c.req.query('token') || '').trim();
+    if (!token) {
+      return c.json({ error: 'token query parameter is required' }, 400);
+    }
+
+    const status = await getEntitlementByToken(db, token, c.env);
+    return c.json({
+      ok: true,
+      adFree: status.adFree,
+      newsletterUnlocked: status.newsletterUnlocked,
+      email: status.email,
+      membershipStatus: status.membershipStatus,
+    });
+  });
+
+  app.get('/v1/membership/refund/eligibility', async (c) => {
+    c.header('Cache-Control', 'no-store');
+    const db = c.env.DB;
+    const token = String(c.req.query('token') || '').trim();
+    if (!token) {
+      return c.json({ error: 'token query parameter is required' }, 400);
+    }
+
+    const eligibility = await getMembershipRefundEligibility(db, token);
+    return c.json({
+      ok: true,
+      minAmountCents: MIN_REFUND_AMOUNT_CENTS,
+      ...eligibility,
+    });
+  });
+
+  app.post('/v1/membership/refund', async (c) => {
+    c.header('Cache-Control', 'no-store');
+    if (!checkRateLimit(clientRateKey(c, 'membership-refund'), REFUND_RATE_MS)) {
+      return c.json({ error: 'Too many requests — try again shortly' }, 429);
+    }
+
+    const db = c.env.DB;
+    const body = await c.req.json().catch(() => ({}));
+    const membershipToken = String(body?.membershipToken || body?.token || '').trim();
+    if (!membershipToken) {
+      return c.json({ error: 'membershipToken is required' }, 400);
+    }
+
+    try {
+      const result = await processMembershipRefund(c.env, db, { membershipToken });
+      return c.json(result);
+    } catch (err) {
+      const code = err.code || '';
+      if (code === 'NOT_ELIGIBLE') {
+        return c.json({ error: publicErrorMessage(err, 'Refund not available', c.env) }, 403);
+      }
+      if (code === 'ALREADY_REFUNDED') {
+        return c.json({ error: publicErrorMessage(err, 'Already refunded', c.env) }, 409);
+      }
+      console.error('[membership/refund]', err.message || err);
+      return c.json({ error: publicErrorMessage(err, 'Could not process refund', c.env) }, 502);
+    }
+  });
+
+  app.get('/v1/membership/cancel/eligibility', async (c) => {
+    c.header('Cache-Control', 'no-store');
+    const db = c.env.DB;
+    const token = String(c.req.query('token') || '').trim();
+    if (!token) {
+      return c.json({ error: 'token query parameter is required' }, 400);
+    }
+
+    const eligibility = await getMembershipCancelEligibility(db, token, c.env);
+    return c.json({ ok: true, ...eligibility });
+  });
+
+  app.post('/v1/membership/cancel', async (c) => {
+    c.header('Cache-Control', 'no-store');
+    if (!checkRateLimit(clientRateKey(c, 'membership-cancel'), CANCEL_RATE_MS)) {
+      return c.json({ error: 'Too many requests — try again shortly' }, 429);
+    }
+
+    const db = c.env.DB;
+    const body = await c.req.json().catch(() => ({}));
+    const membershipToken = String(body?.membershipToken || body?.token || '').trim();
+    if (!membershipToken) {
+      return c.json({ error: 'membershipToken is required' }, 400);
+    }
+
+    try {
+      const result = await processMembershipCancel(c.env, db, { membershipToken });
+      return c.json(result);
+    } catch (err) {
+      const code = err.code || '';
+      if (code === 'NOT_CANCELLABLE') {
+        return c.json(
+          {
+            error: publicErrorMessage(err, 'Cancellation not available', c.env),
+            membershipStatus: err.membershipStatus || null,
+          },
+          403,
+        );
+      }
+      if (code === 'ALREADY_CANCELLED') {
+        return c.json({ error: publicErrorMessage(err, 'Already cancelled', c.env) }, 409);
+      }
+      console.error('[membership/cancel]', err.message || err);
+      return c.json({ error: publicErrorMessage(err, 'Could not cancel membership', c.env) }, 502);
+    }
+  });
+
+  app.post('/v1/membership/resume', async (c) => {
+    c.header('Cache-Control', 'no-store');
+    if (!checkRateLimit(clientRateKey(c, 'membership-resume'), RESUME_RATE_MS)) {
+      return c.json({ error: 'Too many requests — try again shortly' }, 429);
+    }
+
+    const db = c.env.DB;
+    const body = await c.req.json().catch(() => ({}));
+    const membershipToken = String(body?.membershipToken || body?.token || '').trim();
+    if (!membershipToken) {
+      return c.json({ error: 'membershipToken is required' }, 400);
+    }
+
+    try {
+      const result = await processMembershipResume(c.env, db, { membershipToken });
+      return c.json(result);
+    } catch (err) {
+      const code = err.code || '';
+      if (code === 'NOT_RESUMABLE') {
+        return c.json({ error: publicErrorMessage(err, 'Resubscribe is not available', c.env) }, 403);
+      }
+      if (code === 'ENDED') {
+        return c.json(
+          { error: publicErrorMessage(err, 'This membership has already ended', c.env), code: 'ENDED' },
+          409,
+        );
+      }
+      console.error('[membership/resume]', err.message || err);
+      return c.json({ error: publicErrorMessage(err, 'Could not resume membership', c.env) }, 502);
+    }
+  });
+
+  app.get('/v1/membership/members', async (c) => {
+    if (c.env.ENVIRONMENT === 'production') {
+      return c.json({ error: 'Not found' }, 404);
+    }
+    const db = c.env.DB;
+    return c.json({ members: await listMembers(db) });
+  });
+}
