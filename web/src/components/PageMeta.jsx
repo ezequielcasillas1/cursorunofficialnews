@@ -56,10 +56,17 @@ function ensureJsonLdScript(id) {
   return el;
 }
 
-export function PageMeta({ title, description, path = '/', breadcrumbLabel = null }) {
+export function PageMeta({
+  title,
+  description,
+  path = '/',
+  breadcrumbLabel = null,
+  robots = 'index, follow',
+}) {
   useEffect(() => {
     document.title = title;
 
+    ensureMeta('robots', 'meta-robots').setAttribute('content', robots);
     ensureMeta('description', META_IDS.description).setAttribute('content', description);
     ensureCanonical(META_IDS.canonical).setAttribute('href', buildCanonicalUrl(path));
     ensureMeta('og:title', META_IDS.ogTitle, 'property').setAttribute('content', title);
@@ -92,7 +99,7 @@ export function PageMeta({ title, description, path = '/', breadcrumbLabel = nul
       jsonLdEl.textContent = '';
       jsonLdEl.hidden = true;
     }
-  }, [title, description, path, breadcrumbLabel]);
+  }, [title, description, path, breadcrumbLabel, robots]);
 
   return null;
 }

@@ -35,23 +35,23 @@ async function fetchJson(path, options = {}) {
 }
 
 export function subscribeNewsletter({
+  email,
   categories,
   categoryLimits,
   officialOnly = false,
   enabled = true,
   resendVerification = false,
-  membershipToken,
 }) {
   return fetchJson('/v1/email/subscribe', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
+      email: String(email || '').trim().toLowerCase(),
       categories,
       categoryLimits,
       officialOnly: Boolean(officialOnly),
       enabled,
       resendVerification: Boolean(resendVerification),
-      membershipToken,
     }),
   });
 }

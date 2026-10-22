@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { itemPublicPath } from '../../../mobile/shared/seo/publicPaths.js';
 import { sanitizeExternalUrl } from '../../../mobile/shared/url/safe-external-url.js';
 import { formatCategoryLabel } from '../utils/articleMedia.js';
 import { ArticleMedia } from './media/ArticleMedia.jsx';
@@ -27,7 +28,7 @@ function formatDate(iso) {
 
 export function NewsCard({ item, isOfficial = false, featured = false }) {
   const safeUrl = sanitizeExternalUrl(item?.canonicalUrl);
-  const articlePath = item?.id ? `/item/${encodeURIComponent(item.id)}` : null;
+  const articlePath = item?.id ? itemPublicPath(item.id) : null;
 
   return (
     <article className="h-full">

@@ -1,9 +1,5 @@
 import { requireIngestSecret } from '../middleware/require-api-secret.js';
 import {
-  isN8nNewsletterConfigured,
-  triggerN8nNewsletter,
-} from '../jobs/trigger-n8n-newsletter.js';
-import {
   generateNewsletterHtml,
   isCursorApiConfigured,
 } from '../llm/cursor-api-client.js';
@@ -125,26 +121,12 @@ export function registerNewsletterRoutes(app) {
     try {
       const exportData = await buildNewsletterExport(db, { newItems }, c.env);
 
-      let n8nResult = { skipped: true, reason: 'N8N_NEWSLETTER_WEBHOOK_URL not configured' };
-      if (isN8nNewsletterConfigured(c.env)) {
-        if (!newItems.length) {
-          n8nResult = { skipped: true, reason: 'no_new_items' };
-        } else {
-          c.executionCtx.waitUntil(
-            triggerN8nNewsletter({ newItems, ingestAt }, c.env).catch((err) => {
-              console.error('[POST /v1/newsletter/trigger] n8n background error:', err.message || err);
-            }),
-          );
-          n8nResult = { status: 'pending', message: 'n8n webhook triggered in background' };
-        }
-      }
-
       return c.json(
         {
           ok: true,
           accepted: Boolean(newItems.length),
           export: exportData,
-          n8n: n8nResult,
+          n8n: { skipped: true, reason: 'membership_n8n_retired' },
         },
         newItems.length ? 202 : 200,
       );

@@ -1,6 +1,7 @@
 import { Separator } from '@/components/ui/separator';
 import { APP_NAME, DISCLAIMER } from '../config.js';
 import { FOOTER_NAV, LEGAL_NAV } from '../config/siteNav.js';
+import { BUY_ME_A_COFFEE_URL } from './support/SupportPanel.jsx';
 import { Tooltip } from './Tooltip.jsx';
 
 export function Footer() {
@@ -26,6 +27,13 @@ export function Footer() {
           ))}
         </nav>
         <p className="site-footer-disclaimer">{DISCLAIMER}</p>
+        <p className="site-footer-support">
+          <a href={BUY_ME_A_COFFEE_URL} target="_blank" rel="noopener noreferrer">
+            Buy me a coffee
+          </a>
+          {' '}
+          — optional tip to help keep the feed free
+        </p>
         <p className="site-footer-meta">
           Unofficial fan project · {year} · Not affiliated with Anysphere
         </p>

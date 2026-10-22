@@ -42,8 +42,7 @@ export async function runScheduledDigest(db, env, { force = false, now = new Dat
 
   const result = await notifyEmailSubscribers(db, queuedItems, { digestSlot }, env);
 
-  const shouldCommit =
-    !result.skipped || Boolean(result.delegatedToN8n && result.n8n?.triggered);
+  const shouldCommit = !result.skipped && (result.sent > 0 || result.failed > 0);
 
   if (shouldCommit) {
     await clearDigestQueue(db);

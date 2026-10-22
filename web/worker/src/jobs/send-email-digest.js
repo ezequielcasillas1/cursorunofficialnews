@@ -12,11 +12,6 @@ import {
   listSubscribers,
 } from '../store/email-subscribers.js';
 import { buildSubscriberDigestSections } from '../shared/notifications/subscriber-digest.js';
-import {
-  isN8nNewsletterConfigured,
-  shouldUseServerEmailDigest,
-  triggerN8nNewsletter,
-} from './trigger-n8n-newsletter.js';
 
 function getItemsForSubscriber(subscriber, newItems) {
   if (!subscriber.enabled) return [];
@@ -39,33 +34,9 @@ export async function notifyEmailSubscribers(db, newItems, { digestSlot, ingestA
 
   const cycleKey = digestSlot || ingestAt || new Date().toISOString().slice(0, 13);
 
-  const n8nPromise = isN8nNewsletterConfigured(env)
-    ? triggerN8nNewsletter({ newItems, ingestAt: cycleKey }, env)
-    : Promise.resolve({ skipped: true, reason: 'n8n_not_configured' });
-
   const subscribers = await listSubscribers(db);
 
-  if (!shouldUseServerEmailDigest(env)) {
-    const n8nResult = await n8nPromise;
-    return {
-      sent: 0,
-      failed: 0,
-      items: newItems.length,
-      subscribers: subscribers.length,
-      n8n: n8nResult,
-      delegatedToN8n: true,
-    };
-  }
-
   if (!isResendConfigured(env)) {
-    const n8nResult = await n8nPromise;
-    if (n8nResult.triggered) {
-      return {
-        skipped: true,
-        reason: 'RESEND_API_KEY not configured',
-        n8n: n8nResult,
-      };
-    }
     return { skipped: true, reason: 'RESEND_API_KEY not configured' };
   }
 
@@ -120,8 +91,6 @@ export async function notifyEmailSubscribers(db, newItems, { digestSlot, ingestA
     sent += 1;
   }
 
-  const n8nResult = await n8nPromise;
-
   console.log(
     JSON.stringify({
       event: 'email_digest_sent',
@@ -131,7 +100,6 @@ export async function notifyEmailSubscribers(db, newItems, { digestSlot, ingestA
       items: newItems.length,
       subscribers: subscribers.length,
       digestSlot: cycleKey,
-      n8nTriggered: Boolean(n8nResult?.triggered),
     }),
   );
 
@@ -142,6 +110,5 @@ export async function notifyEmailSubscribers(db, newItems, { digestSlot, ingestA
     subscribers: subscribers.length,
     digestSlot: cycleKey,
     errors: errors.length ? errors : undefined,
-    n8n: n8nResult,
   };
 }

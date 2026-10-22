@@ -1,24 +1,28 @@
-import { getPublicWebBase } from '../lib/env.js';
+import {
+  buildCanonicalUrl,
+  itemPublicPath,
+  normalizePublicPath,
+} from '../../../../mobile/shared/seo/publicPaths.js';
 import { listRecentNewsIds } from '../store/news-store.js';
 
 const STATIC_PATHS = [
   { path: '/', changefreq: 'hourly', priority: '1.0' },
-  { path: '/updates', changefreq: 'hourly', priority: '0.9' },
-  { path: '/news', changefreq: 'hourly', priority: '0.8' },
-  { path: '/forum', changefreq: 'hourly', priority: '0.8' },
-  { path: '/issues', changefreq: 'hourly', priority: '0.8' },
-  { path: '/community', changefreq: 'hourly', priority: '0.8' },
-  { path: '/discussion', changefreq: 'hourly', priority: '0.8' },
-  { path: '/social', changefreq: 'hourly', priority: '0.8' },
-  { path: '/videos', changefreq: 'hourly', priority: '0.8' },
-  { path: '/tutorials', changefreq: 'hourly', priority: '0.9' },
-  { path: '/games', changefreq: 'weekly', priority: '0.7' },
-  { path: '/newsletter', changefreq: 'weekly', priority: '0.7' },
-  { path: '/about', changefreq: 'monthly', priority: '0.6' },
-  { path: '/editorial-policy', changefreq: 'monthly', priority: '0.6' },
-  { path: '/sources', changefreq: 'weekly', priority: '0.6' },
-  { path: '/privacy', changefreq: 'yearly', priority: '0.3' },
-  { path: '/terms', changefreq: 'yearly', priority: '0.3' },
+  { path: '/updates/', changefreq: 'hourly', priority: '0.9' },
+  { path: '/news/', changefreq: 'hourly', priority: '0.8' },
+  { path: '/forum/', changefreq: 'hourly', priority: '0.8' },
+  { path: '/issues/', changefreq: 'hourly', priority: '0.8' },
+  { path: '/community/', changefreq: 'hourly', priority: '0.8' },
+  { path: '/discussion/', changefreq: 'hourly', priority: '0.8' },
+  { path: '/social/', changefreq: 'hourly', priority: '0.8' },
+  { path: '/videos/', changefreq: 'hourly', priority: '0.8' },
+  { path: '/tutorials/', changefreq: 'hourly', priority: '0.9' },
+  { path: '/games/', changefreq: 'weekly', priority: '0.7' },
+  { path: '/newsletter/', changefreq: 'weekly', priority: '0.7' },
+  { path: '/about/', changefreq: 'monthly', priority: '0.6' },
+  { path: '/editorial-policy/', changefreq: 'monthly', priority: '0.6' },
+  { path: '/sources/', changefreq: 'weekly', priority: '0.6' },
+  { path: '/privacy/', changefreq: 'yearly', priority: '0.3' },
+  { path: '/terms/', changefreq: 'yearly', priority: '0.3' },
 ];
 
 function escapeXml(value) {
@@ -39,9 +43,8 @@ function urlEntry(loc, { changefreq, priority, lastmod } = {}) {
 }
 
 /** Build a fresh sitemap XML string including recent item pages. */
-export async function buildSitemapXml(db, env) {
-  const origin = getPublicWebBase(env).replace(/\/$/, '');
-  const feedLastmodPaths = new Set(['/', '/news', '/updates']);
+export async function buildSitemapXml(db) {
+  const feedLastmodPaths = new Set(['/', '/news/', '/updates/']);
 
   let itemEntries = [];
   let newestLastmod;
@@ -49,9 +52,8 @@ export async function buildSitemapXml(db, env) {
     const rows = await listRecentNewsIds(db, 500);
     newestLastmod = rows[0]?.published_at ? String(rows[0].published_at).slice(0, 10) : undefined;
     itemEntries = rows.map((row) => {
-      const id = encodeURIComponent(row.id);
       const lastmod = row.published_at ? String(row.published_at).slice(0, 10) : undefined;
-      return urlEntry(`${origin}/item/${id}`, {
+      return urlEntry(buildCanonicalUrl(itemPublicPath(row.id)), {
         changefreq: 'weekly',
         priority: '0.7',
         lastmod,
@@ -62,10 +64,10 @@ export async function buildSitemapXml(db, env) {
   }
 
   const staticEntries = STATIC_PATHS.map(({ path, changefreq, priority }) =>
-    urlEntry(`${origin}${path === '/' ? '/' : path}`, {
+    urlEntry(buildCanonicalUrl(normalizePublicPath(path)), {
       changefreq,
       priority,
-      lastmod: feedLastmodPaths.has(path) ? newestLastmod : undefined,
+      lastmod: feedLastmodPaths.has(normalizePublicPath(path)) ? newestLastmod : undefined,
     }),
   );
 
@@ -80,7 +82,7 @@ export async function buildSitemapXml(db, env) {
 }
 
 export async function sitemapResponse(db, env) {
-  const xml = await buildSitemapXml(db, env);
+  const xml = await buildSitemapXml(db);
   return new Response(xml, {
     status: 200,
     headers: {

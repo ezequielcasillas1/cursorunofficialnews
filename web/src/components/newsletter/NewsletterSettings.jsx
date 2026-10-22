@@ -33,26 +33,21 @@ function collapsedSummary(prefs) {
   return digestStateLabel(prefs);
 }
 
-export function NewsletterSettings({ membership }) {
-  const { newsletterUnlocked, checking: membershipChecking, memberEmail } = membership || {};
-
+export function NewsletterSettings() {
   const {
     prefs,
     loading,
     syncing,
     statusMessage,
     errorMessage,
+    setEmail,
     toggleCategory,
     setCategoryLimit,
     setOfficialOnly,
     setEnabled,
     subscribe,
     unsubscribe,
-  } = useNewsletter(membership);
-
-  if (membershipChecking || !newsletterUnlocked) {
-    return null;
-  }
+  } = useNewsletter();
 
   return (
     <CollapsiblePanel
@@ -60,7 +55,7 @@ export function NewsletterSettings({ membership }) {
       className="newsletter-panel"
       eyebrow="Email digest · Beta"
       title="Newsletter options"
-      subtitle="Choose topics and manage your member email digest."
+      subtitle="Choose topics and manage your email digest."
       summary={loading ? 'Loading newsletter settings…' : collapsedSummary(prefs)}
       defaultExpanded={NEWSLETTER_PANEL_DEFAULT_EXPANDED}
       loading={loading}
@@ -82,10 +77,20 @@ export function NewsletterSettings({ membership }) {
       ) : null}
 
       <div className="newsletter-grid">
-        <div className="newsletter-field">
+        <label className="newsletter-field" htmlFor="newsletter-email">
           <span className="newsletter-field-label">Email address</span>
-          <p className="hint">{memberEmail || prefs.email} — your membership email</p>
-        </div>
+          <input
+            id="newsletter-email"
+            type="email"
+            autoComplete="email"
+            value={prefs.email || ''}
+            onChange={(event) => {
+              setEmail(event.target.value);
+            }}
+            disabled={syncing}
+            placeholder="you@example.com"
+          />
+        </label>
 
         <label className="newsletter-toggle">
           <span className="newsletter-field-label">Digest emails</span>
@@ -252,7 +257,7 @@ export function NewsletterSettings({ membership }) {
       <p className="hint newsletter-footer-note">
         New sign-ups must confirm via the email we send before digests begin. This
         browser remembers your settings after you subscribe. You can also{' '}
-        <a href="/newsletter/unsubscribe">unsubscribe here</a> or from the link at the bottom of
+        <a href="/newsletter/unsubscribe/">unsubscribe here</a> or from the link at the bottom of
         every digest email.
       </p>
     </CollapsiblePanel>

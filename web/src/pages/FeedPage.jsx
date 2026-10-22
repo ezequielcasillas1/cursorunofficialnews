@@ -3,13 +3,12 @@ import { PageMeta } from '../components/PageMeta.jsx';
 import { StatusBar } from '../components/AboutPanel.jsx';
 import { CategoryFilter } from '../components/CategoryFilter.jsx';
 import { FeedSearch } from '../components/FeedSearch.jsx';
-import { MonetizationSection } from '../components/monetization/MonetizationSection.jsx';
+import { SupportPanel } from '../components/support/SupportPanel.jsx';
 import { NewsletterSettings } from '../components/newsletter/NewsletterSettings.jsx';
 import { FeedPagination } from '../components/FeedPagination.jsx';
 import { NewsFeed } from '../components/NewsFeed.jsx';
 import { getCategoryApiParam, FEED_PAGE_SIZE, FEED_SEARCH_FETCH_LIMIT } from '../config/feedCategories.js';
 import { INGEST_SECRET } from '../config.js';
-import { useMembership } from '../monetization/useMembership.js';
 import {
   buildSourceMap,
   fetchNews,
@@ -47,8 +46,6 @@ export function FeedPage({ categoryId = 'all' }) {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
   const [status, setStatus] = useState({ lastIngestAt: null, sourceCount: 0, feedPublishedAfter: null });
-  const membership = useMembership();
-
   const activeCategoryFilter = useMemo(
     () => getActiveCategoryFilter(categoryFilters, selectedCategory),
     [categoryFilters, selectedCategory],
@@ -194,8 +191,8 @@ export function FeedPage({ categoryId = 'all' }) {
         resultCount={filteredItems.length}
         totalCount={isSearching ? items.length : feedMeta.total}
       />
-      <MonetizationSection membership={membership} />
-      <NewsletterSettings membership={membership} />
+      <SupportPanel />
+      <NewsletterSettings />
       <main className="app-main" id="feed">
         <NewsFeed
           items={filteredItems}

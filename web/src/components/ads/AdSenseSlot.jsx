@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { ADSENSE_CLIENT_ID, ADSENSE_SLOT_ID, isAdSenseConfigured } from '../../monetization/config.js';
+import { ADSENSE_CLIENT_ID, ADSENSE_SLOT_ID, isAdSenseConfigured } from '../../config/adsense.js';
 
 let adsenseScriptPromise;
 
@@ -36,7 +36,6 @@ export function AdSenseSlot({ className = '' }) {
   const slotRef = useRef(null);
   const pushedRef = useRef(false);
   const clientId = ADSENSE_CLIENT_ID || 'ca-pub-5184491334740169';
-  // Manual <ins> units need a slot ID from AdSense → Units. Without it, rely on auto ads in index.html.
   const hasDisplayUnit = Boolean(ADSENSE_SLOT_ID);
   const adsEnabled = hasDisplayUnit && (isAdSenseConfigured() || isAdSenseScriptPresent());
 

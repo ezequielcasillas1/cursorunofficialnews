@@ -23,7 +23,6 @@ const MAX_DEVICE_TOKEN_LENGTH = 512;
 import { isScrapeConfigured } from '../ingest/scrape.js';
 import { isTwitterApiConfigured } from '../ingest/twitter-api.js';
 import { isWorkersAiConfigured } from '../llm/workers-ai-client.js';
-import { getStripeMembershipConfigStatus } from '../monetization/stripe-client.js';
 import { runIngestWithLock } from '../ingest/run-ingest.js';
 import { healthPayload } from '../ops/site-offline.js';
 
@@ -50,7 +49,6 @@ export function registerCoreRoutes(app) {
       payload.scrapeConfigured = isScrapeConfigured(c.env);
       payload.twitterApiConfigured = isTwitterApiConfigured(c.env);
       payload.workersAiConfigured = isWorkersAiConfigured(c.env);
-      payload.stripeMembership = getStripeMembershipConfigStatus(c.env);
     }
     return c.json(payload);
   });
