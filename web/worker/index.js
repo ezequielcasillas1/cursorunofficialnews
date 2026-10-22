@@ -85,6 +85,10 @@ export default {
         });
       }
     }
+    if (url.pathname.startsWith("/assets/")) {
+      return env.ASSETS.fetch(request);
+    }
+
 
     return resolveSpaAsset(request, env, env.DB);
   },
