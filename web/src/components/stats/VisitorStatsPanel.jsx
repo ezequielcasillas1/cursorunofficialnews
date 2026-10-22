@@ -41,6 +41,9 @@ export function VisitorStatsPanel({ status = null }) {
   const isDevSample = stats?.sampleData === true || stats?.aggregatesSource === 'dev_sample';
   const statsUnavailable =
     !error && stats && stats.aggregatesSource === 'unavailable' && !isDevSample;
+  const botsIncludedInAggregates =
+    stats?.aggregatesIncludeBots === true ||
+    stats?.aggregatesSource === 'cloudflare_http_includes_bots';
   const lastIngest = status?.lastIngestAt ? new Date(status.lastIngestAt) : null;
   const updatedLabel =
     lastIngest && !Number.isNaN(lastIngest.getTime())
@@ -53,7 +56,9 @@ export function VisitorStatsPanel({ status = null }) {
         <p className="visitor-stats-kicker">Public dashboard</p>
         <h2 className="visitor-stats-title">Visitors</h2>
         <p className="visitor-stats-subtitle">
-          Aggregate counts from Cloudflare Analytics (bots excluded). Live presence uses lightweight heartbeats.
+          {botsIncludedInAggregates
+            ? 'Daily totals from zone HTTP analytics (includes bots). Live presence uses lightweight heartbeats.'
+            : 'Aggregate counts from Cloudflare Web Analytics (real browsers; bots excluded). Live presence uses lightweight heartbeats.'}
         </p>
       </div>
 

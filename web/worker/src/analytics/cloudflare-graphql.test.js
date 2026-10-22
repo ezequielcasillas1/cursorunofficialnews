@@ -4,7 +4,9 @@ import assert from 'node:assert/strict';
 import {
   fetchDailyUniqueVisitors,
   isCloudflareAnalyticsConfigured,
-  parseGraphqlDailyUniques,
+  isRumAnalyticsConfigured,
+  parseGraphqlHttpDailyUniques,
+  parseGraphqlRumDailyVisits,
 } from './cloudflare-graphql.js';
 
 describe('cloudflare-graphql', () => {
@@ -12,8 +14,8 @@ describe('cloudflare-graphql', () => {
     mock.restoreAll();
   });
 
-  it('parseGraphqlDailyUniques maps zone groups to date rows', () => {
-    const rows = parseGraphqlDailyUniques({
+  it('parseGraphqlHttpDailyUniques maps zone groups to date rows', () => {
+    const rows = parseGraphqlHttpDailyUniques({
       data: {
         viewer: {
           zones: [
@@ -34,6 +36,47 @@ describe('cloudflare-graphql', () => {
     ]);
   });
 
+  it('parseGraphqlRumDailyVisits sums visits per date and filters requestHost', () => {
+    const rows = parseGraphqlRumDailyVisits(
+      {
+        data: {
+          viewer: {
+            accounts: [
+              {
+                rumPageloadEventsAdaptiveGroups: [
+                  {
+                    dimensions: { date: '2026-10-20', requestHost: 'cursorunofficial.news' },
+                    sum: { visits: 40 },
+                  },
+                  {
+                    dimensions: { date: '2026-10-20', requestHost: 'other.example' },
+                    sum: { visits: 5 },
+                  },
+                  {
+                    dimensions: { date: '2026-10-21', requestHost: 'cursorunofficial.news' },
+                    sum: { visits: 12 },
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      },
+      { requestHost: 'cursorunofficial.news' },
+    );
+
+    assert.deepEqual(rows, [
+      { date: '2026-10-20', visitors: 40 },
+      { date: '2026-10-21', visitors: 12 },
+    ]);
+  });
+
+  it('isCloudflareAnalyticsConfigured accepts RUM or zone HTTP credentials', () => {
+    assert.equal(isRumAnalyticsConfigured({ CF_ANALYTICS_TOKEN: 't', CF_ANALYTICS_ACCOUNT_ID: 'a', CF_WEB_ANALYTICS_SITE_TAG: 's' }), true);
+    assert.equal(isCloudflareAnalyticsConfigured({ CF_ANALYTICS_TOKEN: 't', CF_ANALYTICS_ZONE_ID: 'z' }), true);
+    assert.equal(isCloudflareAnalyticsConfigured({ CF_ANALYTICS_ZONE_ID: 'z' }), false);
+  });
+
   it('fetchDailyUniqueVisitors returns not configured without token', async () => {
     const result = await fetchDailyUniqueVisitors(
       { CF_ANALYTICS_ZONE_ID: 'zone-1' },
@@ -43,28 +86,33 @@ describe('cloudflare-graphql', () => {
     assert.equal(result.reason, 'analytics_not_configured');
   });
 
-  it('fetchDailyUniqueVisitors posts GraphQL and parses mocked response', async () => {
+  it('fetchDailyUniqueVisitors uses RUM when account and site tag are set', async () => {
     const env = {
       CF_ANALYTICS_TOKEN: 'test-token',
-      CF_ANALYTICS_ZONE_ID: 'zone-abc',
+      CF_ANALYTICS_ACCOUNT_ID: 'acct-1',
+      CF_WEB_ANALYTICS_SITE_TAG: 'site-abc',
+      CF_ANALYTICS_ZONE_ID: 'zone-fallback',
     };
-
-    assert.equal(isCloudflareAnalyticsConfigured(env), true);
 
     mock.method(globalThis, 'fetch', async (_url, init) => {
       const body = JSON.parse(init.body);
-      assert.equal(body.variables.zoneTag, 'zone-abc');
-      assert.equal(body.variables.dateGte, '2026-10-20');
+      assert.match(body.query, /rumPageloadEventsAdaptiveGroups/);
+      assert.equal(body.variables.accountTag, 'acct-1');
+      assert.equal(body.variables.siteTag, 'site-abc');
+      assert.equal(body.variables.datetimeGte, '2026-10-20T00:00:00Z');
       assert.match(init.headers.Authorization, /^Bearer test-token$/);
 
       return new Response(
         JSON.stringify({
           data: {
             viewer: {
-              zones: [
+              accounts: [
                 {
-                  httpRequests1dGroups: [
-                    { dimensions: { date: '2026-10-20' }, uniq: { uniques: 42 } },
+                  rumPageloadEventsAdaptiveGroups: [
+                    {
+                      dimensions: { date: '2026-10-20', requestHost: 'cursorunofficial.news' },
+                      sum: { visits: 42 },
+                    },
                   ],
                 },
               ],
@@ -82,6 +130,102 @@ describe('cloudflare-graphql', () => {
     });
 
     assert.equal(result.ok, true);
+    assert.equal(result.analyticsMode, 'rum');
+    assert.equal(result.includesBots, false);
     assert.deepEqual(result.rows, [{ date: '2026-10-20', visitors: 42 }]);
+  });
+
+  it('fetchDailyUniqueVisitors falls back to zone HTTP without requestSource when RUM fails', async () => {
+    const env = {
+      CF_ANALYTICS_TOKEN: 'test-token',
+      CF_ANALYTICS_ACCOUNT_ID: 'acct-1',
+      CF_WEB_ANALYTICS_SITE_TAG: 'site-abc',
+      CF_ANALYTICS_ZONE_ID: 'zone-abc',
+    };
+
+    let call = 0;
+    mock.method(globalThis, 'fetch', async (_url, init) => {
+      call += 1;
+      const body = JSON.parse(init.body);
+
+      if (call === 1) {
+        assert.match(body.query, /rumPageloadEventsAdaptiveGroups/);
+        return new Response(
+          JSON.stringify({ errors: [{ message: 'site not found' }] }),
+          { status: 200 },
+        );
+      }
+
+      assert.match(body.query, /httpRequests1dGroups/);
+      assert.equal(body.variables.zoneTag, 'zone-abc');
+      assert.equal(body.query.includes('requestSource'), false);
+
+      return new Response(
+        JSON.stringify({
+          data: {
+            viewer: {
+              zones: [
+                {
+                  httpRequests1dGroups: [
+                    { dimensions: { date: '2026-10-20' }, uniq: { uniques: 99 } },
+                  ],
+                },
+              ],
+            },
+          },
+        }),
+        { status: 200 },
+      );
+    });
+
+    const result = await fetchDailyUniqueVisitors(env, {
+      startDate: '2026-10-20',
+      endDate: '2026-10-20',
+      limit: 1,
+    });
+
+    assert.equal(call, 2);
+    assert.equal(result.ok, true);
+    assert.equal(result.analyticsMode, 'http_includes_bots');
+    assert.equal(result.includesBots, true);
+    assert.deepEqual(result.rows, [{ date: '2026-10-20', visitors: 99 }]);
+  });
+
+  it('fetchDailyUniqueVisitors uses zone HTTP when only zone credentials exist', async () => {
+    const env = {
+      CF_ANALYTICS_TOKEN: 'test-token',
+      CF_ANALYTICS_ZONE_ID: 'zone-only',
+    };
+
+    mock.method(globalThis, 'fetch', async (_url, init) => {
+      const body = JSON.parse(init.body);
+      assert.match(body.query, /httpRequests1dGroups/);
+      assert.equal(body.query.includes('requestSource'), false);
+
+      return new Response(
+        JSON.stringify({
+          data: {
+            viewer: {
+              zones: [
+                {
+                  httpRequests1dGroups: [
+                    { dimensions: { date: '2026-10-19' }, uniq: { uniques: 7 } },
+                  ],
+                },
+              ],
+            },
+          },
+        }),
+        { status: 200 },
+      );
+    });
+
+    const result = await fetchDailyUniqueVisitors(env, {
+      startDate: '2026-10-19',
+      endDate: '2026-10-19',
+    });
+
+    assert.equal(result.analyticsMode, 'http_includes_bots');
+    assert.deepEqual(result.rows, [{ date: '2026-10-19', visitors: 7 }]);
   });
 });

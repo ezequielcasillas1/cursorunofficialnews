@@ -67,6 +67,7 @@ export async function buildPublicVisitorStats(db, env, { online } = {}) {
 
   let aggregatesSource = 'd1_snapshots';
   let liveRows = [];
+  let aggregatesIncludeBots = false;
 
   const live = await fetchDailyUniqueVisitors(env, {
     startDate: start30,
@@ -75,7 +76,9 @@ export async function buildPublicVisitorStats(db, env, { online } = {}) {
   });
 
   if (live.ok) {
-    aggregatesSource = 'cloudflare';
+    aggregatesSource =
+      live.analyticsMode === 'http_includes_bots' ? 'cloudflare_http_includes_bots' : 'cloudflare_rum';
+    aggregatesIncludeBots = live.includesBots === true;
     liveRows = live.rows;
   }
 
@@ -107,6 +110,7 @@ export async function buildPublicVisitorStats(db, env, { online } = {}) {
     last30Days: hasRealAggregates ? last30Days : null,
     history: hasRealAggregates ? history : [],
     aggregatesSource: live.ok ? aggregatesSource : dbHistory.length ? 'd1_snapshots' : 'unavailable',
+    aggregatesIncludeBots: live.ok ? aggregatesIncludeBots : false,
     sampleData: false,
     asOf: new Date().toISOString(),
   };
