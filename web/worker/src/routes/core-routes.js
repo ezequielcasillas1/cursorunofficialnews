@@ -14,6 +14,7 @@ import { listDevices, registerDevice, unregisterDevice } from '../store/device-t
 import { optionalRegisterSecret, requireIngestSecret } from '../middleware/require-api-secret.js';
 import { checkRateLimit, clientRateKey } from '../security/rate-limit.js';
 import { publicErrorMessage } from '../security/public-error.js';
+import { isAutomatedVisitorRequest } from '../security/visitor-bot.js';
 
 const DEVICE_REGISTER_RATE_MS = 60_000;
 const PRESENCE_HEARTBEAT_RATE_MS = 15_000;
@@ -71,6 +72,12 @@ export function registerCoreRoutes(app) {
     const db = c.env.DB;
 
     try {
+      if (isAutomatedVisitorRequest(c)) {
+        await pruneStalePresence(db);
+        const online = await getActiveVisitorCount(db);
+        return c.json({ online, recorded: false, reason: 'automated_client' });
+      }
+
       let sessionId = getCookie(c, PRESENCE_SESSION_COOKIE);
       const rateKey = isValidSessionId(sessionId)
         ? `session:${sessionId}:presence-heartbeat`

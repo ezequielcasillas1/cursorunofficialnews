@@ -174,3 +174,11 @@ CREATE TABLE IF NOT EXISTS site_presence (
   last_seen TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_site_presence_last_seen ON site_presence (last_seen);
+
+-- Daily unique-visitor snapshots (Cloudflare GraphQL Analytics aggregates).
+CREATE TABLE IF NOT EXISTS visitor_analytics_daily (
+  date TEXT PRIMARY KEY,
+  visitors INTEGER NOT NULL,
+  captured_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_visitor_analytics_daily_date ON visitor_analytics_daily (date);

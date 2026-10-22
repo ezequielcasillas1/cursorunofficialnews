@@ -1,6 +1,7 @@
 import { createApp } from './src/app.js';
 import { bootstrapIngestIfEmpty, runIngestWithLock } from './src/ingest/run-ingest.js';
 import { runScheduledDigest } from './src/jobs/run-scheduled-digest.js';
+import { runVisitorAnalyticsSnapshot } from './src/jobs/snapshot-visitor-analytics.js';
 import { healthPayload, isHealthPath, isSiteOffline, offlineResponse } from './src/ops/site-offline.js';
 import { getNewsItem } from './src/store/news-store.js';
 import { sitemapResponse } from './src/seo/sitemap.js';
@@ -95,6 +96,19 @@ export default {
     }
 
     const cron = controller.cron;
+
+    if (cron === '15 6 * * *') {
+      ctx.waitUntil(
+        runVisitorAnalyticsSnapshot(env.DB, env)
+          .then((result) => {
+            console.log(JSON.stringify({ event: 'visitor_analytics_snapshot', cron, ...result }));
+          })
+          .catch((err) => {
+            console.error('[cron] visitor_analytics_snapshot', err.message || err);
+          }),
+      );
+      return;
+    }
 
     if (cron === '*/30 * * * *') {
       ctx.waitUntil(

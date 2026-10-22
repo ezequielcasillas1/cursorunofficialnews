@@ -5,6 +5,7 @@ import { registerCoreRoutes } from './routes/core-routes.js';
 import { registerEmailRoutes } from './notifications/email-routes.js';
 import { registerNewsletterRoutes } from './notifications/newsletter-routes.js';
 import { registerLlmRoutes } from './llm/llm-routes.js';
+import { registerPublicStatsRoutes } from './routes/public-stats-routes.js';
 import { isHealthPath, isSiteOffline, OFFLINE_MESSAGE } from './ops/site-offline.js';
 
 /**
@@ -50,6 +51,7 @@ export function createApp() {
   registerEmailRoutes(app);
   registerNewsletterRoutes(app);
   registerLlmRoutes(app);
+  registerPublicStatsRoutes(app);
 
   return app;
 }

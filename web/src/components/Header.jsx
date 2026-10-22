@@ -9,7 +9,7 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { HEADER_NAV } from '../config/siteNav.js';
-import { useSiteViews } from '../hooks/useSiteViews.js';
+import { VisitorStatsPanel } from './stats/VisitorStatsPanel.jsx';
 import { SupporterSlot } from './SupporterSlot.jsx';
 import { ThemeToggle } from './ThemeToggle.jsx';
 import { Tooltip } from './Tooltip.jsx';
@@ -111,61 +111,7 @@ function Marquee() {
   );
 }
 
-function HeroStatusCard({ status }) {
-  const lastIngest = status?.lastIngestAt ? new Date(status.lastIngestAt) : null;
-  const updatedLabel =
-    lastIngest && !Number.isNaN(lastIngest.getTime())
-      ? lastIngest.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
-      : null;
-
-  return (
-    <div
-      className="relative h-[420px] w-full rounded-3xl border border-[var(--color-border)] overflow-hidden animate-fade-up group backdrop-blur-sm bg-[var(--color-card)]/40"
-      style={{ animationDelay: '0.2s' }}
-    >
-      <div className="absolute inset-0 flex items-center justify-center">
-        <div className="absolute inset-8 rounded-full border border-[var(--color-border)] animate-spin-slow" />
-        <div
-          className="absolute inset-16 rounded-full border border-dashed border-[var(--color-border)] animate-spin-slow"
-          style={{ animationDirection: 'reverse' }}
-        />
-        <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-[var(--color-paper-deep)] shadow-2xl z-10 group-hover:border-[var(--color-gold)]/40 transition-colors duration-500 flex items-center justify-center bg-[var(--color-paper-warm)]">
-          <img
-            src="/brand/logo-icon.svg"
-            alt=""
-            width={72}
-            height={72}
-            className="opacity-80 group-hover:opacity-100 transition-opacity duration-500"
-          />
-        </div>
-        <div className="absolute bottom-24 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-[var(--color-paper-deep)]/90 border border-[var(--color-border)] backdrop-blur-md text-[10px] uppercase font-bold tracking-widest text-[var(--color-ink)] shadow-xl whitespace-nowrap">
-          FEED: <span className="text-[var(--color-gold)]">Active</span>
-        </div>
-      </div>
-
-      <div className="flex bg-[var(--color-paper-deep)]/70 border-[var(--color-border)] border rounded-2xl p-4 absolute right-6 bottom-6 left-6 backdrop-blur-md items-center justify-between gap-4">
-        <div>
-          <p className="text-[var(--color-ink)] text-xs font-bold uppercase tracking-widest">
-            Latest ingest
-          </p>
-          <p className="text-[var(--color-gold)] text-[10px] uppercase tracking-wider mt-1">
-            {updatedLabel ? `Updated ${updatedLabel}` : 'Updates every ~30 min'}
-          </p>
-        </div>
-        <div className="flex flex-col items-end">
-          <span className="text-[10px] uppercase tracking-wider text-[var(--color-ink-light)]">
-            {status?.sourceCount ? `${status.sourceCount} sources` : 'Sources'}
-          </span>
-          <div className="w-24 h-1 bg-[var(--color-border)] rounded-full mt-1 overflow-hidden">
-            <div className="h-full bg-[var(--color-gold)] w-full" />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function Hero({ status, onlineCount, heading = 'Cursor News', kicker = 'unofficially.' }) {
+function Hero({ status, heading = 'Cursor News', kicker = 'unofficially.' }) {
   const today = new Date().toLocaleDateString(undefined, {
     weekday: 'long',
     year: 'numeric',
@@ -209,11 +155,6 @@ function Hero({ status, onlineCount, heading = 'Cursor News', kicker = 'unoffici
 
             <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] uppercase tracking-widest text-[var(--color-ink-light)] m-0">
               <span>{today}</span>
-              {onlineCount !== null ? (
-                <span aria-live="polite" className="text-[var(--color-gold)]">
-                  {onlineCount.toLocaleString()} {onlineCount === 1 ? 'person' : 'people'} online
-                </span>
-              ) : null}
               <span className="flex gap-3">
                 {SOCIAL_LINKS.map((link) => (
                   <a
@@ -230,7 +171,7 @@ function Hero({ status, onlineCount, heading = 'Cursor News', kicker = 'unoffici
             </p>
           </div>
 
-          <HeroStatusCard status={status} />
+          <VisitorStatsPanel status={status} />
         </div>
       </section>
       <Marquee />
@@ -247,8 +188,6 @@ export function Header({
   heroKicker = 'unofficially.',
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const onlineCount = useSiteViews();
-
   return (
     <header className={hero ? '' : 'pb-4'}>
       <nav className="fixed top-0 w-full z-50 border-b border-[var(--color-border)] bg-[var(--color-paper)]/80 backdrop-blur-xl">
@@ -330,7 +269,7 @@ export function Header({
       </nav>
 
       {hero ? (
-        <Hero status={status} onlineCount={onlineCount} heading={heroHeading} kicker={heroKicker} />
+        <Hero status={status} heading={heroHeading} kicker={heroKicker} />
       ) : (
         <div className="h-16" aria-hidden="true" />
       )}
