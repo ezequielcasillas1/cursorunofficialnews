@@ -575,6 +575,21 @@ html[data-theme='light'] .feed-search-input {
   margin: 0;
 }
 
+.visitor-stats-sample-banner {
+  background: color-mix(in srgb, var(--color-gold) 12%, transparent);
+  border: 1px dashed var(--color-gold);
+  border-radius: var(--radius-md);
+  color: var(--color-ink-muted);
+  font-size: 0.75rem;
+  line-height: 1.45;
+  margin: 0;
+  padding: var(--space-sm) var(--space-md);
+}
+
+.visitor-stats-sample-banner code {
+  font-size: 0.6875rem;
+}
+
 .visitor-stats-chart {
   align-items: flex-end;
   display: flex;

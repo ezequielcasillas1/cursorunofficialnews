@@ -38,6 +38,9 @@ export function VisitorStatsPanel({ status = null }) {
   const { stats, error } = useVisitorStats();
 
   const online = typeof liveOnline === 'number' ? liveOnline : stats?.online ?? null;
+  const isDevSample = stats?.sampleData === true || stats?.aggregatesSource === 'dev_sample';
+  const statsUnavailable =
+    !error && stats && stats.aggregatesSource === 'unavailable' && !isDevSample;
   const lastIngest = status?.lastIngestAt ? new Date(status.lastIngestAt) : null;
   const updatedLabel =
     lastIngest && !Number.isNaN(lastIngest.getTime())
@@ -74,12 +77,16 @@ export function VisitorStatsPanel({ status = null }) {
         </div>
       </dl>
 
-      {error ? (
-        <p className="visitor-stats-hint">Visitor totals are temporarily unavailable. Live count may still update.</p>
-      ) : stats?.aggregatesSource === 'unavailable' ? (
-        <p className="visitor-stats-hint">
-          Historical totals need Cloudflare Analytics configured on the Worker. Live presence still works.
+      {isDevSample ? (
+        <p className="visitor-stats-sample-banner" role="note">
+          Sample numbers — dev preview only. Set <code>CF_ANALYTICS_TOKEN</code> on the Worker before production deploy.
         </p>
+      ) : null}
+
+      {error ? (
+        <p className="visitor-stats-hint">Stats unavailable. Live count may still update.</p>
+      ) : statsUnavailable ? (
+        <p className="visitor-stats-hint">Stats unavailable. Live presence still updates.</p>
       ) : null}
 
       <VisitorHistoryChart history={stats?.history} />

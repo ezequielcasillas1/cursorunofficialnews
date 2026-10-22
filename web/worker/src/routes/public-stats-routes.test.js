@@ -64,14 +64,16 @@ function createStatsDb() {
   };
 }
 
-const env = {
-  ENVIRONMENT: 'test',
-  DB: null,
-};
+function makeEnv(db) {
+  return {
+    ENVIRONMENT: 'test',
+    DB: db,
+  };
+}
 
 describe('public visitor stats API', () => {
   it('does not expose analytics token or per-visitor fields', async () => {
-    env.DB = createStatsDb();
+    const env = makeEnv(createStatsDb());
     const app = createApp();
     const res = await app.request('http://localhost/api/v1/public/visitor-stats', {}, env);
     const body = await res.json();
@@ -83,11 +85,26 @@ describe('public visitor stats API', () => {
     assert.equal(serialized.includes('CF_ANALYTICS'), false);
     assert.equal(Array.isArray(body.history), true);
     assert.equal(typeof body.online, 'number');
+    assert.equal(body.sampleData, true);
+    assert.equal(body.aggregatesSource, 'dev_sample');
+  });
+
+  it('returns unavailable aggregates in production without analytics', async () => {
+    const env = makeEnv(createStatsDb());
+    env.ENVIRONMENT = 'production';
+    const app = createApp();
+    const res = await app.request('http://localhost/api/v1/public/visitor-stats', {}, env);
+    const body = await res.json();
+
+    assert.equal(body.aggregatesSource, 'unavailable');
+    assert.equal(body.sampleData, false);
+    assert.equal(body.today, null);
+    assert.equal(body.history.length, 0);
   });
 
   it('ignores bot heartbeats for presence counts', async () => {
     const db = createStatsDb();
-    env.DB = db;
+    const env = makeEnv(db);
     const app = createApp();
     const humanId = createSessionId();
 

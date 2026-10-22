@@ -25,6 +25,7 @@ export function registerPublicStatsRoutes(app) {
         last30Days: null,
         history: [],
         aggregatesSource: 'unavailable',
+        sampleData: false,
         asOf: new Date().toISOString(),
       });
     }

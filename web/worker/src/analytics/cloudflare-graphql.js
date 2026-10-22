@@ -34,7 +34,7 @@ export function isCloudflareAnalyticsConfigured(env) {
   return Boolean(String(env?.CF_ANALYTICS_TOKEN || '').trim() && String(env?.CF_ANALYTICS_ZONE_ID || '').trim());
 }
 
-function parseGraphqlRows(payload) {
+export function parseGraphqlDailyUniques(payload) {
   const groups = payload?.data?.viewer?.zones?.[0]?.httpRequests1dGroups;
   if (!Array.isArray(groups)) return [];
   return groups.map((entry) => ({
@@ -80,7 +80,7 @@ export async function fetchDailyUniqueVisitors(env, { startDate, endDate, limit 
     return { ok: false, reason: 'analytics_fetch_failed', rows: [], message };
   }
 
-  const rows = parseGraphqlRows(body).filter((row) => row.date);
+  const rows = parseGraphqlDailyUniques(body).filter((row) => row.date);
   return { ok: true, rows };
 }
 
