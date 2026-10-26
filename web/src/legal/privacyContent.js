@@ -1,5 +1,7 @@
 /** Privacy Policy copy — editable without touching page layout. */
 
+import { OWNER_BLUESKY_LABEL, OWNER_BLUESKY_URL } from '../config/ownerSocial.js';
+
 export const PRIVACY_POLICY = {
   title: 'Privacy Policy',
   lastUpdated: 'July 3, 2026',
@@ -46,10 +48,10 @@ export const PRIVACY_POLICY = {
     {
       heading: 'Your choices',
       paragraphs: [
-        'For privacy-related questions or requests, contact us at customerservice@cursorunofficial.news. You can also manage your data directly on the site:',
+        'For privacy-related questions or requests, message the maintainer on Bluesky (@casiezeq). You can also manage your data directly on the site:',
       ],
       list: [
-        { label: 'customerservice@cursorunofficial.news', href: 'mailto:customerservice@cursorunofficial.news' },
+        { label: OWNER_BLUESKY_LABEL, href: OWNER_BLUESKY_URL, external: true },
         { label: 'Newsletter settings', href: '/newsletter' },
         { label: 'Unsubscribe from newsletter emails', href: '/newsletter/unsubscribe' },
         { label: 'Cancel paid membership (Stripe subscription)', href: '/membership/unsubscribe' },

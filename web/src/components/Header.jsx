@@ -14,13 +14,7 @@ import { SupporterSlot } from './SupporterSlot.jsx';
 import { ThemeToggle } from './ThemeToggle.jsx';
 import { Tooltip } from './Tooltip.jsx';
 import { Icon } from './ui/Icon.jsx';
-
-const SOCIAL_LINKS = [
-  { label: 'X', href: 'https://x.com/casiezeq' },
-  { label: 'TikTok', href: 'https://www.tiktok.com/@casiezeq' },
-  { label: 'Instagram @casiezeq', href: 'https://www.instagram.com/casiezeq' },
-  { label: 'Reddit', href: 'https://reddit.com/user/Ok-Address3409' },
-];
+import { OWNER_BLUESKY_LABEL, OWNER_BLUESKY_URL } from '../config/ownerSocial.js';
 
 const MARQUEE_WORDS = [
   { text: 'CHANGELOG', serif: false },
@@ -155,19 +149,14 @@ function Hero({ status, heading = 'Cursor News', kicker = 'unofficially.' }) {
 
             <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] uppercase tracking-widest text-[var(--color-ink-light)] m-0">
               <span>{today}</span>
-              <span className="flex gap-3">
-                {SOCIAL_LINKS.map((link) => (
-                  <a
-                    key={link.label}
-                    href={link.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="hover:text-[var(--color-gold-bright)] transition-colors no-underline text-[var(--color-ink-light)]"
-                  >
-                    {link.label}
-                  </a>
-                ))}
-              </span>
+              <a
+                href={OWNER_BLUESKY_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-[var(--color-gold-bright)] transition-colors no-underline text-[var(--color-ink-light)]"
+              >
+                {OWNER_BLUESKY_LABEL}
+              </a>
             </p>
           </div>
 
