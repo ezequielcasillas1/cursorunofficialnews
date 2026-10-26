@@ -12,9 +12,9 @@ export function CategoryFilter({
   onCategoryFilterChange,
 }) {
   return (
-    <div className="filter-section sticky top-16 z-40 bg-[var(--color-paper)]/90 backdrop-blur-xl pb-3">
+    <div className="filter-section sticky top-14 sm:top-16 z-40 bg-[var(--color-paper)]/90 backdrop-blur-xl pb-3 min-w-0">
       <span className="filter-label">Sections</span>
-      <nav className="flex flex-wrap gap-2" aria-label="Filter by section">
+      <nav className="category-nav-scroll md:flex-wrap md:overflow-visible" aria-label="Filter by section">
         {FEED_CATEGORIES.map((cat) => {
           const active = selectedCategory === cat.id;
           return (
@@ -23,7 +23,7 @@ export function CategoryFilter({
                 asChild
                 variant={active ? 'default' : 'outline'}
                 size="sm"
-                className="h-8 rounded-full px-3.5 text-[10px] font-semibold uppercase tracking-[0.1em]"
+                className="category-nav-chip h-11 rounded-full px-3.5 text-[10px] font-semibold uppercase tracking-[0.1em]"
               >
                 <NavLink to={getPathForCategory(cat.id)} end={cat.id === 'all'}>
                   {cat.label}

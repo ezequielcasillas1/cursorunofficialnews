@@ -59,7 +59,7 @@ export function CategoryFilterPanel({
                 type="button"
                 variant={normalized.officialOnly ? 'default' : 'outline'}
                 size="sm"
-                className="h-8 rounded-full px-3.5 text-[10px] font-semibold uppercase tracking-[0.1em]"
+                className="min-h-11 h-11 rounded-full px-3.5 text-[10px] font-semibold uppercase tracking-[0.1em]"
                 aria-pressed={normalized.officialOnly}
                 onClick={handleOfficialToggle}
               >
@@ -85,7 +85,7 @@ export function CategoryFilterPanel({
                     type="button"
                     variant={selected ? 'default' : 'outline'}
                     size="sm"
-                    className="h-8 rounded-full px-3.5 text-[10px] font-semibold uppercase tracking-[0.1em]"
+                    className="min-h-11 h-11 rounded-full px-3.5 text-[10px] font-semibold uppercase tracking-[0.1em]"
                     aria-pressed={Boolean(selected)}
                     onClick={() => handleSourceToggle(source.id)}
                   >

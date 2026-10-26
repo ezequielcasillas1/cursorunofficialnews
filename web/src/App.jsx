@@ -14,6 +14,7 @@ import { TermsPage } from './pages/TermsPage.jsx';
 import { NotFoundPage } from './pages/NotFoundPage.jsx';
 import { FEED_SECTION_ROUTES } from './routes/feedRoutes.js';
 import './App.css';
+import './responsive.css';
 
 function Redirect({ to }) {
   return <Navigate to={to} replace />;
