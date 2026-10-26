@@ -12,7 +12,6 @@ query RumDailyVisits(
     accounts(filter: { accountTag: $accountTag }) {
       rumPageloadEventsAdaptiveGroups(
         limit: $limit
-        orderBy: [date_ASC]
         filter: {
           siteTag: $siteTag
           datetime_geq: $datetimeGte
@@ -65,6 +64,26 @@ function trimEnv(value) {
   return String(value ?? '').trim();
 }
 
+/** Normalize GraphQL date/datetime dimensions to YYYY-MM-DD for D1 and range sums. */
+export function normalizeAnalyticsDateKey(value) {
+  const raw = trimEnv(value);
+  if (!raw) return '';
+  const match = raw.match(/^(\d{4}-\d{2}-\d{2})/);
+  return match ? match[1] : '';
+}
+
+function normalizeRequestHost(host) {
+  return trimEnv(host).toLowerCase().replace(/^www\./, '');
+}
+
+function requestHostMatches(filterHost, rowHost) {
+  const filter = normalizeRequestHost(filterHost);
+  if (!filter) return true;
+  const row = normalizeRequestHost(rowHost);
+  if (!row) return true;
+  return row === filter;
+}
+
 export function isRumAnalyticsConfigured(env) {
   return Boolean(
     trimEnv(env?.CF_ANALYTICS_TOKEN) &&
@@ -86,7 +105,7 @@ export function parseGraphqlHttpDailyUniques(payload) {
   const groups = payload?.data?.viewer?.zones?.[0]?.httpRequests1dGroups;
   if (!Array.isArray(groups)) return [];
   return groups.map((entry) => ({
-    date: entry.dimensions?.date,
+    date: normalizeAnalyticsDateKey(entry.dimensions?.date),
     visitors: Number(entry.uniq?.uniques ?? 0),
   }));
 }
@@ -99,15 +118,15 @@ export function parseGraphqlRumDailyVisits(payload, { requestHost } = {}) {
   const groups = payload?.data?.viewer?.accounts?.[0]?.rumPageloadEventsAdaptiveGroups;
   if (!Array.isArray(groups)) return [];
 
-  const hostFilter = trimEnv(requestHost).toLowerCase();
+  const hostFilter = trimEnv(requestHost);
   const byDate = new Map();
 
   for (const entry of groups) {
-    const date = entry.dimensions?.date;
+    const date = normalizeAnalyticsDateKey(entry.dimensions?.date);
     if (!date) continue;
 
-    const host = trimEnv(entry.dimensions?.requestHost).toLowerCase();
-    if (hostFilter && host && host !== hostFilter) continue;
+    const host = entry.dimensions?.requestHost;
+    if (!requestHostMatches(hostFilter, host)) continue;
 
     const visits = Number(entry.sum?.visits ?? 0);
     byDate.set(date, (byDate.get(date) ?? 0) + visits);
@@ -164,25 +183,38 @@ export async function fetchDailyUniqueVisitors(env, { startDate, endDate, limit 
     const siteTag = trimEnv(env.CF_WEB_ANALYTICS_SITE_TAG);
     const { datetimeGte, datetimeLeq } = dateRangeToDateTimeBounds(startDate, endDate);
 
+    // Adaptive groups are per dimension tuple (date × host × …); cap high enough for ~30 days.
+    const rumGroupLimit = Math.min(5000, Math.max(boundedLimit, boundedLimit * 16));
+
     const rum = await postGraphql(token, RUM_DAILY_VISITS_QUERY, {
       accountTag,
       siteTag,
       datetimeGte,
       datetimeLeq,
-      limit: boundedLimit,
+      limit: rumGroupLimit,
     });
 
     if (rum.ok) {
       const rows = parseGraphqlRumDailyVisits(rum.body, { requestHost }).filter((row) => row.date);
-      return {
-        ok: true,
-        rows,
-        analyticsMode: 'rum',
-        includesBots: false,
-      };
-    }
+      if (rows.length > 0) {
+        return {
+          ok: true,
+          rows,
+          analyticsMode: 'rum',
+          includesBots: false,
+        };
+      }
 
-    if (!isZoneHttpAnalyticsConfigured(env)) {
+      if (!isZoneHttpAnalyticsConfigured(env)) {
+        return {
+          ok: true,
+          rows: [],
+          analyticsMode: 'rum',
+          includesBots: false,
+          message: 'rum_empty',
+        };
+      }
+    } else if (!isZoneHttpAnalyticsConfigured(env)) {
       return {
         ok: false,
         reason: 'analytics_fetch_failed',

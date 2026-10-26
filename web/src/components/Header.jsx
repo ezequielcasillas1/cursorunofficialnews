@@ -52,7 +52,7 @@ function BrandMark() {
           event.currentTarget.hidden = true;
         }}
       />
-      <span className="font-display font-semibold text-sm tracking-tight uppercase text-[var(--color-ink)]">
+      <span className="font-display font-semibold text-xs sm:text-sm tracking-tight uppercase text-[var(--color-ink)] max-w-[11rem] sm:max-w-none truncate sm:whitespace-normal">
         Unofficial <span className="text-[var(--color-gold)]">Cursor News</span>
       </span>
     </a>
@@ -121,16 +121,16 @@ function Hero({ status, heading = 'Cursor News', kicker = 'unofficially.' }) {
 
   return (
     <>
-      <section className="relative min-h-[92vh] flex items-center justify-center pt-24 pb-16 overflow-hidden">
+      <section className="relative min-h-0 md:min-h-[92vh] flex items-center justify-center pt-20 sm:pt-24 pb-10 md:pb-16 overflow-hidden">
         <WaveBackground />
-        <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-16 items-center relative z-10 w-full">
-          <div className="space-y-8 animate-fade-up">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 grid md:grid-cols-2 gap-10 md:gap-16 items-center relative z-10 w-full min-w-0">
+          <div className="space-y-6 md:space-y-8 animate-fade-up min-w-0">
             <div className="inline-flex items-center gap-2 text-[10px] uppercase font-bold tracking-widest rounded-full px-3 py-1 border border-[var(--color-border-subtle)] bg-[var(--color-card)]/50 backdrop-blur-sm text-[var(--color-ink-soft)]">
               <span className="ping-dot" aria-hidden="true" />
               Independent fan briefing
             </div>
 
-            <h1 className="text-6xl md:text-7xl lg:text-8xl font-semibold tracking-tighter text-[var(--color-ink)] leading-[0.9] m-0">
+            <h1 className="text-[2.35rem] sm:text-5xl md:text-7xl lg:text-8xl font-semibold tracking-tighter text-[var(--color-ink)] leading-[0.92] sm:leading-[0.9] m-0 break-words">
               {heading}
               <br />
               <span className="font-serif-accent text-[var(--color-ink-muted)]">{kicker}</span>
@@ -153,9 +153,9 @@ function Hero({ status, heading = 'Cursor News', kicker = 'unofficially.' }) {
               </Button>
             </div>
 
-            <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] uppercase tracking-widest text-[var(--color-ink-light)] m-0">
-              <span>{today}</span>
-              <span className="flex gap-3">
+            <p className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-y-2 gap-x-4 text-[11px] uppercase tracking-widest text-[var(--color-ink-light)] m-0">
+              <span className="shrink-0">{today}</span>
+              <span className="flex flex-wrap gap-x-3 gap-y-1">
                 {SOCIAL_LINKS.map((link) => (
                   <a
                     key={link.label}
@@ -171,7 +171,9 @@ function Hero({ status, heading = 'Cursor News', kicker = 'unofficially.' }) {
             </p>
           </div>
 
-          <VisitorStatsPanel status={status} />
+          <div className="w-full min-w-0 md:max-w-none">
+            <VisitorStatsPanel status={status} />
+          </div>
         </div>
       </section>
       <Marquee />
@@ -191,8 +193,10 @@ export function Header({
   return (
     <header className={hero ? '' : 'pb-4'}>
       <nav className="fixed top-0 w-full z-50 border-b border-[var(--color-border)] bg-[var(--color-paper)]/80 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-4">
-          <BrandMark />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-4 min-w-0">
+          <div className="min-w-0 shrink">
+            <BrandMark />
+          </div>
 
           <div className="hidden lg:flex flex-wrap items-center justify-end gap-x-4 gap-y-1 max-w-4xl text-[11px] font-semibold text-[var(--color-ink-muted)] uppercase tracking-widest">
             {HEADER_NAV.map((link) => (
@@ -207,7 +211,7 @@ export function Header({
             ))}
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             <ThemeToggle />
             {onRefresh ? (
               <Button
@@ -216,7 +220,7 @@ export function Header({
                 size="sm"
                 onClick={onRefresh}
                 disabled={refreshing}
-                className="hidden rounded-full uppercase tracking-widest sm:inline-flex"
+                className="hidden rounded-full uppercase tracking-widest md:inline-flex min-h-11"
               >
                 {refreshing ? 'Refreshing…' : 'Refresh'}
               </Button>
@@ -228,7 +232,7 @@ export function Header({
                   type="button"
                   variant="outline"
                   size="icon"
-                  className="rounded-full lg:hidden"
+                  className="rounded-full lg:hidden min-h-11 min-w-11"
                   aria-label={menuOpen ? 'Close menu' : 'Open menu'}
                 >
                   <Icon name={menuOpen ? 'x' : 'menu'} width={18} />
@@ -245,12 +249,15 @@ export function Header({
                       key={link.href}
                       href={link.href}
                       onClick={() => setMenuOpen(false)}
-                      className="rounded-lg px-2 py-3 text-muted-foreground no-underline transition-colors hover:bg-muted hover:text-primary"
+                      className="rounded-lg px-3 py-3 min-h-11 flex items-center text-muted-foreground no-underline transition-colors hover:bg-muted hover:text-primary"
                     >
                       {link.label}
                     </a>
                   ))}
                 </nav>
+                <div className="px-4 pt-2 md:hidden">
+                  <SupporterSlot variant="inline" className="w-full justify-center" />
+                </div>
                 {onRefresh ? (
                   <Button
                     type="button"
@@ -271,7 +278,7 @@ export function Header({
       {hero ? (
         <Hero status={status} heading={heroHeading} kicker={heroKicker} />
       ) : (
-        <div className="h-16" aria-hidden="true" />
+        <div className="h-14 sm:h-16" aria-hidden="true" />
       )}
     </header>
   );
