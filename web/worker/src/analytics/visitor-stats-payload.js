@@ -84,12 +84,13 @@ export async function buildPublicVisitorStats(db, env, { online } = {}) {
 
   const history = mergeHistoryRows(dbHistory, liveRows);
 
+  const hasLiveRows = live.ok && liveRows.length > 0;
+  const hasRealAggregates = hasLiveRows || dbHistory.length > 0;
+
   const todayVisitors =
     liveRows.find((row) => row.date === today)?.visitors ??
     dbHistory.find((row) => row.date === today)?.visitors ??
-    null;
-
-  const hasRealAggregates = live.ok || dbHistory.length > 0;
+    (hasRealAggregates ? 0 : null);
 
   if (!hasRealAggregates && isDevelopmentEnv(env) && !isProductionEnv(env)) {
     const sample = buildDevSampleVisitorAggregates({ today, start30, start7 });
@@ -109,8 +110,8 @@ export async function buildPublicVisitorStats(db, env, { online } = {}) {
     last7Days: hasRealAggregates ? last7Days : null,
     last30Days: hasRealAggregates ? last30Days : null,
     history: hasRealAggregates ? history : [],
-    aggregatesSource: live.ok ? aggregatesSource : dbHistory.length ? 'd1_snapshots' : 'unavailable',
-    aggregatesIncludeBots: live.ok ? aggregatesIncludeBots : false,
+    aggregatesSource: hasLiveRows ? aggregatesSource : dbHistory.length ? 'd1_snapshots' : 'unavailable',
+    aggregatesIncludeBots: hasLiveRows ? aggregatesIncludeBots : false,
     sampleData: false,
     asOf: new Date().toISOString(),
   };

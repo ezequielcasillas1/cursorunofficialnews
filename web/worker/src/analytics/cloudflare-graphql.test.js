@@ -5,6 +5,7 @@ import {
   fetchDailyUniqueVisitors,
   isCloudflareAnalyticsConfigured,
   isRumAnalyticsConfigured,
+  normalizeAnalyticsDateKey,
   parseGraphqlHttpDailyUniques,
   parseGraphqlRumDailyVisits,
 } from './cloudflare-graphql.js';
@@ -34,6 +35,36 @@ describe('cloudflare-graphql', () => {
       { date: '2026-10-20', visitors: 120 },
       { date: '2026-10-21', visitors: 98 },
     ]);
+  });
+
+  it('normalizeAnalyticsDateKey trims datetime values to UTC date', () => {
+    assert.equal(normalizeAnalyticsDateKey('2026-10-20T00:00:00Z'), '2026-10-20');
+    assert.equal(normalizeAnalyticsDateKey('2026-10-20'), '2026-10-20');
+    assert.equal(normalizeAnalyticsDateKey(''), '');
+  });
+
+  it('parseGraphqlRumDailyVisits matches www and apex requestHost', () => {
+    const rows = parseGraphqlRumDailyVisits(
+      {
+        data: {
+          viewer: {
+            accounts: [
+              {
+                rumPageloadEventsAdaptiveGroups: [
+                  {
+                    dimensions: { date: '2026-10-20', requestHost: 'www.cursorunofficial.news' },
+                    sum: { visits: 15 },
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      },
+      { requestHost: 'cursorunofficial.news' },
+    );
+
+    assert.deepEqual(rows, [{ date: '2026-10-20', visitors: 15 }]);
   });
 
   it('parseGraphqlRumDailyVisits sums visits per date and filters requestHost', () => {
@@ -133,6 +164,63 @@ describe('cloudflare-graphql', () => {
     assert.equal(result.analyticsMode, 'rum');
     assert.equal(result.includesBots, false);
     assert.deepEqual(result.rows, [{ date: '2026-10-20', visitors: 42 }]);
+  });
+
+  it('fetchDailyUniqueVisitors falls back to zone HTTP when RUM returns no rows', async () => {
+    const env = {
+      CF_ANALYTICS_TOKEN: 'test-token',
+      CF_ANALYTICS_ACCOUNT_ID: 'acct-1',
+      CF_WEB_ANALYTICS_SITE_TAG: 'site-abc',
+      CF_ANALYTICS_ZONE_ID: 'zone-abc',
+    };
+
+    let call = 0;
+    mock.method(globalThis, 'fetch', async (_url, init) => {
+      call += 1;
+      const body = JSON.parse(init.body);
+
+      if (call === 1) {
+        assert.match(body.query, /rumPageloadEventsAdaptiveGroups/);
+        return new Response(
+          JSON.stringify({
+            data: {
+              viewer: {
+                accounts: [{ rumPageloadEventsAdaptiveGroups: [] }],
+              },
+            },
+          }),
+          { status: 200 },
+        );
+      }
+
+      assert.match(body.query, /httpRequests1dGroups/);
+      return new Response(
+        JSON.stringify({
+          data: {
+            viewer: {
+              zones: [
+                {
+                  httpRequests1dGroups: [
+                    { dimensions: { date: '2026-10-20' }, uniq: { uniques: 55 } },
+                  ],
+                },
+              ],
+            },
+          },
+        }),
+        { status: 200 },
+      );
+    });
+
+    const result = await fetchDailyUniqueVisitors(env, {
+      startDate: '2026-10-20',
+      endDate: '2026-10-20',
+      limit: 1,
+    });
+
+    assert.equal(call, 2);
+    assert.equal(result.analyticsMode, 'http_includes_bots');
+    assert.deepEqual(result.rows, [{ date: '2026-10-20', visitors: 55 }]);
   });
 
   it('fetchDailyUniqueVisitors falls back to zone HTTP without requestSource when RUM fails', async () => {
