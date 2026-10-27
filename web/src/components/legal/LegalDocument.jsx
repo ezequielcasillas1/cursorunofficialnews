@@ -4,17 +4,9 @@ function renderListItem(item, index) {
   }
 
   if (item?.href) {
-    const external = item.external || /^https?:\/\//i.test(item.href);
     return (
       <li key={index}>
-        <a
-          href={item.href}
-          {...(external
-            ? { target: '_blank', rel: 'noopener noreferrer' }
-            : {})}
-        >
-          {item.label}
-        </a>
+        <a href={item.href}>{item.label}</a>
       </li>
     );
   }

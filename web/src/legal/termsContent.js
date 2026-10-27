@@ -1,5 +1,4 @@
 import { DISCLAIMER } from '../config.js';
-import { OWNER_BLUESKY_LABEL, OWNER_BLUESKY_URL } from '../config/ownerSocial.js';
 
 /** Terms of Use copy — editable without touching page layout. */
 
@@ -74,12 +73,12 @@ export const TERMS_OF_USE = {
       ],
     },
     {
-      heading: 'Account management',
+      heading: 'Account management and contact',
       paragraphs: [
-        'For account, billing, membership, or privacy questions, message the maintainer on Bluesky (@casiezeq). You can also manage newsletter and membership settings on the Site:',
+        'For account, billing, membership, or privacy questions, email customerservice@cursorunofficial.news. You can also manage newsletter and membership settings on the Site:',
       ],
       list: [
-        { label: OWNER_BLUESKY_LABEL, href: OWNER_BLUESKY_URL, external: true },
+        { label: 'customerservice@cursorunofficial.news', href: 'mailto:customerservice@cursorunofficial.news' },
         { label: 'Newsletter', href: '/newsletter' },
         { label: 'Unsubscribe from emails', href: '/newsletter/unsubscribe' },
         { label: 'Cancel membership', href: '/membership/unsubscribe' },

@@ -1,5 +1,3 @@
-import { OWNER_BLUESKY_LABEL, OWNER_BLUESKY_URL } from '../config/ownerSocial.js';
-
 export const EDITORIAL_POLICY = {
   title: 'Editorial Policy',
   lastUpdated: 'July 17, 2026',
@@ -48,11 +46,10 @@ export const EDITORIAL_POLICY = {
     {
       heading: 'Corrections and takedowns',
       paragraphs: [
-        'If a title, attribution, or commentary is wrong, or if you are a rights holder requesting removal of an excerpt or link listing, message the maintainer on Bluesky (@casiezeq) and we will review promptly.',
+        'If a title, attribution, or commentary is wrong, or if you are a rights holder requesting removal of an excerpt or link listing, contact us and we will review promptly.',
         'For privacy-related requests, see our Privacy Policy. For general terms of use, see Terms.',
       ],
       list: [
-        { label: OWNER_BLUESKY_LABEL, href: OWNER_BLUESKY_URL, external: true },
         { href: '/privacy', label: 'Privacy Policy' },
         { href: '/terms', label: 'Terms of Use' },
         { href: '/sources', label: 'Sources' },
