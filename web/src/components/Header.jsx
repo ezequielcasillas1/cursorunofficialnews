@@ -14,6 +14,7 @@ import { SupporterSlot } from './SupporterSlot.jsx';
 import { ThemeToggle } from './ThemeToggle.jsx';
 import { Tooltip } from './Tooltip.jsx';
 import { Icon } from './ui/Icon.jsx';
+import { BlueskyIcon } from './BlueskyIcon.jsx';
 import { OWNER_BLUESKY_LABEL, OWNER_BLUESKY_URL } from '../config/ownerSocial.js';
 
 const MARQUEE_WORDS = [
@@ -153,8 +154,9 @@ function Hero({ status, heading = 'Cursor News', kicker = 'unofficially.' }) {
                 href={OWNER_BLUESKY_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hover:text-[var(--color-gold-bright)] transition-colors no-underline text-[var(--color-ink-light)]"
+                className="inline-flex items-center gap-1.5 hover:text-[var(--color-gold-bright)] transition-colors no-underline text-[var(--color-ink-light)]"
               >
+                <BlueskyIcon size={12} className="shrink-0" />
                 {OWNER_BLUESKY_LABEL}
               </a>
             </p>

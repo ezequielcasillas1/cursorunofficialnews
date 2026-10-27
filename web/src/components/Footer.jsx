@@ -1,6 +1,7 @@
 import { Separator } from '@/components/ui/separator';
 import { APP_NAME, DISCLAIMER } from '../config.js';
 import { FOOTER_NAV, LEGAL_NAV } from '../config/siteNav.js';
+import { BlueskyIcon } from './BlueskyIcon.jsx';
 import { OWNER_BLUESKY_LABEL, OWNER_BLUESKY_URL } from '../config/ownerSocial.js';
 import { BUY_ME_A_COFFEE_URL } from './support/SupportPanel.jsx';
 import { Tooltip } from './Tooltip.jsx';
@@ -36,7 +37,13 @@ export function Footer() {
           — optional tip to help keep the feed free
         </p>
         <p className="site-footer-meta">
-          <a href={OWNER_BLUESKY_URL} target="_blank" rel="noopener noreferrer">
+          <a
+            href={OWNER_BLUESKY_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5"
+          >
+            <BlueskyIcon size={12} className="shrink-0" />
             {OWNER_BLUESKY_LABEL}
           </a>
           {' · '}
