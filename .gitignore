@@ -34,3 +34,6 @@ mobile/.gradle-trust/
 .chunk*.txt
 .dump-patches.js
 .extract-transcript.js
+# Android keystores
+*.keystore
+*.jks
