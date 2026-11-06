@@ -1,5 +1,9 @@
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { getPaginationRange } from '../feed/getPaginationRange.js';
+
+const paginationNavBtn =
+  'min-h-11 rounded-full sm:h-7 sm:min-h-0 sm:px-2.5 sm:text-[0.8rem]';
 
 export function FeedPagination({ page, totalPages, onPageChange, loading = false }) {
   if (totalPages <= 1) return null;
@@ -12,7 +16,7 @@ export function FeedPagination({ page, totalPages, onPageChange, loading = false
         type="button"
         variant="outline"
         size="sm"
-        className="rounded-full"
+        className={cn(paginationNavBtn)}
         onClick={() => onPageChange(page - 1)}
         disabled={loading || page <= 1}
         aria-label="Previous page"
@@ -32,7 +36,7 @@ export function FeedPagination({ page, totalPages, onPageChange, loading = false
                 type="button"
                 variant={entry === page ? 'default' : 'outline'}
                 size="icon"
-                className="rounded-full"
+                className="min-h-11 min-w-11 rounded-full sm:size-7"
                 onClick={() => onPageChange(entry)}
                 disabled={loading || entry === page}
                 aria-label={`Page ${entry}`}
@@ -49,7 +53,7 @@ export function FeedPagination({ page, totalPages, onPageChange, loading = false
         type="button"
         variant="outline"
         size="sm"
-        className="rounded-full"
+        className={cn(paginationNavBtn)}
         onClick={() => onPageChange(page + 1)}
         disabled={loading || page >= totalPages}
         aria-label="Next page"
