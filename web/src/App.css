@@ -2194,35 +2194,33 @@ html[data-theme='light'] .header-support-link {
   color: var(--color-gold);
 }
 
-.horizontal-scroll-rail {
-  width: 100%;
-  min-width: 0;
+.feed-section-catalog {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.feed-section-catalog-heading {
+  margin: 0 0 var(--space-sm);
+  font-family: var(--font-ui);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-ink-light);
+}
+
+.source-filter-registry-heading {
+  margin: 0 0 var(--space-sm);
+  font-family: var(--font-ui);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: capitalize;
+  color: var(--color-ink-muted);
 }
 
 @media (max-width: 767px) {
-  .horizontal-scroll-rail__track {
-    overflow-x: auto;
-    overflow-y: hidden;
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior-x: contain;
-    scroll-snap-type: x proximity;
-    scrollbar-width: thin;
-    padding-bottom: var(--space-sm);
-  }
-
-  .horizontal-scroll-rail .catalog-chip-row {
-    display: flex;
-    flex-wrap: nowrap;
-    width: max-content;
-    max-width: none;
-    gap: var(--space-sm);
-  }
-
-  .horizontal-scroll-rail .catalog-chip-row > * {
-    scroll-snap-align: start;
-    flex-shrink: 0;
-  }
-
   .app-main {
     padding-left: var(--space-md);
     padding-right: var(--space-md);
@@ -2280,11 +2278,5 @@ html[data-theme='light'] .header-support-link {
     align-items: center;
     min-height: 2.75rem;
     padding: 0.25rem 0;
-  }
-}
-
-@media (min-width: 768px) {
-  .horizontal-scroll-rail__track {
-    overflow: visible;
   }
 }
