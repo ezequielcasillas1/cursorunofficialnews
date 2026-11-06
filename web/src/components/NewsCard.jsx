@@ -65,9 +65,17 @@ export function NewsCard({ item, isOfficial = false, featured = false }) {
               {formatDate(item.publishedAt)}
             </time>
           </div>
-          <CardTitle className={cn('font-display text-xl leading-snug', featured && 'text-2xl')}>
+          <CardTitle
+            className={cn(
+              'min-w-0 break-words font-display text-xl leading-snug [overflow-wrap:anywhere]',
+              featured && 'text-2xl',
+            )}
+          >
             {articlePath ? (
-              <Link to={articlePath} className="text-foreground no-underline hover:text-primary">
+              <Link
+                to={articlePath}
+                className="text-foreground no-underline hover:text-primary [overflow-wrap:anywhere]"
+              >
                 {item.title}
               </Link>
             ) : (
